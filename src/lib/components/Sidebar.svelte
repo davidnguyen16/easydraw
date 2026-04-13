@@ -9,7 +9,8 @@
 	// Might move this to another file so we can just import
 	// instead of writing it here
 	const basicShapes = [
-		{label: 'Rectangle', type: 'RectangleNode'}
+		{label: 'Rectangle', type: 'RectangleNode'},
+        {label: 'Table', type: 'EntityNode'}
 	]
 </script>
 

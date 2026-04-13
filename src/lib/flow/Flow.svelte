@@ -8,14 +8,24 @@
 		BackgroundVariant,
 		MiniMap,
 		useSvelteFlow,
+		addEdge,
 		type Node,
 		type Edge,
-		type NodeEventWithPointer, ConnectionMode
+		type NodeEventWithPointer, ConnectionMode,
+		type Connection
 	} from '@xyflow/svelte';
 	import { get } from 'svelte/store';
 
+	import { setContext } from 'svelte';
+
 	import { useDnD } from '$lib/flow/DnDProvider.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
+
+	import RightSidebar from '$lib/components/RightSidebar.svelte';
+	import EntityNode from '$lib/flow/nodes/EntityNode.svelte';
+	import RelationshipEdge from '$lib/flow/edges/RelationshipEdge.svelte';
+	import CrowsFootMarkers from './edges/CrowsFootMarkers.svelte';
+
 	import EditorFooter from '$lib/components/EditorFooter.svelte';
 	import ContextMenu from '$lib/flow/ContextMenu.svelte';
 	import RectangleNode from '$lib/flow/nodes/RectangleNode.svelte';
@@ -34,9 +44,16 @@
 	// import '@xyflow/svelte/dist/style.css';
 	import '../../xy-theme.css';
 
+	setContext('updateNode', (id: string, data: any) => updateNodeData(id, data));
+
 	// Define all of our custom node here
 	const nodeTypes = {
 		RectangleNode: RectangleNode,
+		EntityNode: EntityNode,
+	};
+
+	const edgeTypes = {
+		relationship: RelationshipEdge
 	};
 
 	// Returns the active page snapshot from editor store.
@@ -51,6 +68,22 @@
 			? structuredClone(items)
 			: (JSON.parse(JSON.stringify(items)) as T[]);
 	};
+
+	// Clones nodes and also re-attaches the onEdit callback to each node's data, since functions cannot be cloned
+	const cloneNodes = (items: Node[]) => {
+		const cloned = typeof structuredClone === 'function'
+			? structuredClone(items)
+			: (JSON.parse(JSON.stringify(items)) as Node[]);
+
+		return cloned.map((n) => ({
+			...n,
+			data: {
+					...n.data,
+					onEdit: (newData: any) => updateNodeData(n.id, newData)
+			}
+		}));
+	};
+
 	// Creates a stable signature for dirty-checking canvas graph state.
 	const createCanvasSignature = (currentNodes: Node[], currentEdges: Edge[]) => {
 		return JSON.stringify({
@@ -60,7 +93,7 @@
 	};
 
 	const initialPage = getActivePageSnapshot();
-	const initialNodes = cloneGraph(initialPage?.nodes ?? ([] as Node[]));
+	const initialNodes = cloneNodes(initialPage?.nodes ?? ([] as Node[]));
 	const initialEdges = cloneGraph(initialPage?.edges ?? ([] as Edge[]));
 
 	// Local graph state used by SvelteFlow bindings.
@@ -88,6 +121,7 @@
 	};
 
 	const onDrop = (event: DragEvent) => {
+		console.log('drop fired', type.current);
 		event.preventDefault();
 
 		if (!type.current) {
@@ -99,11 +133,29 @@
 			y: event.clientY
 		});
 
+		let nodeData: any = { label: 'New Node' };
+
+    	if (type.current === 'EntityNode') {
+        	nodeData = {
+            	label: 'New Entity',
+            	fields: [
+                	{ name: 'id', type: 'PK' },
+                	{ name: 'field', type: 'varchar' },
+                	{ name: 'field', type: 'varchar' }
+            	]
+        	};
+    	}
+
+		const newNodeId = `${Math.random()}`;
+
 		const newNode = {
 			id: `${Math.random()}`,
 			type: type.current,
 			position,
-			data: { label: `` }, // Define labels in the nodes themselves
+			data: {
+				...nodeData,
+				onEdit: (newData: any) => updateNodeData(newNodeId, newData)
+			},
 			origin: [0.5, 0.0]
 		} satisfies Node;
 
@@ -153,7 +205,7 @@
 	// Loads the active page graph from store into canvas state.
 	function hydrateCanvasFromStore() {
 		const activePage = getActivePageSnapshot();
-		const nextNodes = cloneGraph(activePage?.nodes ?? []);
+		const nextNodes = cloneNodes(activePage?.nodes ?? []);
 		const nextEdges = cloneGraph(activePage?.edges ?? []);
 
 		isHydratingCanvas = true;
@@ -235,6 +287,47 @@
 			window.removeEventListener('keydown', handleSaveShortcut);
 		};
 	});
+
+	// Reactive state to find the currently selected EntityNode
+	let selectedEntityNode = $derived(
+        nodes.find((n: any) => n.selected && n.type === 'EntityNode')
+    );
+
+	// Function to update the data of a specific node
+	function updateNodeData(nodeId: string, newData: any) {
+        // Since you use $state.raw, we must trigger a full reassignment
+        nodes = nodes.map((n) => {
+            if (n.id === nodeId) {
+                // Merge existing data with the new data from RightSidebar
+                return {
+                    ...n,
+                    data: { ...n.data, ...newData }
+                };
+            }
+            return n;
+        });
+    }
+
+	// Function to handle new connections between nodes
+	function onConnect(connection: Connection) {
+		const newEdge: Edge = {
+			...connection,
+			id: `${Math.random()}`,
+			type: 'relationship',
+			data: { relationship: 'one-to-many' } // default
+		};
+		edges = addEdge(newEdge, edges);
+	}
+
+	let selectedEdge = $derived(
+		edges.find((e: any) => e.selected)
+	);
+
+	function updateEdgeData(edgeId: string, newData: any) {
+		edges = edges.map((e) =>
+			e.id === edgeId ? { ...e, data: { ...e.data, ...newData}} : e
+		);
+	}
 </script>
 
 <main class="editor-root">
@@ -268,19 +361,91 @@
 		</SvelteFlow>
 		<Sidebar />
 		<Controls position="top-right" />
+	<SvelteFlow
+			bind:nodes
+			bind:edges
+			{defaultEdgeOptions}
+			fitView
+			ondragover={onDragOver}
+			ondrop={onDrop}
+			onnodecontextmenu={handleContextMenu}
+			onpaneclick={handlePaneClick}
+			{nodeTypes}
+			connectionMode={ConnectionMode.Loose}
+			onconnect={onConnect}
+			{edgeTypes}
+	>
+		<CrowsFootMarkers />
+		<Background variant={BackgroundVariant.Dots} />
+		{#if menu}
+			<ContextMenu
+				onclick={handlePaneClick}
+				id={menu.id}
+				top={menu.top}
+				left={menu.left}
+				right={menu.right}
+				bottom={menu.bottom}
+			/>
+		{/if}
+		<MiniMap />
+
+	</SvelteFlow>
+	<Sidebar />
+
+	{#if selectedEntityNode}
+        {@const activeNode = selectedEntityNode}
+        <RightSidebar
+            node={activeNode}
+            onUpdate={(updatedData: any) => updateNodeData(activeNode.id, updatedData)}
+        />
+    {/if}
+
+	{#if selectedEdge}
+		{@const activeEdge = selectedEdge}
+		{@const edgeData = activeEdge.data as { relationship: string } | undefined}
+		<div class="edge-editor">
+			<span class="context-label">RELATIONSHIP</span>
+			<select
+				value={edgeData?.relationship ?? 'one-to-many'}
+				onchange={(e) => updateEdgeData(activeEdge.id, {
+					relationship: e.currentTarget.value
+				})}
+			>
+				<option value="one-to-one">One to One</option>
+				<option value="one-to-many">One to Many</option>
+				<option value="many-to-many">Many to Many</option>
+			</select>
+		</div>
+	{/if}
+
+	<Controls position="top-right" />
+
 	</section>
 	<EditorFooter onSwitchPage={handleSwitchPage} onCreatePage={handleCreatePage} />
 </main>
 
 <style>
+    main {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
 	/* Root editor layout: canvas on top, footer pinned as the last row. */
-	.editor-root {
-		width: 100vw;
-		height: 100vh;
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-	}
+  .edge-editor {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+  }
 
 	/* Canvas shell reserves all remaining height above the footer. */
 	.canvas-shell {
@@ -294,4 +459,21 @@
 		width: 100%;
 		height: 100%;
 	}
+
+  .context-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #888;
+      font-weight: 600;
+  }
+
+  select {
+      border: 1px solid #eee;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      outline: none;
+      background: #f8f9fa;
+  }
 </style>

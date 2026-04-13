@@ -15,7 +15,8 @@
 	const type = useDnD();
 
 	const onDragStart = (event: DragEvent, nodeType: string) => {
-		if (!event.dataTransfer) {
+		console.log('dragstart fired', nodeType);
+        if (!event.dataTransfer) {
 			return null;
 		}
 
@@ -37,6 +38,7 @@
 								ondragstart={(event) => onDragStart(event, node.type)}
 				>
 				</button>
+				
 			</li>
 		{/each}
 	</ul>
@@ -47,13 +49,26 @@
         font-size: 1.3rem;
     }
 
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;    
+        align-items: center;
+    }
+
     ul li {
-        display: inline-block;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .node-container {
         display: flex;
         flex-direction: column;
+        gap: 0.5rem;
     }
 
     button {
@@ -87,5 +102,17 @@
         font-weight: 700;
         border-radius: 5px;
         cursor: grab;
+    }
+
+	.table-node {
+        width: 60px;
+        height: 50px;
+        margin: 0.5rem;
+        border: 1px solid #111;
+        border-radius: 4px;
+        background: linear-gradient(to bottom, #d1d1d1 30%, white 30%);
+        cursor: grab;
+        display: flex;
+        flex-direction: column;
     }
 </style>

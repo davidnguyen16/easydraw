@@ -2,33 +2,33 @@
 	import NodeContainer from '$lib/components/NodeContainer.svelte';
 	import { editorMetaData } from '$lib/stores/editor.store.svelte';
 
-	// let fileName = $state("Untitled")
 	let searchBar = $state('');
 
-	// Array to be passed into the NodeContainer component
-	// Might move this to another file so we can just import
-	// instead of writing it here
 	const basicShapes = [
-		{label: 'Rectangle', type: 'RectangleNode'},
-        {label: 'Table', type: 'EntityNode'}
-	]
+		{ label: 'Rectangle', type: 'RectangleNode' },
+		{ label: 'Table', type: 'EntityNode' }
+	];
+
+	const filteredShapes = $derived(
+		basicShapes.filter((shape) =>
+		shape.label.toLowerCase().includes(searchBar.toLowerCase())
+		)
+	);
 </script>
 
 <aside>
-
 	<input class="file-name" bind:value={editorMetaData.fileName} />
 	<input class="search-bar" bind:value={searchBar} placeholder="Search..." />
 
 	<NodeContainer
 		heading="Basic Shapes"
-		nodes={basicShapes}
+		nodes={filteredShapes}
 	/>
 </aside>
 
 <style>
     aside {
         width: 300px;
-        /* Keep sidebar inside the canvas shell, above the footer row. */
         position: absolute;
         top: 20px;
         left: 0;

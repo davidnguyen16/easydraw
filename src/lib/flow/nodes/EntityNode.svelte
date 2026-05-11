@@ -39,7 +39,7 @@
                     class="field-input type"
                     oninput={(e) => {
                         const updated = data.fields.map((f: any, idx: number) =>
-                            idx === i ? { ...f, name: e.currentTarget.value } : f
+                            idx === i ? { ...f, type: e.currentTarget.value } : f
                         );
                         data.onEdit?.({ fields: updated });
                     }}

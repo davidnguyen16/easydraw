@@ -6,149 +6,6 @@
  * 1) Canvas-local graph state in Flow.svelte (live edits while user is drawing)
  * 2) editorStoreSvelte state in this file (in-memory app state across pages)
  * 3) localStorage snapshot (explicitly saved storage state)
- *
- * Public API contract (exported symbols)
- * --------------------------------------
- *
- * Internal helper signatures (non-exported):
- * - getPageSignature(page: EditorPage): string
- *   Used by:
- *   - unsavedPageIdsStore
- *   - saveActivePageToStorage()
- *   Purpose:
- *   - Build a deterministic page-level snapshot string for dirty checks
- *
- * - buildPageSignatures(pages: EditorPage[]): Record<string, string>
- *   Used by:
- *   - loadEditorStateFromStorage()
- *   Purpose:
- *   - Build page-id -> signature map from persisted snapshot
- *
- * - isEditorPage(value: unknown): value is EditorPage
- *   Used by:
- *   - isEditorState()
- *   Purpose:
- *   - Runtime validation guard for localStorage payload shape
- *
- * - isEditorState(value: unknown): value is EditorState
- *   Used by:
- *   - saveActivePageToStorage()
- *   - loadEditorStateFromStorage()
- *   Purpose:
- *   - Runtime validation guard for full snapshot structure
- *
- * Core stores:
- * - editorStoreSvelte: Writable<EditorState>
- *   Signature: `Writable<EditorState>`
- *   Called by:
- *   - Flow.svelte for reading active page snapshot and page arrays
- *   - EditorFooter.svelte for rendering page tabs and active tab state
- *   Behavior:
- *   - Holds `pages[]` and `activePageId`
- *   - Is the source of truth for app-level page data
- *
- * - unsavedPageIdsStore: Readable<string[]>
- *   Signature: `Readable<string[]>`
- *   Called by:
- *   - visibleUnsavedPageIdsStore (internal composition)
- *   Behavior:
- *   - Derived from `editorStoreSvelte` vs `savedPageSignaturesStore`
- *   - Marks pages that differ from last saved localStorage signature
- *
- * - visibleUnsavedPageIdsStore: Readable<string[]>
- *   Signature: `Readable<string[]>`
- *   Called by:
- *   - EditorFooter.svelte to display the unsaved indicator dot
- *   Behavior:
- *   - Union of `unsavedPageIdsStore` and canvas-only dirty pages
- *   - Supports both "store vs storage" and "canvas vs store" dirty states
- *
- * Persistence functions:
- * - saveActivePageToStorage(): boolean
- *   Called by:
- *   - Flow.svelte on Ctrl/Cmd + S
- *   Behavior:
- *   - Saves only the currently active page into localStorage
- *   - Merges active page into existing snapshot instead of overwriting all pages
- *   - Updates saved signature and clears canvas-dirty marker for that page
- *
- * - loadEditorStateFromStorage(): boolean
- *   Called by:
- *   - Flow.svelte on initial mount (onLoad path)
- *   Behavior:
- *   - Validates localStorage snapshot shape
- *   - Replaces editorStoreSvelte state with persisted snapshot
- *   - Rebuilds saved signatures and clears canvas-only dirty markers
- *
- * Editor state mutation functions:
- * - switchPage(pageId: string): void
- *   Called by:
- *   - Flow.svelte page-switch handler (before/after canvas-store sync flow)
- *   - EditorFooter.svelte fallback path when no callback prop is injected
- *   Behavior:
- *   - Updates `activePageId` only if target page exists
- *
- * - createPage(name?: string): string | null
- *   Called by:
- *   - Flow.svelte create-page handler
- *   - EditorFooter.svelte fallback path when no callback prop is injected
- *   Behavior:
- *   - Appends a new blank page
- *   - Makes the new page active
- *   - Returns created page id for optional caller-side hydration
- *
- * - updateActiveGraph(nodes: Node[], edges: Edge[]): void
- *   Called by:
- *   - Flow.svelte right before page switch
- *   - Flow.svelte right before page create
- *   - Flow.svelte right before Ctrl/Cmd + S storage save
- *   Behavior:
- *   - Writes canvas graph snapshot into currently active page in editorStoreSvelte
- *   - Does not touch localStorage directly
- *
- * - renamePage(pageId: string, nextName: string): void
- *   Called by:
- *   - EditorFooter.svelte inline name input handler
- *   Behavior:
- *   - Updates page `name` only, keeps id and graph intact
- *
- * - deletePage(pageId: string): void
- *   Called by:
- *   - EditorFooter.svelte dropdown Delete action
- *   Behavior:
- *   - Deletes target page when more than one page exists
- *   - Re-points activePageId if active page is deleted
- *   - Clears canvas-dirty marker for deleted page id
- *
- * Canvas dirty marker functions:
- * - markCanvasDirtyPage(pageId: string): void
- *   Called by:
- *   - Flow.svelte when live canvas content diverges from last baseline
- *   Behavior:
- *   - Adds page to canvas-only dirty list (no localStorage writes)
- *
- * - clearCanvasDirtyPage(pageId: string): void
- *   Called by:
- *   - Flow.svelte after explicit canvas->store sync
- *   - saveActivePageToStorage() after page was saved
- *   - deletePage() for removed page cleanup
- *   Behavior:
- *   - Removes page from canvas-only dirty list
- *
- * - clearAllCanvasDirtyPages(): void
- *   Called by:
- *   - loadEditorStateFromStorage() after state hydration
- *   Behavior:
- *   - Resets all canvas-only dirty markers
- *
- * Derived active page:
- * - activePageStore: Readable<EditorPage | null>
- *   Called by:
- *   - Flow.svelte (snapshot-based hydration helpers may also read editorStoreSvelte directly)
- *   Behavior:
- *   - Resolves current active page
- *   - Falls back to first page when active id becomes stale
- *   - Repairs stale activePageId in editorStoreSvelte
  */
 import { browser } from '$app/environment';
 import type { Edge, Node } from '@xyflow/svelte';
@@ -172,6 +29,7 @@ export interface EditorPage {
 export interface EditorState {
 	pages: EditorPage[];
 	activePageId: string;
+	fileName?: string;       // Optional: persisted file name (kept optional for backward compat)
 }
 
 const STORAGE_KEY = 'easydraw.editor.v1';
@@ -306,7 +164,8 @@ export function saveActivePageToStorage() {
 
 	const nextState: EditorState = {
 		pages: nextPages,
-		activePageId: activePage.id
+		activePageId: activePage.id,
+		fileName: editorMetaData.fileName       // Persist file name alongside pages
 	};
 
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
@@ -332,6 +191,12 @@ export function loadEditorStateFromStorage() {
 		editorStoreSvelte.set(parsedState);
 		savedPageSignaturesStore.set(buildPageSignatures(parsedState.pages));
 		clearAllCanvasDirtyPages();
+
+		// Restore file name if it exists in the saved snapshot
+		if (parsedState.fileName) {
+			editorMetaData.fileName = parsedState.fileName;
+		}
+
 		return true;
 	} catch {
 		return false;

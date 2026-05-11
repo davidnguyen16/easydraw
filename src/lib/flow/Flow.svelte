@@ -121,7 +121,6 @@
 	};
 
 	const onDrop = (event: DragEvent) => {
-		console.log('drop fired', type.current);
 		event.preventDefault();
 
 		if (!type.current) {
@@ -282,9 +281,42 @@
 			saveActivePageToStorage();
 		};
 
+		// Deletes selected nodes and edges when user presses Delete or Backspace.
+		const handleDeleteKey = (event: KeyboardEvent) => {
+			// Ignore if user is typing in an input/textarea (so they can edit text normally)
+			const target = event.target as HTMLElement;
+			if (
+				target.tagName === 'INPUT' ||
+				target.tagName === 'TEXTAREA' ||
+				target.isContentEditable
+			) {
+				return;
+			}
+
+			if (event.key !== 'Delete' && event.key !== 'Backspace') {
+				return;
+			}
+
+			const hasSelectedNodes = nodes.some((n) => n.selected);
+			const hasSelectedEdges = edges.some((e) => e.selected);
+
+			if (!hasSelectedNodes && !hasSelectedEdges) return;
+
+			event.preventDefault();
+
+			if (hasSelectedNodes) {
+				nodes = nodes.filter((n) => !n.selected);
+			}
+			if (hasSelectedEdges) {
+				edges = edges.filter((e) => !e.selected);
+			}
+		};
+
 		window.addEventListener('keydown', handleSaveShortcut);
+		window.addEventListener('keydown', handleDeleteKey);
 		return () => {
 			window.removeEventListener('keydown', handleSaveShortcut);
+			window.removeEventListener('keydown', handleDeleteKey);
 		};
 	});
 
@@ -342,10 +374,13 @@
 				onnodecontextmenu={handleContextMenu}
 				onpaneclick={handlePaneClick}
 				onpointerdown={handlePaneClick}
+				onconnect={onConnect}
 				{nodeTypes}
+				{edgeTypes}
 				connectionMode={ConnectionMode.Loose}
 				proOptions={{ hideAttribution: true }}
 		>
+			<CrowsFootMarkers />
 			<Background variant={BackgroundVariant.Dots} />
 			{#if menu}
 				<ContextMenu
@@ -359,68 +394,38 @@
 			{/if}
 			<MiniMap />
 		</SvelteFlow>
+
 		<Sidebar />
-		<Controls position="top-right" />
-	<SvelteFlow
-			bind:nodes
-			bind:edges
-			{defaultEdgeOptions}
-			fitView
-			ondragover={onDragOver}
-			ondrop={onDrop}
-			onnodecontextmenu={handleContextMenu}
-			onpaneclick={handlePaneClick}
-			{nodeTypes}
-			connectionMode={ConnectionMode.Loose}
-			onconnect={onConnect}
-			{edgeTypes}
-	>
-		<CrowsFootMarkers />
-		<Background variant={BackgroundVariant.Dots} />
-		{#if menu}
-			<ContextMenu
-				onclick={handlePaneClick}
-				id={menu.id}
-				top={menu.top}
-				left={menu.left}
-				right={menu.right}
-				bottom={menu.bottom}
+
+		{#if selectedEntityNode}
+			{@const activeNode = selectedEntityNode}
+			<RightSidebar
+				node={activeNode}
+				onUpdate={(updatedData: any) => updateNodeData(activeNode.id, updatedData)}
 			/>
 		{/if}
-		<MiniMap />
 
-	</SvelteFlow>
-	<Sidebar />
+		{#if selectedEdge}
+			{@const activeEdge = selectedEdge}
+			{@const edgeData = activeEdge.data as { relationship: string } | undefined}
+			<div class="edge-editor">
+				<span class="context-label">RELATIONSHIP</span>
+				<select
+					value={edgeData?.relationship ?? 'one-to-many'}
+					onchange={(e) => updateEdgeData(activeEdge.id, {
+						relationship: e.currentTarget.value
+					})}
+				>
+					<option value="one-to-one">One to One</option>
+					<option value="one-to-many">One to Many</option>
+					<option value="many-to-many">Many to Many</option>
+				</select>
+			</div>
+		{/if}
 
-	{#if selectedEntityNode}
-        {@const activeNode = selectedEntityNode}
-        <RightSidebar
-            node={activeNode}
-            onUpdate={(updatedData: any) => updateNodeData(activeNode.id, updatedData)}
-        />
-    {/if}
-
-	{#if selectedEdge}
-		{@const activeEdge = selectedEdge}
-		{@const edgeData = activeEdge.data as { relationship: string } | undefined}
-		<div class="edge-editor">
-			<span class="context-label">RELATIONSHIP</span>
-			<select
-				value={edgeData?.relationship ?? 'one-to-many'}
-				onchange={(e) => updateEdgeData(activeEdge.id, {
-					relationship: e.currentTarget.value
-				})}
-			>
-				<option value="one-to-one">One to One</option>
-				<option value="one-to-many">One to Many</option>
-				<option value="many-to-many">Many to Many</option>
-			</select>
-		</div>
-	{/if}
-
-	<Controls position="top-right" />
-
+		<Controls position="top-right" />
 	</section>
+
 	<EditorFooter onSwitchPage={handleSwitchPage} onCreatePage={handleCreatePage} />
 </main>
 

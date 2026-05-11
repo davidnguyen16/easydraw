@@ -1,6 +1,13 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import NodeContainer from '$lib/components/NodeContainer.svelte';
+	import CollapseButton from '$lib/components/sidebar/CollapseButton.svelte';
+	import ResizeHandle from '$lib/components/sidebar/ResizeHandle.svelte';
 	import { editorMetaData } from '$lib/stores/editor.store.svelte';
+	import {
+		loadSidebarStateFromStorage,
+		sidebarState
+	} from '$lib/stores/sidebar.store.svelte';
 
 	let searchBar = $state('');
 
@@ -11,42 +18,74 @@
 
 	const filteredShapes = $derived(
 		basicShapes.filter((shape) =>
-		shape.label.toLowerCase().includes(searchBar.toLowerCase())
+			shape.label.toLowerCase().includes(searchBar.toLowerCase())
 		)
 	);
+
+	onMount(() => {
+		loadSidebarStateFromStorage();
+	});
 </script>
 
-<aside>
-	<input class="file-name" bind:value={editorMetaData.fileName} />
-	<input class="search-bar" bind:value={searchBar} placeholder="Search..." />
+<aside
+	class:collapsed={sidebarState.isCollapsed}
+	style:width={sidebarState.isCollapsed ? '0px' : `${sidebarState.width}px`}
+>
+	<div class="sidebar-content" aria-hidden={sidebarState.isCollapsed}>
+		<input class="file-name" bind:value={editorMetaData.fileName} />
+		<input class="search-bar" bind:value={searchBar} placeholder="Search..." />
 
-	<NodeContainer
-		heading="Basic Shapes"
-		nodes={filteredShapes}
-	/>
+		<NodeContainer
+			heading="Basic Shapes"
+			nodes={filteredShapes}
+		/>
+	</div>
+
+	<CollapseButton />
+	{#if !sidebarState.isCollapsed}
+		<ResizeHandle />
+	{/if}
 </aside>
 
 <style>
     aside {
-        width: 300px;
         position: absolute;
-        top: 20px;
+        top: 100px;
         left: 0;
-        bottom: 20px;
+        bottom: 0px;
 
-        padding: 3em 1.5em 1em;
         margin: 0;
+
+        background: white;
+
+        border-radius: 0;
+        border-left: 0;
+
+        box-shadow: 0 0 10px #808080;
+
+        /* Smooth width change when toggling collapse / dragging finishes. */
+        transition: width 0.15s ease;
+    }
+
+    aside.collapsed {
+        box-shadow: none;
+    }
+
+    .sidebar-content {
+        width: 100%;
+        height: 100%;
+        padding: 3em 1.5em 1em;
         gap: 1em;
 
         display: flex;
         flex-direction: column;
 
-        background: white;
+        /* Clip content so it doesn't spill while panel is narrow / collapsed. */
+        overflow: hidden;
+    }
 
-        border-radius: 0 10px 10px 0;
-        border-left: 0;
-
-        box-shadow: 0 0 10px #808080;
+    aside.collapsed .sidebar-content {
+        visibility: hidden;
     }
 
     input {

@@ -1,15 +1,11 @@
 <script lang="ts">
-	// Interface to define what should always be passed
-	// into this component
 	interface Props {
 		heading: string;
 		nodes: { label: string; type: string }[];
 	}
 
-	// Let these variables be props
 	let { heading, nodes }: Props = $props();
 
-	// Drag and drop behavior in the NodeContainer itself
 	import { useDnD } from '$lib/flow/DnDProvider.svelte';
 
 	const type = useDnD();
@@ -28,7 +24,6 @@
 <main class="node-container">
 	<h2>{heading}</h2>
 	<ul>
-<!--		Create a list item for each container-->
 		{#each nodes as node}
 			<li>
 				<button type="button"
@@ -38,7 +33,7 @@
 								ondragstart={(event) => onDragStart(event, node.type)}
 				>
 				</button>
-				
+
 			</li>
 		{/each}
 	</ul>
@@ -55,7 +50,7 @@
         margin: 0;
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;    
+        gap: 10px;
         align-items: center;
     }
 
@@ -72,12 +67,6 @@
     }
 
     button {
-        /*
-				Source - https://stackoverflow.com/a/45890842
-				Posted by Kevinleary.net, modified by community. See post 'Timeline' for change history
-				Retrieved 2026-02-10, License - CC BY-SA 4.0
-				*/
-
         background: none;
         color: inherit;
         border: none;
@@ -87,11 +76,6 @@
         outline: inherit;
     }
 
-		/*
-		It's saying unused cause the class is
-		dynamically generated. Will need to refactor this
-		to be clearer. Define the node look in the container here for now
-		*/
     .rectangle-node {
         width: 80px;
         height: 40px;

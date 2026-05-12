@@ -27,6 +27,8 @@
 	import CrowsFootMarkers from './edges/CrowsFootMarkers.svelte';
 
 	import EditorFooter from '$lib/components/EditorFooter.svelte';
+	import MenuBar from '$lib/components/menubar/MenuBar.svelte';
+	import ToolBar from '$lib/components/toolbar/ToolBar.svelte';
 	import ContextMenu from '$lib/flow/ContextMenu.svelte';
 	import RectangleNode from '$lib/flow/nodes/RectangleNode.svelte';
 	import {
@@ -363,6 +365,8 @@
 </script>
 
 <main class="editor-root">
+	<MenuBar />
+	<ToolBar />
 	<section class="canvas-shell" bind:clientWidth bind:clientHeight>
 		<SvelteFlow
 				bind:nodes

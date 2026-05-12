@@ -50,7 +50,7 @@
 <style>
     aside {
         position: absolute;
-        top: 100px;
+        top: 0.2%;
         left: 0;
         bottom: 0px;
 
@@ -61,7 +61,7 @@
         border-radius: 0;
         border-left: 0;
 
-        box-shadow: 0 0 10px #808080;
+        box-shadow: 0 0 10px #bfbbbb;
 
         /* Smooth width change when toggling collapse / dragging finishes. */
         transition: width 0.15s ease;

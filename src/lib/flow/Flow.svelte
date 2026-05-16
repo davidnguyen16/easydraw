@@ -1,12 +1,11 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, setContext } from 'svelte';
 	import { beforeNavigate } from '$app/navigation';
+	import { nanoid } from 'nanoid';
 	import {
 		SvelteFlow,
-		Controls,
 		Background,
 		BackgroundVariant,
-		MiniMap,
 		useSvelteFlow,
 		addEdge,
 		type Node,
@@ -15,8 +14,6 @@
 		type Connection
 	} from '@xyflow/svelte';
 	import { get } from 'svelte/store';
-
-	import { setContext } from 'svelte';
 
 	import { useDnD } from '$lib/flow/DnDProvider.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
@@ -34,14 +31,25 @@
 	import {
 		clearCanvasDirtyPage,
 		createPage,
+		editorMetaData,
 		editorStoreSvelte,
+		exportEditorStateAsJSON,
+		loadEditorStateFromJSON,
 		loadEditorStateFromStorage,
 		markCanvasDirtyPage,
+		resetEditorState,
 		saveActivePageToStorage,
 		switchPage,
 		updateActiveGraph,
 		visibleUnsavedPageIdsStore,
 	} from '$lib/stores/editor.store.svelte';
+	import {
+		historyState,
+		recordSnapshot,
+		resetHistory,
+		undo as historyUndo,
+		redo as historyRedo
+	} from '$lib/stores/history.store.svelte';
 
 	// import '@xyflow/svelte/dist/style.css';
 	import '../../xy-theme.css';
@@ -72,7 +80,7 @@
 	};
 
 	// Clones nodes and also re-attaches the onEdit callback to each node's data, since functions cannot be cloned
-	const cloneNodes = (items: Node[]) => {
+	const cloneNodes = (items: Node[]): Node[] => {
 		const cloned = typeof structuredClone === 'function'
 			? structuredClone(items)
 			: (JSON.parse(JSON.stringify(items)) as Node[]);
@@ -83,7 +91,7 @@
 					...n.data,
 					onEdit: (newData: any) => updateNodeData(n.id, newData)
 			}
-		}));
+		})) as Node[];
 	};
 
 	// Creates a stable signature for dirty-checking canvas graph state.
@@ -105,7 +113,27 @@
 	let baselineCanvasSignature = $state(createCanvasSignature(initialNodes, initialEdges));
 	let isHydratingCanvas = $state(false);
 
-	const { screenToFlowPosition } = useSvelteFlow();
+	// Set true while undo/redo is restoring a snapshot, so the resulting
+	// nodes/edges change does NOT push another snapshot onto the history stack.
+	let isApplyingHistory = $state(false);
+	let historyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+	// Hidden file input ref used by File > Open in MenuBar / Open icon in ToolBar.
+	// Definitely assigned via bind:this once the template mounts.
+	let fileInput!: HTMLInputElement;
+
+	// Reactive state shared with MenuBar / ToolBar via the `editor` context.
+	const editorActionsState = $state({
+		zoomPercent: 100,
+		showGrid: true,
+		snapToGrid: false,
+		locked: false
+	});
+
+	// In-memory clipboard for Copy / Paste. JSON-clean (no function refs).
+	let clipboardSnapshot: { nodes: Node[]; edges: Edge[] } | null = null;
+
+	const { screenToFlowPosition, zoomIn, zoomOut, fitView, getViewport, setViewport } = useSvelteFlow();
 
 	const type = useDnD();
 
@@ -218,6 +246,9 @@
 			clearCanvasDirtyPage(canvasPageId);
 		}
 
+		// Reset undo/redo history each time we swap into a different page snapshot.
+		resetHistory(baselineCanvasSignature);
+
 		queueMicrotask(() => {
 			isHydratingCanvas = false;
 		});
@@ -239,7 +270,355 @@
 		handlePaneClick();
 	}
 
-	// Marks active page as dirty immediately when canvas diverges from last synced state.
+	// =========================================================================
+	// Editor action handlers (consumed by MenuBar / ToolBar via context).
+	// =========================================================================
+
+	function handleSave() {
+		persistCanvasToStore();
+		saveActivePageToStorage();
+	}
+
+	function handleNewFile() {
+		const unsavedIds = get(visibleUnsavedPageIdsStore);
+		if (unsavedIds.length > 0) {
+			const ok = confirm('You have unsaved changes. Discard them and start a new file?');
+			if (!ok) return;
+		}
+		resetEditorState();
+		hydrateCanvasFromStore();
+	}
+
+	function handleOpenFile() {
+		fileInput?.click();
+	}
+
+	function handleFileSelected(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = ''; // reset so re-selecting the same file still triggers change
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			const content = e.target?.result;
+			if (typeof content !== 'string') return;
+			const ok = loadEditorStateFromJSON(content);
+			if (!ok) {
+				alert('Failed to open: file is not a valid EasyDraw diagram.');
+				return;
+			}
+			hydrateCanvasFromStore();
+		};
+		reader.readAsText(file);
+	}
+
+	function handleSaveAs() {
+		persistCanvasToStore();
+		const json = exportEditorStateAsJSON();
+		const blob = new Blob([json], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `${editorMetaData.fileName || 'easydraw'}.json`;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+	}
+
+	function applyHistorySnapshot(snapshot: string) {
+		try {
+			const parsed = JSON.parse(snapshot) as { nodes: Node[]; edges: Edge[] };
+			isApplyingHistory = true;
+			isHydratingCanvas = true;
+			nodes = cloneNodes(parsed.nodes);
+			edges = cloneGraph(parsed.edges);
+			queueMicrotask(() => {
+				isApplyingHistory = false;
+				isHydratingCanvas = false;
+			});
+		} catch {
+			// Ignore corrupt snapshot.
+		}
+	}
+
+	function handleUndo() {
+		const snapshot = historyUndo();
+		if (snapshot) applyHistorySnapshot(snapshot);
+	}
+
+	function handleRedo() {
+		const snapshot = historyRedo();
+		if (snapshot) applyHistorySnapshot(snapshot);
+	}
+
+	function handleZoomIn() { zoomIn(); }
+	function handleZoomOut() { zoomOut(); }
+	function handleFitView() { fitView(); }
+
+	function handleDuplicate() {
+		const selected = nodes.filter((n) => n.selected);
+		if (selected.length === 0) return;
+
+		const copies = selected.map((n) => {
+			const newId = nanoid();
+			return {
+				...n,
+				id: newId,
+				position: { x: n.position.x + 30, y: n.position.y + 30 },
+				selected: false,
+				data: {
+					...n.data,
+					onEdit: (newData: any) => updateNodeData(newId, newData)
+				}
+			};
+		});
+
+		nodes = [...nodes.map((n) => ({ ...n, selected: false })), ...copies];
+	}
+
+	function handleDeleteSelected() {
+		const hasSelectedNodes = nodes.some((n) => n.selected);
+		const hasSelectedEdges = edges.some((e) => e.selected);
+		if (!hasSelectedNodes && !hasSelectedEdges) return;
+
+		if (hasSelectedNodes) nodes = nodes.filter((n) => !n.selected);
+		if (hasSelectedEdges) edges = edges.filter((e) => !e.selected);
+	}
+
+	function handleSelectAll() {
+		nodes = nodes.map((n) => ({ ...n, selected: true }));
+		edges = edges.map((e) => ({ ...e, selected: true }));
+	}
+
+	async function handleShare() {
+		persistCanvasToStore();
+		const json = exportEditorStateAsJSON();
+		try {
+			await navigator.clipboard.writeText(json);
+			alert('Diagram JSON copied to clipboard. Paste it into a file to share.');
+		} catch {
+			// Clipboard blocked: fall back to a download.
+			handleSaveAs();
+		}
+	}
+
+	// =========================================================================
+	// Copy / Paste — uses an in-memory snapshot keyed by selection.
+	// =========================================================================
+	function handleCopy() {
+		const selectedNodes = nodes.filter((n) => n.selected);
+		if (selectedNodes.length === 0) return;
+
+		const selectedIds = new Set(selectedNodes.map((n) => n.id));
+		const selectedEdges = edges.filter(
+			(e) => selectedIds.has(e.source) && selectedIds.has(e.target)
+		);
+
+		// Strip onEdit so the clone is JSON-clean. cloneNodes re-attaches it on paste.
+		clipboardSnapshot = {
+			nodes: JSON.parse(JSON.stringify(selectedNodes)),
+			edges: JSON.parse(JSON.stringify(selectedEdges))
+		};
+	}
+
+	function handlePaste() {
+		if (!clipboardSnapshot) return;
+
+		const idMap = new Map<string, string>();
+
+		const pastedNodes = clipboardSnapshot.nodes.map((n) => {
+			const newId = nanoid();
+			idMap.set(n.id, newId);
+			return {
+				...n,
+				id: newId,
+				position: { x: n.position.x + 40, y: n.position.y + 40 },
+				selected: true,
+				data: {
+					...n.data,
+					onEdit: (newData: any) => updateNodeData(newId, newData)
+				}
+			} as Node;
+		});
+
+		const pastedEdges = clipboardSnapshot.edges.map((e) => ({
+			...e,
+			id: nanoid(),
+			source: idMap.get(e.source) ?? e.source,
+			target: idMap.get(e.target) ?? e.target,
+			selected: true
+		}));
+
+		nodes = [...nodes.map((n) => ({ ...n, selected: false })), ...pastedNodes];
+		edges = [...edges.map((e) => ({ ...e, selected: false })), ...pastedEdges];
+	}
+
+	// =========================================================================
+	// Z-order — array order controls render stacking in SvelteFlow.
+	// =========================================================================
+	function handleBringToFront() {
+		const selected = nodes.filter((n) => n.selected);
+		if (selected.length === 0) return;
+		const others = nodes.filter((n) => !n.selected);
+		nodes = [...others, ...selected];
+	}
+
+	function handleSendToBack() {
+		const selected = nodes.filter((n) => n.selected);
+		if (selected.length === 0) return;
+		const others = nodes.filter((n) => !n.selected);
+		nodes = [...selected, ...others];
+	}
+
+	// =========================================================================
+	// Group / Ungroup — wraps selected nodes in a parent container.
+	// =========================================================================
+	function handleGroup() {
+		const selected = nodes.filter((n) => n.selected && !(n as any).parentId);
+		if (selected.length < 2) {
+			alert('Select at least 2 nodes to group.');
+			return;
+		}
+
+		const PADDING = 24;
+		const minX = Math.min(...selected.map((n) => n.position.x));
+		const minY = Math.min(...selected.map((n) => n.position.y));
+		const maxX = Math.max(
+			...selected.map((n) => n.position.x + (((n as any).width ?? n.measured?.width) ?? 150))
+		);
+		const maxY = Math.max(
+			...selected.map((n) => n.position.y + (((n as any).height ?? n.measured?.height) ?? 80))
+		);
+
+		const groupId = nanoid();
+		const groupNode = {
+			id: groupId,
+			type: 'group',
+			position: { x: minX - PADDING, y: minY - PADDING },
+			data: {},
+			style: `width: ${maxX - minX + PADDING * 2}px; height: ${maxY - minY + PADDING * 2}px;`
+		} as unknown as Node;
+
+		const selectedIds = new Set(selected.map((n) => n.id));
+		const next: Node[] = [
+			groupNode,
+			...nodes.map((n) => {
+				if (!selectedIds.has(n.id)) return n;
+				return {
+					...n,
+					parentId: groupId,
+					extent: 'parent' as const,
+					position: {
+						x: n.position.x - (minX - PADDING),
+						y: n.position.y - (minY - PADDING)
+					},
+					selected: false
+				};
+			})
+		];
+		nodes = next;
+	}
+
+	function handleUngroup() {
+		const selectedGroups = nodes.filter((n) => n.selected && n.type === 'group');
+		if (selectedGroups.length === 0) {
+			alert('Select a group node to ungroup.');
+			return;
+		}
+
+		const groupIds = new Set(selectedGroups.map((g) => g.id));
+		const groupById = new Map(selectedGroups.map((g) => [g.id, g]));
+
+		nodes = nodes
+			.filter((n) => !groupIds.has(n.id))
+			.map((n) => {
+				const parentId = (n as any).parentId as string | undefined;
+				if (parentId && groupIds.has(parentId)) {
+					const parent = groupById.get(parentId)!;
+					const { parentId: _drop, extent: _drop2, ...rest } = n as any;
+					return {
+						...rest,
+						position: {
+							x: parent.position.x + n.position.x,
+							y: parent.position.y + n.position.y
+						}
+					} as Node;
+				}
+				return n;
+			});
+	}
+
+	// =========================================================================
+	// View toggles + Export.
+	// =========================================================================
+	function handleToggleShowGrid() {
+		editorActionsState.showGrid = !editorActionsState.showGrid;
+	}
+
+	function handleToggleSnapToGrid() {
+		editorActionsState.snapToGrid = !editorActionsState.snapToGrid;
+	}
+
+	// Sets absolute zoom (1.0 = 100%) while preserving the current pan.
+	function handleSetZoom(percent: number) {
+		const { x, y } = getViewport();
+		setViewport({ x, y, zoom: percent / 100 });
+	}
+
+	// Fits the viewport to selected nodes, or to all nodes if none selected.
+	function handleFitSelection() {
+		const selected = nodes.filter((n) => n.selected);
+		if (selected.length === 0) {
+			fitView();
+			return;
+		}
+		fitView({ nodes: selected.map((n) => ({ id: n.id })) });
+	}
+
+	// Locks/unlocks node interaction (drag + connect). Pan + zoom stay available.
+	function handleToggleLock() {
+		editorActionsState.locked = !editorActionsState.locked;
+	}
+
+	// SvelteFlow viewport changes drive the live zoom % shown in the toolbar.
+	function handleViewportMove(_event: any, viewport: { zoom: number }) {
+		editorActionsState.zoomPercent = Math.round(viewport.zoom * 100);
+	}
+
+	// Single context object exposed to MenuBar and ToolBar as 'editor'.
+	setContext('editor', {
+		state: editorActionsState,
+		history: historyState,
+		save: handleSave,
+		newFile: handleNewFile,
+		open: handleOpenFile,
+		saveAs: handleSaveAs,
+		undo: handleUndo,
+		redo: handleRedo,
+		copy: handleCopy,
+		paste: handlePaste,
+		zoomIn: handleZoomIn,
+		zoomOut: handleZoomOut,
+		fitView: handleFitView,
+		duplicate: handleDuplicate,
+		deleteSelected: handleDeleteSelected,
+		selectAll: handleSelectAll,
+		share: handleShare,
+		bringToFront: handleBringToFront,
+		sendToBack: handleSendToBack,
+		group: handleGroup,
+		ungroup: handleUngroup,
+		toggleShowGrid: handleToggleShowGrid,
+		toggleSnapToGrid: handleToggleSnapToGrid,
+		setZoom: handleSetZoom,
+		fitSelection: handleFitSelection,
+		toggleLock: handleToggleLock
+	});
+
+	// Marks active page as dirty immediately when canvas diverges from last synced state,
+	// and records a debounced history snapshot for undo/redo.
 	$effect(() => {
 		nodes;
 		edges;
@@ -252,6 +631,14 @@
 			markCanvasDirtyPage(canvasPageId);
 		} else {
 			clearCanvasDirtyPage(canvasPageId);
+		}
+
+		// Skip recording while undo/redo is restoring a snapshot.
+		if (!isApplyingHistory) {
+			if (historyDebounceTimer) clearTimeout(historyDebounceTimer);
+			historyDebounceTimer = setTimeout(() => {
+				recordSnapshot(currentCanvasSignature);
+			}, 350);
 		}
 	});
 
@@ -273,52 +660,124 @@
 			}
 		});
 
-		// Saves the current active page snapshot when user presses Ctrl/Cmd + S.
-		const handleSaveShortcut = (event: KeyboardEvent) => {
-			const isSaveShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's';
-			if (!isSaveShortcut) return;
-
-			event.preventDefault();
-			persistCanvasToStore();
-			saveActivePageToStorage();
-		};
-
-		// Deletes selected nodes and edges when user presses Delete or Backspace.
-		const handleDeleteKey = (event: KeyboardEvent) => {
-			// Ignore if user is typing in an input/textarea (so they can edit text normally)
+		// Centralized shortcut router. Reuses the same handlers wired into the
+		// MenuBar / ToolBar so behavior stays in lockstep with the UI.
+		const handleKeyboard = (event: KeyboardEvent) => {
 			const target = event.target as HTMLElement;
-			if (
+			const isInInput =
 				target.tagName === 'INPUT' ||
 				target.tagName === 'TEXTAREA' ||
-				target.isContentEditable
-			) {
+				target.isContentEditable;
+
+			const meta = event.ctrlKey || event.metaKey;
+			const key = event.key.toLowerCase();
+
+			if (meta && key === 's') {
+				event.preventDefault();
+				handleSave();
 				return;
 			}
 
-			if (event.key !== 'Delete' && event.key !== 'Backspace') {
+			if (meta && key === 'z') {
+				if (isInInput) return;
+				event.preventDefault();
+				if (event.shiftKey) handleRedo();
+				else handleUndo();
 				return;
 			}
 
-			const hasSelectedNodes = nodes.some((n) => n.selected);
-			const hasSelectedEdges = edges.some((e) => e.selected);
-
-			if (!hasSelectedNodes && !hasSelectedEdges) return;
-
-			event.preventDefault();
-
-			if (hasSelectedNodes) {
-				nodes = nodes.filter((n) => !n.selected);
+			if (meta && key === 'y') {
+				if (isInInput) return;
+				event.preventDefault();
+				handleRedo();
+				return;
 			}
-			if (hasSelectedEdges) {
-				edges = edges.filter((e) => !e.selected);
+
+			if (meta && key === 'd') {
+				if (isInInput) return;
+				event.preventDefault();
+				handleDuplicate();
+				return;
+			}
+
+			if (meta && key === 'a') {
+				if (isInInput) return;
+				event.preventDefault();
+				handleSelectAll();
+				return;
+			}
+
+			if (meta && key === 'c') {
+				if (isInInput) return;
+				event.preventDefault();
+				handleCopy();
+				return;
+			}
+
+			if (meta && key === 'v') {
+				if (isInInput) return;
+				event.preventDefault();
+				handlePaste();
+				return;
+			}
+
+			if (meta && event.shiftKey && key === 'f') {
+				event.preventDefault();
+				handleBringToFront();
+				return;
+			}
+
+			if (meta && event.shiftKey && key === 'b') {
+				event.preventDefault();
+				handleSendToBack();
+				return;
+			}
+
+			if (meta && event.shiftKey && key === 'g') {
+				if (isInInput) return;
+				event.preventDefault();
+				handleUngroup();
+				return;
+			}
+
+			if (meta && key === 'g') {
+				if (isInInput) return;
+				event.preventDefault();
+				handleGroup();
+				return;
+			}
+
+			if (meta && event.shiftKey && key === 'h') {
+				event.preventDefault();
+				handleFitView();
+				return;
+			}
+
+			if (meta && (key === '=' || key === '+')) {
+				event.preventDefault();
+				handleZoomIn();
+				return;
+			}
+
+			if (meta && key === '-') {
+				event.preventDefault();
+				handleZoomOut();
+				return;
+			}
+
+			if (event.key === 'Delete' || event.key === 'Backspace') {
+				if (isInInput) return;
+				const hasSelected =
+					nodes.some((n) => n.selected) || edges.some((e) => e.selected);
+				if (!hasSelected) return;
+				event.preventDefault();
+				handleDeleteSelected();
 			}
 		};
 
-		window.addEventListener('keydown', handleSaveShortcut);
-		window.addEventListener('keydown', handleDeleteKey);
+		window.addEventListener('keydown', handleKeyboard);
 		return () => {
-			window.removeEventListener('keydown', handleSaveShortcut);
-			window.removeEventListener('keydown', handleDeleteKey);
+			window.removeEventListener('keydown', handleKeyboard);
 		};
 	});
 
@@ -367,6 +826,13 @@
 <main class="editor-root">
 	<MenuBar />
 	<ToolBar />
+	<input
+		type="file"
+		accept=".json,application/json"
+		bind:this={fileInput}
+		onchange={handleFileSelected}
+		hidden
+	/>
 	<section class="canvas-shell" bind:clientWidth bind:clientHeight>
 		<SvelteFlow
 				bind:nodes
@@ -379,13 +845,19 @@
 				onpaneclick={handlePaneClick}
 				onpointerdown={handlePaneClick}
 				onconnect={onConnect}
+				onmove={handleViewportMove}
+				snapGrid={editorActionsState.snapToGrid ? [20, 20] : undefined}
+				nodesDraggable={!editorActionsState.locked}
+				nodesConnectable={!editorActionsState.locked}
 				{nodeTypes}
 				{edgeTypes}
 				connectionMode={ConnectionMode.Loose}
 				proOptions={{ hideAttribution: true }}
 		>
 			<CrowsFootMarkers />
-			<Background variant={BackgroundVariant.Dots} />
+			{#if editorActionsState.showGrid}
+				<Background variant={BackgroundVariant.Dots} />
+			{/if}
 			{#if menu}
 				<ContextMenu
 					onclick={handlePaneClick}
@@ -396,7 +868,6 @@
 					bottom={menu.bottom}
 				/>
 			{/if}
-			<MiniMap />
 		</SvelteFlow>
 
 		<Sidebar />
@@ -426,8 +897,6 @@
 				</select>
 			</div>
 		{/if}
-
-		<Controls position="top-right" />
 	</section>
 
 	<EditorFooter onSwitchPage={handleSwitchPage} onCreatePage={handleCreatePage} />

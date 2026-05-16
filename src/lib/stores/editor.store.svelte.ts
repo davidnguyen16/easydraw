@@ -184,15 +184,19 @@ export function loadEditorStateFromStorage() {
 	const rawState = localStorage.getItem(STORAGE_KEY);
 	if (!rawState) return false;
 
+	return loadEditorStateFromJSON(rawState);
+}
+
+// Loads editor state from a raw JSON string (used by File > Open).
+export function loadEditorStateFromJSON(rawJson: string): boolean {
 	try {
-		const parsedState = JSON.parse(rawState) as unknown;
+		const parsedState = JSON.parse(rawJson) as unknown;
 		if (!isEditorState(parsedState)) return false;
 
 		editorStoreSvelte.set(parsedState);
 		savedPageSignaturesStore.set(buildPageSignatures(parsedState.pages));
 		clearAllCanvasDirtyPages();
 
-		// Restore file name if it exists in the saved snapshot
 		if (parsedState.fileName) {
 			editorMetaData.fileName = parsedState.fileName;
 		}
@@ -201,6 +205,41 @@ export function loadEditorStateFromStorage() {
 	} catch {
 		return false;
 	}
+}
+
+// Resets editor state to a single empty page (used by File > New).
+export function resetEditorState() {
+	editorStoreSvelte.set({
+		pages: [
+			{
+				id: nanoid(),
+				name: 'Page 1',
+				nodes: [],
+				edges: []
+			}
+		],
+		activePageId: ''
+	});
+	editorStoreSvelte.update((state) => ({
+		...state,
+		activePageId: state.pages[0].id
+	}));
+	savedPageSignaturesStore.set({});
+	clearAllCanvasDirtyPages();
+	editorMetaData.fileName = 'Untitled';
+}
+
+// Serializes the current editor state for download/clipboard.
+export function exportEditorStateAsJSON(): string {
+	const state = get(editorStoreSvelte);
+	return JSON.stringify(
+		{
+			...state,
+			fileName: editorMetaData.fileName
+		},
+		null,
+		2
+	);
 }
 
 // Updates the active page only when the target page id exists.

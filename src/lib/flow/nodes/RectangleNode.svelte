@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Handle, Position, useSvelteFlow, type NodeProps } from '@xyflow/svelte';
+	import { Handle, Position, NodeResizer, useSvelteFlow, type NodeProps } from '@xyflow/svelte';
 
-	let { id, data, isConnectable }: NodeProps = $props();
+	let { id, data, selected, isConnectable }: NodeProps = $props();
 	let { updateNodeData } = useSvelteFlow();
 
 	function onInput(evt: Event) {
@@ -11,6 +11,11 @@
 </script>
 
 <div class="rectangle-node">
+	<NodeResizer
+		isVisible={selected}
+		minWidth={60}
+		minHeight={30}
+	/>
 
 	<Handle type="source" position={Position.Top} {isConnectable} id="top" />
 	<Handle type="source" position={Position.Right} {isConnectable} id="right" />
@@ -45,5 +50,7 @@
         align-items: center;
         justify-content: center;
         min-height: 30px;
+		width: 100%;
+		height: 100%;
     }
 </style>

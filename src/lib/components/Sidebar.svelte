@@ -3,7 +3,6 @@
 	import NodeContainer from '$lib/components/NodeContainer.svelte';
 	import CollapseButton from '$lib/components/sidebar/CollapseButton.svelte';
 	import ResizeHandle from '$lib/components/sidebar/ResizeHandle.svelte';
-	import { editorMetaData } from '$lib/stores/editor.store.svelte';
 	import {
 		loadSidebarStateFromStorage,
 		sidebarState
@@ -12,15 +11,35 @@
 	let searchBar = $state('');
 
 	const basicShapes = [
-		{ label: 'Rectangle', type: 'RectangleNode' },
-		{ label: 'Table', type: 'EntityNode' }
+		{ label: 'Rectangle', type: 'RectangleNode', icon: 'rectangle' },
+		{ label: 'Circle', type: 'RectangleNode', icon: 'circle' },
+		{ label: 'Triangle', type: 'RectangleNode', icon: 'triangle' },
+		{ label: 'Diamond', type: 'RectangleNode', icon: 'diamond' },
+		{ label: 'Pill', type: 'RectangleNode', icon: 'pill' },
+		{ label: 'Pentagon', type: 'RectangleNode', icon: 'pentagon' }
 	];
 
-	const filteredShapes = $derived(
-		basicShapes.filter((shape) =>
-			shape.label.toLowerCase().includes(searchBar.toLowerCase())
-		)
-	);
+	const arrowShapes = [
+		{ label: 'Arrow', type: 'RectangleNode', icon: 'arrow-right' },
+		{ label: 'Double Arrow', type: 'RectangleNode', icon: 'arrow-double' },
+		{ label: 'Bent Arrow', type: 'RectangleNode', icon: 'arrow-bent' }
+	];
+
+	const containerShapes = [
+		{ label: 'Dashed Container', type: 'RectangleNode', icon: 'dashed-rect' },
+		{ label: 'Rounded Container', type: 'RectangleNode', icon: 'rounded-rect' },
+		{ label: 'Grid Container', type: 'RectangleNode', icon: 'grid-4' }
+	];
+
+	function filterShapes<T extends { label: string }>(shapes: T[]): T[] {
+		const query = searchBar.trim().toLowerCase();
+		if (!query) return shapes;
+		return shapes.filter((s) => s.label.toLowerCase().includes(query));
+	}
+
+	const filteredBasic = $derived(filterShapes(basicShapes));
+	const filteredArrows = $derived(filterShapes(arrowShapes));
+	const filteredContainers = $derived(filterShapes(containerShapes));
 
 	onMount(() => {
 		loadSidebarStateFromStorage();
@@ -32,13 +51,35 @@
 	style:width={sidebarState.isCollapsed ? '0px' : `${sidebarState.width}px`}
 >
 	<div class="sidebar-content" aria-hidden={sidebarState.isCollapsed}>
-		<input class="file-name" bind:value={editorMetaData.fileName} />
-		<input class="search-bar" bind:value={searchBar} placeholder="Search..." />
+		<div class="search-wrapper">
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.8"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="search-icon"
+			>
+				<circle cx="11" cy="11" r="7" />
+				<line x1="20" y1="20" x2="16.5" y2="16.5" />
+			</svg>
+			<input
+				class="search-bar"
+				bind:value={searchBar}
+				placeholder="Search shapes"
+			/>
+		</div>
 
-		<NodeContainer
-			heading="Basic Shapes"
-			nodes={filteredShapes}
-		/>
+		{#if filteredBasic.length}
+			<NodeContainer heading="BASIC" shapes={filteredBasic} />
+		{/if}
+		{#if filteredArrows.length}
+			<NodeContainer heading="ARROWS" shapes={filteredArrows} />
+		{/if}
+		{#if filteredContainers.length}
+			<NodeContainer heading="CONTAINERS" shapes={filteredContainers} />
+		{/if}
 	</div>
 
 	<CollapseButton />
@@ -52,11 +93,11 @@
         position: absolute;
         top: 0.2%;
         left: 0;
-        bottom: 0px;
+        bottom: 0;
 
         margin: 0;
 
-        background: white;
+        background: #F5F1E8;
 
         border-radius: 0;
         border-left: 0;
@@ -74,38 +115,56 @@
     .sidebar-content {
         width: 100%;
         height: 100%;
-        padding: 3em 1.5em 1em;
-        gap: 1em;
+        padding: 2.5em 1.2em 1em;
+        gap: 1.4em;
 
         display: flex;
         flex-direction: column;
 
-        /* Clip content so it doesn't spill while panel is narrow / collapsed. */
-        overflow: hidden;
+        /* Allow vertical scrolling when many sections are present. */
+        overflow-y: auto;
+        overflow-x: hidden;
     }
 
     aside.collapsed .sidebar-content {
         visibility: hidden;
     }
 
-    input {
-        appearance: none;
-        -webkit-appearance: none;
-
-        border: none;
-
-        padding: 0;
-        margin: 0;
-
-        outline: none;
+    .search-wrapper {
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e8e2d3;
+        border-radius: 8px;
+        padding: 0 10px;
+        height: 36px;
     }
 
-    .file-name {
-        font-weight: bold;
-        font-size: 1.2rem;
+    .search-wrapper:focus-within {
+        border-color: #A6192E;
+    }
+
+    .search-icon {
+        width: 16px;
+        height: 16px;
+        color: #888;
+        flex-shrink: 0;
     }
 
     .search-bar {
-        font-size: 0.8rem;
+        appearance: none;
+        -webkit-appearance: none;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.9rem;
+        padding: 0 8px;
+        flex: 1;
+        min-width: 0;
+        color: #333;
+    }
+
+    .search-bar::placeholder {
+        color: #999;
     }
 </style>

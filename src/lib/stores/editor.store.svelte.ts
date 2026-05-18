@@ -12,6 +12,8 @@ import type { Edge, Node } from '@xyflow/svelte';
 import { nanoid } from 'nanoid';
 import { derived, get, writable } from 'svelte/store';
 
+import { parseEasyDraw } from '$lib/exporters/easydraw';
+
 export const editorMetaData = $state({
 	fileName: 'Untitled',
 	lastSaved: Date.now()
@@ -187,10 +189,12 @@ export function loadEditorStateFromStorage() {
 	return loadEditorStateFromJSON(rawState);
 }
 
-// Loads editor state from a raw JSON string (used by File > Open).
-export function loadEditorStateFromJSON(rawJson: string): boolean {
+// Loads editor state from a raw file string. Accepts both legacy plain JSON
+// and the native .easydraw XML envelope (which carries the same JSON inside).
+export function loadEditorStateFromJSON(rawContent: string): boolean {
 	try {
-		const parsedState = JSON.parse(rawJson) as unknown;
+		const jsonPayload = parseEasyDraw(rawContent) ?? rawContent;
+		const parsedState = JSON.parse(jsonPayload) as unknown;
 		if (!isEditorState(parsedState)) return false;
 
 		editorStoreSvelte.set(parsedState);

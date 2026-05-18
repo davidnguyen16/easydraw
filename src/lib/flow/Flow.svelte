@@ -18,7 +18,9 @@
 	import { useDnD } from '$lib/flow/DnDProvider.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
-	import RightSidebar from '$lib/components/RightSidebar.svelte';
+	import StylePanel, { type NodeStyleData } from '$lib/components/StylePanel.svelte';
+	import type { EntityField } from '$lib/flow/nodes/entity.types';
+	import { EXPORTERS, getExporter } from '$lib/exporters';
 	import EntityNode from '$lib/flow/nodes/EntityNode.svelte';
 	import RelationshipEdge from '$lib/flow/edges/RelationshipEdge.svelte';
 	import CrowsFootMarkers from './edges/CrowsFootMarkers.svelte';
@@ -133,7 +135,12 @@
 	// In-memory clipboard for Copy / Paste. JSON-clean (no function refs).
 	let clipboardSnapshot: { nodes: Node[]; edges: Edge[] } | null = null;
 
-	const { screenToFlowPosition, zoomIn, zoomOut, fitView, getViewport, setViewport } = useSvelteFlow();
+	// Keep the full hook return so method lookups happen at call time. xyflow
+	// returns `zoomIn`/`zoomOut` as direct property captures (not lazy wrappers
+	// like `fitView` is) — destructuring them at init time was firing a stale
+	// no-op when invoked through the menu, even though the toolbar happened
+	// to work.
+	const flow = useSvelteFlow();
 
 	const type = useDnD();
 
@@ -141,8 +148,13 @@
 		type: 'smoothstep'
 	};
 
-	// Drag and drop behavior
+	// Drag and drop behavior. When locked, we skip preventDefault so the
+	// browser refuses the drop, and show a 'none' cursor for feedback.
 	const onDragOver = (event: DragEvent) => {
+		if (editorActionsState.locked) {
+			if (event.dataTransfer) event.dataTransfer.dropEffect = 'none';
+			return;
+		}
 		event.preventDefault();
 
 		if (event.dataTransfer) {
@@ -151,13 +163,14 @@
 	};
 
 	const onDrop = (event: DragEvent) => {
+		if (editorActionsState.locked) return;
 		event.preventDefault();
 
 		if (!type.current) {
 			return;
 		}
 
-		const position = screenToFlowPosition({
+		const position = flow.screenToFlowPosition({
 			x: event.clientX,
 			y: event.clientY
 		});
@@ -166,19 +179,19 @@
 
     	if (type.current === 'EntityNode') {
         	nodeData = {
-            	label: 'New Entity',
+            	label: 'Entity',
             	fields: [
-                	{ name: 'id', type: 'PK' },
-                	{ name: 'field', type: 'varchar' },
-                	{ name: 'field', type: 'varchar' }
+                	{ name: 'field' },
+                	{ name: 'field' },
+                	{ name: 'field' }
             	]
         	};
     	}
 
-		const newNodeId = `${Math.random()}`;
+		const newNodeId = nanoid();
 
 		const newNode = {
-			id: `${Math.random()}`,
+			id: newNodeId,
 			type: type.current,
 			position,
 			data: {
@@ -313,18 +326,38 @@
 		reader.readAsText(file);
 	}
 
-	function handleSaveAs() {
+	// Lazily resolved at call time so capture sees the current canvas DOM.
+	let canvasShellEl: HTMLElement | undefined = $state();
+
+	function getExportContext() {
 		persistCanvasToStore();
-		const json = exportEditorStateAsJSON();
-		const blob = new Blob([json], { type: 'application/json' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = `${editorMetaData.fileName || 'easydraw'}.json`;
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-		URL.revokeObjectURL(url);
+		return {
+			fileName: editorMetaData.fileName || 'easydraw',
+			serializedState: exportEditorStateAsJSON(),
+			canvasElement: canvasShellEl ?? null
+		};
+	}
+
+	// Save As = "download a copy of the diagram as a native .easydraw file"
+	// (draw.io's Save As semantics). Save (above) writes to localStorage.
+	async function handleSaveAs() {
+		const easydraw = getExporter('easydraw');
+		if (!easydraw) return;
+		await easydraw.run(getExportContext());
+	}
+
+	async function handleExport(formatId: string) {
+		const exporter = getExporter(formatId);
+		if (!exporter) {
+			alert(`Unknown export format: ${formatId}`);
+			return;
+		}
+		try {
+			await exporter.run(getExportContext());
+		} catch (err) {
+			console.error(`Export to ${exporter.label} failed:`, err);
+			alert(`Export to ${exporter.label} failed. See console for details.`);
+		}
 	}
 
 	function applyHistorySnapshot(snapshot: string) {
@@ -353,9 +386,21 @@
 		if (snapshot) applyHistorySnapshot(snapshot);
 	}
 
-	function handleZoomIn() { zoomIn(); }
-	function handleZoomOut() { zoomOut(); }
-	function handleFitView() { fitView(); }
+	// 15% step per click. We go through getZoom/setZoom rather than the
+	// hook's zoomIn/zoomOut (which xyflow returns as direct property captures
+	// — those silently no-op before panZoom mounts). setZoom is a lazy
+	// wrapper so it always resolves to the live store function.
+	const ZOOM_STEP = 1.15;
+
+	function handleZoomIn() {
+		flow.setZoom(flow.getZoom() * ZOOM_STEP);
+	}
+	function handleZoomOut() {
+		flow.setZoom(flow.getZoom() / ZOOM_STEP);
+	}
+	function handleFitView() {
+		flow.fitView();
+	}
 
 	function handleDuplicate() {
 		const selected = nodes.filter((n) => n.selected);
@@ -421,6 +466,16 @@
 			nodes: JSON.parse(JSON.stringify(selectedNodes)),
 			edges: JSON.parse(JSON.stringify(selectedEdges))
 		};
+	}
+
+	// Cut = copy the current selection to the in-memory clipboard, then remove
+	// it from the canvas. Mirrors the same selection rules as Copy.
+	function handleCut() {
+		const hasSelection =
+			nodes.some((n) => n.selected) || edges.some((e) => e.selected);
+		if (!hasSelection) return;
+		handleCopy();
+		handleDeleteSelected();
 	}
 
 	function handlePaste() {
@@ -563,18 +618,18 @@
 
 	// Sets absolute zoom (1.0 = 100%) while preserving the current pan.
 	function handleSetZoom(percent: number) {
-		const { x, y } = getViewport();
-		setViewport({ x, y, zoom: percent / 100 });
+		const { x, y } = flow.getViewport();
+		flow.setViewport({ x, y, zoom: percent / 100 });
 	}
 
 	// Fits the viewport to selected nodes, or to all nodes if none selected.
 	function handleFitSelection() {
 		const selected = nodes.filter((n) => n.selected);
 		if (selected.length === 0) {
-			fitView();
+			flow.fitView();
 			return;
 		}
-		fitView({ nodes: selected.map((n) => ({ id: n.id })) });
+		flow.fitView({ nodes: selected.map((n) => ({ id: n.id })) });
 	}
 
 	// Locks/unlocks node interaction (drag + connect). Pan + zoom stay available.
@@ -595,8 +650,11 @@
 		newFile: handleNewFile,
 		open: handleOpenFile,
 		saveAs: handleSaveAs,
+		exportFormats: EXPORTERS,
+		exportAs: handleExport,
 		undo: handleUndo,
 		redo: handleRedo,
+		cut: handleCut,
 		copy: handleCopy,
 		paste: handlePaste,
 		zoomIn: handleZoomIn,
@@ -674,7 +732,8 @@
 
 			if (meta && key === 's') {
 				event.preventDefault();
-				handleSave();
+				if (event.shiftKey) handleSaveAs();
+				else handleSave();
 				return;
 			}
 
@@ -711,6 +770,13 @@
 				if (isInInput) return;
 				event.preventDefault();
 				handleCopy();
+				return;
+			}
+
+			if (meta && key === 'x') {
+				if (isInInput) return;
+				event.preventDefault();
+				handleCut();
 				return;
 			}
 
@@ -781,10 +847,46 @@
 		};
 	});
 
-	// Reactive state to find the currently selected EntityNode
-	let selectedEntityNode = $derived(
-        nodes.find((n: any) => n.selected && n.type === 'EntityNode')
-    );
+	// Any selected node — drives the StylePanel.
+	let selectedNode = $derived(nodes.find((n) => n.selected));
+
+	// Style edits land on node.data so they ride existing persistence + history.
+	function handleStyleChange(patch: NodeStyleData) {
+		if (!selectedNode) return;
+		updateNodeData(selectedNode.id, patch);
+	}
+
+	// Position edits replace node.position; xyflow re-renders from the new value.
+	function handlePositionChange(x: number, y: number) {
+		if (!selectedNode) return;
+		const targetId = selectedNode.id;
+		nodes = nodes.map((n) =>
+			n.id === targetId ? { ...n, position: { x, y } } : n
+		);
+	}
+
+	// Size edits set width/height + an inline style override so resized nodes
+	// stay sized after re-render (matches how NodeResizer persists size).
+	function handleSizeChange(width: number, height: number) {
+		if (!selectedNode) return;
+		const targetId = selectedNode.id;
+		nodes = nodes.map((n) =>
+			n.id === targetId
+				? {
+						...n,
+						width,
+						height,
+						style: `width: ${width}px; height: ${height}px;`
+					}
+				: n
+		);
+	}
+
+	// Entity-specific: replaces the fields array on the selected node.
+	function handleFieldsChange(fields: EntityField[]) {
+		if (!selectedNode) return;
+		updateNodeData(selectedNode.id, { fields });
+	}
 
 	// Function to update the data of a specific node
 	function updateNodeData(nodeId: string, newData: any) {
@@ -828,12 +930,18 @@
 	<ToolBar />
 	<input
 		type="file"
-		accept=".json,application/json"
+		accept=".easydraw,.json,application/xml,application/json"
 		bind:this={fileInput}
 		onchange={handleFileSelected}
 		hidden
 	/>
-	<section class="canvas-shell" bind:clientWidth bind:clientHeight>
+	<section
+		class="canvas-shell"
+		class:locked={editorActionsState.locked}
+		bind:clientWidth
+		bind:clientHeight
+		bind:this={canvasShellEl}
+	>
 		<SvelteFlow
 				bind:nodes
 				bind:edges
@@ -849,6 +957,7 @@
 				snapGrid={editorActionsState.snapToGrid ? [20, 20] : undefined}
 				nodesDraggable={!editorActionsState.locked}
 				nodesConnectable={!editorActionsState.locked}
+				elementsSelectable={!editorActionsState.locked}
 				{nodeTypes}
 				{edgeTypes}
 				connectionMode={ConnectionMode.Loose}
@@ -872,13 +981,21 @@
 
 		<Sidebar />
 
-		{#if selectedEntityNode}
-			{@const activeNode = selectedEntityNode}
-			<RightSidebar
+		{#if selectedNode}
+			{@const activeNode = selectedNode}
+			<StylePanel
 				node={activeNode}
-				onUpdate={(updatedData: any) => updateNodeData(activeNode.id, updatedData)}
+				onStyleChange={handleStyleChange}
+				onPositionChange={handlePositionChange}
+				onSizeChange={handleSizeChange}
+				onFieldsChange={handleFieldsChange}
+				onBringToFront={handleBringToFront}
+				onSendToBack={handleSendToBack}
+				onDuplicate={handleDuplicate}
+				onDelete={handleDeleteSelected}
 			/>
 		{/if}
+
 
 		{#if selectedEdge}
 			{@const activeEdge = selectedEdge}
@@ -930,6 +1047,19 @@
 		position: relative;
 		flex: 1 1 auto;
 		min-height: 0;
+	}
+
+	/*
+	 * Lock mode: disable every interaction inside the canvas (clicks, drags,
+	 * focusing inputs, dragging handles). Pan + zoom still work on the empty
+	 * pane background. Toolbar / menu / sidebar are outside .canvas-shell, so
+	 * they stay live — matching the requirement that only those still work.
+	 */
+	.canvas-shell.locked :global(.svelte-flow__node),
+	.canvas-shell.locked :global(.svelte-flow__handle),
+	.canvas-shell.locked :global(.svelte-flow__edge) {
+		pointer-events: none;
+		user-select: none;
 	}
 
 	/* Keep SvelteFlow sized to the available canvas shell area. */

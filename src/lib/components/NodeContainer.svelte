@@ -35,7 +35,12 @@
 				draggable={true}
 				ondragstart={(event) => onDragStart(event, shape.type)}
 			>
-				<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="shape-icon">
+				<svg
+					viewBox={shape.icon === 'entity' ? '0 0 60 60' : '0 0 24 24'}
+					xmlns="http://www.w3.org/2000/svg"
+					class="shape-icon"
+					class:shape-icon-large={shape.icon === 'entity'}
+				>
 					{#if shape.icon === 'rectangle'}
 						<rect x="4" y="7" width="16" height="10" rx="1" fill="currentColor" />
 					{:else if shape.icon === 'circle'}
@@ -63,6 +68,16 @@
 						<rect x="13" y="5" width="6" height="6" rx="1" fill="currentColor" />
 						<rect x="5" y="13" width="6" height="6" rx="1" fill="currentColor" />
 						<rect x="13" y="13" width="6" height="6" rx="1" fill="currentColor" />
+					{:else if shape.icon === 'entity'}
+						<rect x="4" y="4" width="52" height="52" rx="3" fill="white" stroke="#A6192E" stroke-width="1.5" />
+						<rect x="4" y="4" width="52" height="12" rx="3" fill="white" stroke="#A6192E" stroke-width="1.5" />
+						<text x="30" y="13" text-anchor="middle" font-size="7.5" fill="#A6192E" font-weight="700" font-family="system-ui, sans-serif">Entity</text>
+						<rect x="7" y="20" width="46" height="9" rx="1" fill="#f3f3f3" />
+						<text x="10" y="26.5" font-size="6" fill="#666" font-family="system-ui, sans-serif">field</text>
+						<rect x="7" y="32" width="46" height="9" rx="1" fill="#f3f3f3" />
+						<text x="10" y="38.5" font-size="6" fill="#666" font-family="system-ui, sans-serif">field</text>
+						<rect x="7" y="44" width="46" height="9" rx="1" fill="#f3f3f3" />
+						<text x="10" y="50.5" font-size="6" fill="#666" font-family="system-ui, sans-serif">field</text>
 					{/if}
 				</svg>
 			</button>
@@ -118,5 +133,10 @@
     .shape-icon {
         width: 26px;
         height: 26px;
+    }
+
+    .shape-icon-large {
+        width: 80%;
+        height: 80%;
     }
 </style>

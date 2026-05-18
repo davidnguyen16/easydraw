@@ -31,6 +31,10 @@
 		{ label: 'Grid Container', type: 'RectangleNode', icon: 'grid-4' }
 	];
 
+	const databaseShapes = [
+		{ label: 'Entity', type: 'EntityNode', icon: 'entity' }
+	];
+
 	function filterShapes<T extends { label: string }>(shapes: T[]): T[] {
 		const query = searchBar.trim().toLowerCase();
 		if (!query) return shapes;
@@ -40,6 +44,7 @@
 	const filteredBasic = $derived(filterShapes(basicShapes));
 	const filteredArrows = $derived(filterShapes(arrowShapes));
 	const filteredContainers = $derived(filterShapes(containerShapes));
+	const filteredDatabase = $derived(filterShapes(databaseShapes));
 
 	onMount(() => {
 		loadSidebarStateFromStorage();
@@ -79,6 +84,9 @@
 		{/if}
 		{#if filteredContainers.length}
 			<NodeContainer heading="CONTAINERS" shapes={filteredContainers} />
+		{/if}
+		{#if filteredDatabase.length}
+			<NodeContainer heading="DATABASE" shapes={filteredDatabase} />
 		{/if}
 	</div>
 

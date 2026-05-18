@@ -1,6 +1,7 @@
 <script lang="ts">
     import { getContext, onMount } from 'svelte';
     import { editorMetaData } from '$lib/stores/editor.store.svelte';
+    import type { Exporter } from '$lib/exporters';
 
     interface MenuItem {
         type?: 'divider';
@@ -22,13 +23,17 @@
         newFile: () => void;
         open: () => void;
         saveAs: () => void;
+        exportFormats: readonly Exporter[];
+        exportAs: (formatId: string) => void;
         undo: () => void;
         redo: () => void;
+        cut: () => void;
         copy: () => void;
         paste: () => void;
         zoomIn: () => void;
         zoomOut: () => void;
         fitView: () => void;
+        duplicate: () => void;
         deleteSelected: () => void;
         selectAll: () => void;
         bringToFront: () => void;
@@ -86,29 +91,33 @@
         };
     });
 
+    // Export submenu built off the registry so new formats appear automatically.
+    // Format label gets its extension appended in parens (e.g. "XML (.easydraw)").
+    const exportSubmenu: MenuItem[] = $derived(
+        editor.exportFormats.map((format) => ({
+            label: `${format.label} (${format.extension})`,
+            onClick: () => editor.exportAs(format.id)
+        }))
+    );
+
     // Menus rebuild each render so disabled/checked state stays in sync with state/history.
     const menus = $derived<Record<string, MenuItem[]>>({
         File: [
             { icon: 'new', label: 'New', shortcut: 'Ctrl+N', onClick: editor.newFile },
             { icon: 'open', label: 'Open…', shortcut: 'Ctrl+O', onClick: editor.open },
             { icon: 'save', label: 'Save', shortcut: 'Ctrl+S', onClick: editor.save },
+            { icon: 'save', label: 'Save As…', shortcut: 'Ctrl+Shift+S', onClick: editor.saveAs },
             { type: 'divider' },
-            {
-                icon: 'export',
-                label: 'Export as',
-                submenu: [
-                    { label: 'PNG' },
-                    { label: 'JSON' },
-                    { label: 'PDF' }
-                ]
-            }
+            { icon: 'export', label: 'Export as', submenu: exportSubmenu }
         ],
         Edit: [
             { icon: 'undo', label: 'Undo', shortcut: 'Ctrl+Z', onClick: editor.undo, disabled: !editor.history.canUndo },
             { icon: 'redo', label: 'Redo', shortcut: 'Ctrl+Y', onClick: editor.redo, disabled: !editor.history.canRedo },
             { type: 'divider' },
+            { icon: 'cut', label: 'Cut', shortcut: 'Ctrl+X', onClick: editor.cut },
             { icon: 'copy', label: 'Copy', shortcut: 'Ctrl+C', onClick: editor.copy },
             { icon: 'paste', label: 'Paste', shortcut: 'Ctrl+V', onClick: editor.paste },
+            { icon: 'duplicate', label: 'Duplicate', shortcut: 'Ctrl+D', onClick: editor.duplicate },
             { type: 'divider' },
             { icon: 'select-all', label: 'Select all', shortcut: 'Ctrl+A', onClick: editor.selectAll },
             { type: 'divider' },
@@ -131,7 +140,7 @@
         ],
         Help: [
             { icon: 'info', label: 'About EasyDraw', onClick: () => alert('EasyDraw — a free diagram editor.') },
-            { icon: 'keyboard', label: 'Keyboard shortcuts', onClick: () => alert('Save: Ctrl+S\nUndo: Ctrl+Z\nRedo: Ctrl+Y\nCopy: Ctrl+C\nPaste: Ctrl+V\nDuplicate: Ctrl+D\nSelect All: Ctrl+A\nDelete: Del\nGroup: Ctrl+G\nUngroup: Ctrl+Shift+G\nBring to Front: Ctrl+Shift+F\nSend to Back: Ctrl+Shift+B\nZoom In: Ctrl+=\nZoom Out: Ctrl+-\nFit to Screen: Ctrl+Shift+H') }
+            { icon: 'keyboard', label: 'Keyboard shortcuts', onClick: () => alert('Save: Ctrl+S\nSave As: Ctrl+Shift+S\nOpen: Ctrl+O\nNew: Ctrl+N\nUndo: Ctrl+Z\nRedo: Ctrl+Y\nCut: Ctrl+X\nCopy: Ctrl+C\nPaste: Ctrl+V\nDuplicate: Ctrl+D\nSelect All: Ctrl+A\nDelete: Del\nGroup: Ctrl+G\nUngroup: Ctrl+Shift+G\nBring to Front: Ctrl+Shift+F\nSend to Back: Ctrl+Shift+B\nZoom In: Ctrl+=\nZoom Out: Ctrl+-\nFit to Screen: Ctrl+Shift+H') }
         ]
     });
 
@@ -159,6 +168,17 @@
         {:else if name === 'redo'}
             <polyline points="15 14 20 9 15 4" />
             <path d="M20 9H9a5 5 0 0 0-5 5v0a5 5 0 0 0 5 5h4" />
+        {:else if name === 'cut'}
+            <circle cx="6" cy="6" r="3" />
+            <circle cx="6" cy="18" r="3" />
+            <line x1="20" y1="4" x2="8.12" y2="15.88" />
+            <line x1="14.47" y1="14.48" x2="20" y2="20" />
+            <line x1="8.12" y1="8.12" x2="12" y2="12" />
+        {:else if name === 'duplicate'}
+            <rect x="9" y="9" width="11" height="11" rx="2" />
+            <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+            <line x1="12" y1="12" x2="17" y2="12" />
+            <line x1="14.5" y1="9.5" x2="14.5" y2="14.5" />
         {:else if name === 'copy'}
             <rect x="9" y="9" width="11" height="11" rx="2" />
             <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />

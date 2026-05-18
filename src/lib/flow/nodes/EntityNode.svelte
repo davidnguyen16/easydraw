@@ -1,111 +1,275 @@
 <script lang="ts">
-    import { Handle, Position } from '@xyflow/svelte';
-    import { getContext } from 'svelte';
+    import {
+        Handle,
+        Position,
+        NodeResizer,
+        useSvelteFlow,
+        type NodeProps
+    } from '@xyflow/svelte';
+    import type { EntityData } from './entity.types';
 
-    let { data, selected } = $props();
+    let { id, data, selected }: NodeProps = $props();
+    let entity = $derived(data as unknown as EntityData);
 
-    const updateNode = getContext<(id: string, data: any) => void>('updateNode');
+    const { updateNodeData } = useSvelteFlow();
+
+    function commit(patch: Partial<EntityData>) {
+        if (entity.onEdit) entity.onEdit(patch);
+        else updateNodeData(id, patch);
+    }
+
+    function setLabel(value: string) {
+        commit({ label: value });
+    }
+
+    function setFieldName(index: number, value: string) {
+        commit({
+            fields: entity.fields.map((field, i) =>
+                i === index ? { ...field, name: value } : field
+            )
+        });
+    }
+
+    // Style overrides from StylePanel. Anything left undefined keeps the
+    // entity's built-in defaults (white card, dark red header, etc.).
+    // fillColor is intentionally scoped to the header only.
+    const cardStyle = $derived(
+        [
+            entity.borderColor ? `border-color: ${entity.borderColor}` : '',
+            entity.borderWidth !== undefined ? `border-width: ${entity.borderWidth}px` : '',
+            entity.rounded !== undefined
+                ? `border-radius: ${entity.rounded ? '4px' : '0'}`
+                : '',
+            entity.shadow ? 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)' : ''
+        ]
+            .filter(Boolean)
+            .join('; ')
+    );
+
+    const headerStyle = $derived(
+        entity.fillColor ? `background-color: ${entity.fillColor}` : ''
+    );
+
+    const titleStyle = $derived(
+        [
+            entity.textColor ? `color: ${entity.textColor}` : '',
+            entity.fontSize ? `font-size: ${entity.fontSize}px` : '',
+            entity.bold !== undefined ? `font-weight: ${entity.bold ? '700' : '500'}` : '',
+            entity.italic ? 'font-style: italic' : '',
+            entity.underline ? 'text-decoration: underline' : '',
+            entity.textAlign ? `text-align: ${entity.textAlign}` : ''
+        ]
+            .filter(Boolean)
+            .join('; ')
+    );
+
+    // Field name text follows the same color choice for visual consistency.
+    const fieldNameStyle = $derived(
+        entity.textColor ? `color: ${entity.textColor}` : ''
+    );
 </script>
 
-<div class="erd-table" class:selected-node={selected}>
-    <div class="header" style="background: {data.color || '#cbcaca'}">
-        <input 
+<div class="entity-node" class:active={selected} style={cardStyle}>
+    <NodeResizer
+        isVisible={selected}
+        minWidth={180}
+        minHeight={80}
+        handleClass="entity-resize-anchor"
+        lineClass="entity-resize-line"
+    />
+
+    <Handle type="source" position={Position.Top} id="top" class="entity-handle" />
+    <Handle type="source" position={Position.Right} id="right" class="entity-handle" />
+    <Handle type="source" position={Position.Bottom} id="bottom" class="entity-handle" />
+    <Handle type="source" position={Position.Left} id="left" class="entity-handle" />
+
+    <header class="entity-header" style={headerStyle}>
+        <input
+            class="entity-title nodrag"
             type="text"
-            bind:value={data.label}
-            class="header-input"
-            oninput={(e) => data.onEdit?.({ label: e.currentTarget.value })}
+            value={entity.label ?? ''}
+            placeholder="Entity"
+            spellcheck="false"
+            oninput={(event) => setLabel(event.currentTarget.value)}
+            style={titleStyle}
         />
-    </div>
-    <div class="rows">
-        {#each data.fields as field, i}
-            <div class="row">
-                <Handle type="target" position={Position.Left} id="target-{i}-target" />
+    </header>
 
+    <ul class="entity-fields">
+        {#each entity.fields as field, index}
+            <li class="entity-field" class:pk-row={field.isPK}>
+                <span class="badge-cell">
+                    {#if field.isPK}
+                        <span class="badge badge-pk">PK</span>
+                    {/if}
+                    {#if field.isFK}
+                        <span class="badge badge-fk">FK</span>
+                    {/if}
+                </span>
                 <input
+                    class="field-name nodrag"
                     type="text"
-                    bind:value={field.name}
-                    class="field-input name"
-                    oninput={(e) => {
-                        const updated = data.fields.map((f: any, idx: number) =>
-                            idx === i ? { ...f, name: e.currentTarget.value } : f
-                        );
-                        data.onEdit?.({ fields: updated });
-                    }}
+                    value={field.name}
+                    placeholder="field"
+                    spellcheck="false"
+                    oninput={(event) => setFieldName(index, event.currentTarget.value)}
+                    style={fieldNameStyle}
                 />
-
-                <input
-                    type="text"
-                    bind:value={field.type}
-                    class="field-input type"
-                    oninput={(e) => {
-                        const updated = data.fields.map((f: any, idx: number) =>
-                            idx === i ? { ...f, type: e.currentTarget.value } : f
-                        );
-                        data.onEdit?.({ fields: updated });
-                    }}
-                />
-
-                <Handle type="source" position={Position.Right} id="source-{i}-source" />
-            </div>
+                {#if field.type}
+                    <span class="field-type">{field.type.toUpperCase()}</span>
+                {/if}
+            </li>
         {/each}
-    </div>
+    </ul>
 </div>
 
 <style>
-    .erd-table {
+    .entity-node {
         min-width: 180px;
-        background: white;
-        border: 1px solid #1a192b;
+        width: 100%;
+        height: 100%;
+        background: #ffffff;
+        border: 1px solid #2c2c2a;
         border-radius: 4px;
-        overflow: visible;
-        font-family: 'Inter', sans-serif, system-ui;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        display: flex;
+        flex-direction: column;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        transition: box-shadow 0.15s ease;
     }
 
-    .header {
-        padding:2px;
-        color: black;
-        font-size: 12px;
-        font-weight: 700;
-        text-align: left;
-        border-bottom: 1px solid #1a192b;
-        border-top-left-radius: 3px;
-        border-top-right-radius: 3px;
+    .entity-node:hover,
+    .entity-node.active {
+        box-shadow: 0 4px 12px rgba(166, 25, 46, 0.15);
     }
 
-    .header-input {
+    .entity-header {
+        background: #76232f;
+        padding: 8px 12px;
+        border-bottom: 1px solid #2c2c2a;
+        text-align: center;
+    }
+
+    .entity-title {
         width: 100%;
         background: transparent;
         border: none;
-        color: black;
-        font-weight: bold;
-        font-size: 12px;
-        padding: 4px 8px;
         outline: none;
+        color: #ffffff;
+        font-weight: 500;
+        font-size: 13px;
+        text-align: center;
+        padding: 0;
+        font-family: inherit;
     }
 
-    .row {
+    .entity-title::placeholder {
+        color: rgba(255, 255, 255, 0.65);
+    }
+
+    .entity-fields {
+        list-style: none;
+        margin: 0;
+        padding: 0;
         display: flex;
-        position: relative;
-        padding: 3px 6px;
-        border-bottom: 1px solid #eee;
-        font-size: 12px;
+        flex-direction: column;
     }
 
-    .row:last-child {
-        border-bottom: none;
+    .entity-field {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-top: 0.5px solid #e5e0d5;
     }
 
-    .field-input {
-        border: none;
-        padding: 3px 4px;
+    .entity-field:first-child {
+        border-top: 1px solid #2c2c2a;
+    }
+
+    .badge-cell {
+        min-width: 26px;
+        margin-right: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .badge {
+        padding: 1px 5px;
+        border-radius: 2px;
         font-size: 10px;
-        outline: none;
-        width: 50%;
+        font-weight: 600;
+        line-height: 1.4;
+        font-family: inherit;
     }
 
-    .field-input.type {
-        border-left: 1px solid #eee;
-        color: #666;
+    .badge-pk {
+        background: #fae9c8;
+        color: #854f0b;
+    }
+
+    .badge-fk {
+        background: #dce9fa;
+        color: #1e4380;
+    }
+
+    .field-name {
+        flex: 1;
+        min-width: 0;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #2c2c2a;
+        font-size: 12px;
+        font-family: inherit;
+        padding: 0;
+    }
+
+    .pk-row .field-name {
+        font-weight: 500;
+    }
+
+    .field-type {
+        margin-left: 8px;
+        font-size: 11px;
+        color: #888;
+        font-family: inherit;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        flex-shrink: 0;
+        text-align: right;
+    }
+
+    /* Cardinal connection handles — invisible until hover/select. */
+    :global(.entity-handle) {
+        width: 12px;
+        height: 12px;
+        background: #ffffff;
+        border: 1.5px solid #a6192e;
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.12s ease;
+    }
+
+    .entity-node:hover :global(.entity-handle),
+    .entity-node.active :global(.entity-handle) {
+        opacity: 1;
+    }
+
+    /* NodeResizer corner anchors. */
+    :global(.entity-resize-anchor) {
+        width: 8px;
+        height: 8px;
+        background: #ffffff;
+        border: 1.5px solid #2c2c2a;
+        border-radius: 1px;
+    }
+
+    /* Hide the edge-line resize handles; spec calls for corner anchors only. */
+    :global(.entity-resize-line) {
+        border-color: transparent;
+        background: transparent;
     }
 </style>

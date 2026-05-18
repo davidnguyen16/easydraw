@@ -7,44 +7,42 @@
 		loadSidebarStateFromStorage,
 		sidebarState
 	} from '$lib/stores/sidebar.store.svelte';
+	import {
+		getCategories,
+		getShapesByCategory,
+		type NodeShape,
+		type NodeCategory
+	} from '$lib/flow/nodes/registry';
 
 	let searchBar = $state('');
 
-	const basicShapes = [
-		{ label: 'Rectangle', type: 'RectangleNode', icon: 'rectangle' },
-		{ label: 'Circle', type: 'RectangleNode', icon: 'circle' },
-		{ label: 'Triangle', type: 'RectangleNode', icon: 'triangle' },
-		{ label: 'Diamond', type: 'RectangleNode', icon: 'diamond' },
-		{ label: 'Pill', type: 'RectangleNode', icon: 'pill' },
-		{ label: 'Pentagon', type: 'RectangleNode', icon: 'pentagon' }
-	];
+	// Stable display titles per category. Add new entries here when a new
+	// NodeCategory is introduced — kept beside the iteration so additions are
+	// one line, not a fan-out across the template.
+	const CATEGORY_TITLES: Record<NodeCategory, string> = {
+		basic: 'BASIC',
+		arrows: 'ARROWS',
+		containers: 'CONTAINERS',
+		database: 'DATABASE'
+	};
 
-	const arrowShapes = [
-		{ label: 'Arrow', type: 'RectangleNode', icon: 'arrow-right' },
-		{ label: 'Double Arrow', type: 'RectangleNode', icon: 'arrow-double' },
-		{ label: 'Bent Arrow', type: 'RectangleNode', icon: 'arrow-bent' }
-	];
-
-	const containerShapes = [
-		{ label: 'Dashed Container', type: 'RectangleNode', icon: 'dashed-rect' },
-		{ label: 'Rounded Container', type: 'RectangleNode', icon: 'rounded-rect' },
-		{ label: 'Grid Container', type: 'RectangleNode', icon: 'grid-4' }
-	];
-
-	const databaseShapes = [
-		{ label: 'Entity', type: 'EntityNode', icon: 'entity' }
-	];
-
-	function filterShapes<T extends { label: string }>(shapes: T[]): T[] {
+	function filterShapes(shapes: NodeShape[]): NodeShape[] {
 		const query = searchBar.trim().toLowerCase();
 		if (!query) return shapes;
 		return shapes.filter((s) => s.label.toLowerCase().includes(query));
 	}
 
-	const filteredBasic = $derived(filterShapes(basicShapes));
-	const filteredArrows = $derived(filterShapes(arrowShapes));
-	const filteredContainers = $derived(filterShapes(containerShapes));
-	const filteredDatabase = $derived(filterShapes(databaseShapes));
+	// Sections derived live from the registry — adding a shape with a new
+	// category surfaces automatically without touching this file.
+	const sections = $derived(
+		getCategories()
+			.map((category) => ({
+				category,
+				title: CATEGORY_TITLES[category] ?? category.toUpperCase(),
+				shapes: filterShapes(getShapesByCategory(category))
+			}))
+			.filter((section) => section.shapes.length > 0)
+	);
 
 	onMount(() => {
 		loadSidebarStateFromStorage();
@@ -76,18 +74,9 @@
 			/>
 		</div>
 
-		{#if filteredBasic.length}
-			<NodeContainer heading="BASIC" shapes={filteredBasic} />
-		{/if}
-		{#if filteredArrows.length}
-			<NodeContainer heading="ARROWS" shapes={filteredArrows} />
-		{/if}
-		{#if filteredContainers.length}
-			<NodeContainer heading="CONTAINERS" shapes={filteredContainers} />
-		{/if}
-		{#if filteredDatabase.length}
-			<NodeContainer heading="DATABASE" shapes={filteredDatabase} />
-		{/if}
+		{#each sections as section (section.category)}
+			<NodeContainer heading={section.title} shapes={section.shapes} />
+		{/each}
 	</div>
 
 	<CollapseButton />

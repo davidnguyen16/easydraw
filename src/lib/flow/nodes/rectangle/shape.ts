@@ -1,0 +1,14 @@
+import type { NodeShape } from '../types';
+import Component from './component.svelte';
+import Icon from './icon.svelte';
+
+export const rectangleShape: NodeShape = {
+    id: 'RectangleNode',
+    label: 'Rectangle',
+    category: 'basic',
+    component: Component,
+    icon: Icon,
+    defaultData: () => ({
+        label: 'New Node'
+    })
+};

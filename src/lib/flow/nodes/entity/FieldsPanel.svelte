@@ -1,13 +1,15 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { ENTITY_FIELD_TYPES, type EntityField } from '$lib/flow/nodes/entity.types';
+    import type { NodePanelProps } from '../types';
+    import { ENTITY_FIELD_TYPES, type EntityData, type EntityField } from './types';
 
-    interface Props {
-        fields: EntityField[];
-        onChange: (next: EntityField[]) => void;
-    }
+    let { node, onDataChange }: NodePanelProps = $props();
 
-    let { fields, onChange }: Props = $props();
+    // Pull the typed fields array from the generic node.data bag. The cast
+    // is local so the rest of StylePanel stays node-shape-agnostic.
+    let fields = $derived(
+        ((node.data as unknown as EntityData).fields ?? []) as EntityField[]
+    );
 
     // Only one type-dropdown can be open at a time, identified by field index.
     let openTypeIndex: number | null = $state(null);
@@ -33,17 +35,21 @@
         };
     });
 
+    function commitFields(next: EntityField[]) {
+        onDataChange({ fields: next });
+    }
+
     function patchField(index: number, patch: Partial<EntityField>) {
-        onChange(fields.map((f, i) => (i === index ? { ...f, ...patch } : f)));
+        commitFields(fields.map((f, i) => (i === index ? { ...f, ...patch } : f)));
     }
 
     function removeField(index: number) {
-        onChange(fields.filter((_, i) => i !== index));
+        commitFields(fields.filter((_, i) => i !== index));
         if (openTypeIndex === index) openTypeIndex = null;
     }
 
     function addField() {
-        onChange([...fields, { name: 'field' }]);
+        commitFields([...fields, { name: 'field' }]);
     }
 
     function toggleType(index: number) {

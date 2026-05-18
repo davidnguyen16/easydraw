@@ -6,7 +6,7 @@
         useSvelteFlow,
         type NodeProps
     } from '@xyflow/svelte';
-    import type { EntityData } from './entity.types';
+    import type { EntityData } from './types';
 
     let { id, data, selected }: NodeProps = $props();
     let entity = $derived(data as unknown as EntityData);

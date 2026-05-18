@@ -19,17 +19,15 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
 	import StylePanel, { type NodeStyleData } from '$lib/components/StylePanel.svelte';
-	import type { EntityField } from '$lib/flow/nodes/entity.types';
 	import { EXPORTERS, getExporter } from '$lib/exporters';
-	import EntityNode from '$lib/flow/nodes/EntityNode.svelte';
 	import RelationshipEdge from '$lib/flow/edges/RelationshipEdge.svelte';
 	import CrowsFootMarkers from './edges/CrowsFootMarkers.svelte';
+	import { buildNodeTypesMap, getShape } from '$lib/flow/nodes/registry';
 
 	import EditorFooter from '$lib/components/EditorFooter.svelte';
 	import MenuBar from '$lib/components/menubar/MenuBar.svelte';
 	import ToolBar from '$lib/components/toolbar/ToolBar.svelte';
 	import ContextMenu from '$lib/flow/ContextMenu.svelte';
-	import RectangleNode from '$lib/flow/nodes/RectangleNode.svelte';
 	import {
 		clearCanvasDirtyPage,
 		createPage,
@@ -58,11 +56,9 @@
 
 	setContext('updateNode', (id: string, data: any) => updateNodeData(id, data));
 
-	// Define all of our custom node here
-	const nodeTypes = {
-		RectangleNode: RectangleNode,
-		EntityNode: EntityNode,
-	};
+	// nodeTypes map is built from the shape registry — adding a new node
+	// type means adding it to src/lib/flow/nodes/registry.ts, not editing here.
+	const nodeTypes = buildNodeTypesMap();
 
 	const edgeTypes = {
 		relationship: RelationshipEdge
@@ -170,24 +166,18 @@
 			return;
 		}
 
+		// Resolve the dropped tile against the shape registry — unknown ids
+		// (e.g. a stale palette tile) get silently ignored rather than dropping
+		// a malformed node onto the canvas.
+		const shape = getShape(type.current);
+		if (!shape) return;
+
 		const position = flow.screenToFlowPosition({
 			x: event.clientX,
 			y: event.clientY
 		});
 
-		let nodeData: any = { label: 'New Node' };
-
-    	if (type.current === 'EntityNode') {
-        	nodeData = {
-            	label: 'Entity',
-            	fields: [
-                	{ name: 'field' },
-                	{ name: 'field' },
-                	{ name: 'field' }
-            	]
-        	};
-    	}
-
+		const nodeData = shape.defaultData();
 		const newNodeId = nanoid();
 
 		const newNode = {
@@ -882,12 +872,6 @@
 		);
 	}
 
-	// Entity-specific: replaces the fields array on the selected node.
-	function handleFieldsChange(fields: EntityField[]) {
-		if (!selectedNode) return;
-		updateNodeData(selectedNode.id, { fields });
-	}
-
 	// Function to update the data of a specific node
 	function updateNodeData(nodeId: string, newData: any) {
         // Since you use $state.raw, we must trigger a full reassignment
@@ -988,7 +972,6 @@
 				onStyleChange={handleStyleChange}
 				onPositionChange={handlePositionChange}
 				onSizeChange={handleSizeChange}
-				onFieldsChange={handleFieldsChange}
 				onBringToFront={handleBringToFront}
 				onSendToBack={handleSendToBack}
 				onDuplicate={handleDuplicate}

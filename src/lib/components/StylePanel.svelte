@@ -18,17 +18,20 @@
 
 <script lang="ts">
     import type { Node } from '@xyflow/svelte';
-    import FieldEditor from './FieldEditor.svelte';
-    import type { EntityData, EntityField } from '$lib/flow/nodes/entity.types';
+    import { getShape } from '$lib/flow/nodes/registry';
 
-    type StyleTab = 'style' | 'text' | 'fields' | 'arrange';
+    type StyleTab = 'style' | 'text' | 'panel' | 'arrange';
 
     interface Props {
         node: Node;
-        onStyleChange: (patch: NodeStyleData) => void;
+        /**
+         * Generic data patcher. Receives a Partial<NodeStyleData> for the
+         * Style/Text tabs and a Partial<NodeData> for shape-specific panels.
+         * Flow merges the patch into node.data either way.
+         */
+        onStyleChange: (patch: Partial<NodeStyleData> & Record<string, unknown>) => void;
         onPositionChange: (x: number, y: number) => void;
         onSizeChange: (width: number, height: number) => void;
-        onFieldsChange: (fields: EntityField[]) => void;
         onBringToFront: () => void;
         onSendToBack: () => void;
         onDuplicate: () => void;
@@ -40,7 +43,6 @@
         onStyleChange,
         onPositionChange,
         onSizeChange,
-        onFieldsChange,
         onBringToFront,
         onSendToBack,
         onDuplicate,
@@ -49,15 +51,16 @@
 
     let activeTab: StyleTab = $state('style');
 
-    // Fields tab only makes sense for EntityNode. If the user switches to a
-    // node that doesn't support it while the tab is active, reset to Style.
-    let isEntity = $derived(node.type === 'EntityNode');
-    let entityFields = $derived(
-        isEntity ? ((node.data as unknown as EntityData).fields ?? []) : []
-    );
+    // The shape registry tells us whether the selected node ships a custom
+    // editor tab (e.g. EntityNode's Fields editor). No node-type-specific
+    // branching here — StylePanel stays generic.
+    let shape = $derived(node.type ? getShape(node.type) : undefined);
+    let customPanel = $derived(shape?.panel);
 
+    // If the user navigates to a node whose shape doesn't expose a custom
+    // panel while that tab is active, fall back to Style.
     $effect(() => {
-        if (!isEntity && activeTab === 'fields') {
+        if (!customPanel && activeTab === 'panel') {
             activeTab = 'style';
         }
     });
@@ -143,15 +146,15 @@
         >
             Text
         </button>
-        {#if isEntity}
+        {#if customPanel}
             <button
                 type="button"
                 role="tab"
-                aria-selected={activeTab === 'fields'}
-                class:active={activeTab === 'fields'}
-                onclick={() => (activeTab = 'fields')}
+                aria-selected={activeTab === 'panel'}
+                class:active={activeTab === 'panel'}
+                onclick={() => (activeTab = 'panel')}
             >
-                Fields
+                {customPanel.label}
             </button>
         {/if}
         <button
@@ -359,8 +362,9 @@
                     {/each}
                 </div>
             </section>
-        {:else if activeTab === 'fields'}
-            <FieldEditor fields={entityFields} onChange={onFieldsChange} />
+        {:else if activeTab === 'panel' && customPanel}
+            {@const PanelComponent = customPanel.component}
+            <PanelComponent {node} onDataChange={onStyleChange} />
         {:else}
             <section class="group">
                 <h3 class="group-label">POSITION</h3>

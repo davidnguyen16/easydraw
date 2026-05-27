@@ -6,7 +6,7 @@
         useSvelteFlow,
         type NodeProps
     } from '@xyflow/svelte';
-    import type { EntityData } from './types';
+    import { resolveFieldKey, type EntityData } from './types';
 
     let { id, data, selected }: NodeProps = $props();
     let entity = $derived(data as unknown as EntityData);
@@ -97,13 +97,11 @@
 
     <ul class="entity-fields">
         {#each entity.fields as field, index}
-            <li class="entity-field" class:pk-row={field.isPK}>
+            {@const key = resolveFieldKey(field)}
+            <li class="entity-field" class:pk-row={key === 'PK'}>
                 <span class="badge-cell">
-                    {#if field.isPK}
-                        <span class="badge badge-pk">PK</span>
-                    {/if}
-                    {#if field.isFK}
-                        <span class="badge badge-fk">FK</span>
+                    {#if key}
+                        <span class="badge" data-key={key}>{key}</span>
                     {/if}
                 </span>
                 <input
@@ -115,7 +113,10 @@
                     oninput={(event) => setFieldName(index, event.currentTarget.value)}
                     style={fieldNameStyle}
                 />
-                {#if field.type}
+                <!-- Field type rendering is gated by the panel's master
+                     toggle — "physical" mode shows it, "conceptual" hides
+                     it even if a type was previously set. -->
+                {#if entity.showDataTypes && field.type}
                     <span class="field-type">{field.type.toUpperCase()}</span>
                 {/if}
             </li>
@@ -188,7 +189,7 @@
     }
 
     .badge-cell {
-        min-width: 26px;
+        min-width: 36px;
         margin-right: 8px;
         display: inline-flex;
         align-items: center;
@@ -205,14 +206,23 @@
         font-family: inherit;
     }
 
-    .badge-pk {
+    /* Per-key colours mirror the FieldsPanel palette so the badge on the
+       canvas matches the dropdown selection 1:1. */
+    .badge[data-key='PK'] {
         background: #fae9c8;
         color: #854f0b;
     }
-
-    .badge-fk {
+    .badge[data-key='FK'] {
         background: #dce9fa;
         color: #1e4380;
+    }
+    .badge[data-key='PI'] {
+        background: #c8eae0;
+        color: #0b6354;
+    }
+    .badge[data-key='WPI'] {
+        background: #e3d8fa;
+        color: #5a3fb0;
     }
 
     .field-name {

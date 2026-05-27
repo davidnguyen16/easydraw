@@ -82,11 +82,19 @@
 			: (JSON.parse(JSON.stringify(items)) as T[]);
 	};
 
-	// Clones nodes and also re-attaches the onEdit callback to each node's data, since functions cannot be cloned
+	// Clones nodes and also re-attaches the onEdit callback to each node's data, since functions cannot be cloned.
+	// onEdit must be stripped BEFORE structuredClone — structuredClone throws a DataCloneError on function values,
+	// whereas JSON.stringify would silently drop them. Stripping first lets structuredClone deep-clone everything
+	// else safely; the map below re-attaches a fresh onEdit closure after cloning.
 	const cloneNodes = (items: Node[]): Node[] => {
+		const serializable = items.map((n) => {
+			const { onEdit: _drop, ...safeData } = (n.data ?? {}) as any;
+			return { ...n, data: safeData };
+		});
+
 		const cloned = typeof structuredClone === 'function'
-			? structuredClone(items)
-			: (JSON.parse(JSON.stringify(items)) as Node[]);
+			? structuredClone(serializable)
+			: (JSON.parse(JSON.stringify(serializable)) as Node[]);
 
 		return cloned.map((n) => ({
 			...n,

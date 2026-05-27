@@ -130,7 +130,7 @@
         width: 100%;
         height: 100%;
         background: #ffffff;
-        border: 1px solid #2c2c2a;
+        border: 1px solid #373A36;
         border-radius: 4px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
         display: flex;
@@ -148,7 +148,7 @@
     .entity-header {
         background: #76232f;
         padding: 8px 12px;
-        border-bottom: 1px solid #2c2c2a;
+        border-bottom: 1px solid #373A36;
         text-align: center;
     }
 
@@ -181,11 +181,11 @@
         display: flex;
         align-items: center;
         padding: 8px 12px;
-        border-top: 0.5px solid #e5e0d5;
+        border-top: 0.5px solid #D6D2C4;
     }
 
     .entity-field:first-child {
-        border-top: 1px solid #2c2c2a;
+        border-top: 1px solid #373A36;
     }
 
     .badge-cell {
@@ -231,7 +231,7 @@
         background: transparent;
         border: none;
         outline: none;
-        color: #2c2c2a;
+        color: #373A36;
         font-size: 12px;
         font-family: inherit;
         padding: 0;
@@ -273,7 +273,7 @@
         width: 8px;
         height: 8px;
         background: #ffffff;
-        border: 1.5px solid #2c2c2a;
+        border: 1.5px solid #A6192E;
         border-radius: 1px;
     }
 

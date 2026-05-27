@@ -94,12 +94,12 @@
 
         margin: 0;
 
-        background: #F5F1E8;
+        background: #F5F3EF;
 
         border-radius: 0;
         border-left: 0;
 
-        box-shadow: 0 0 10px #bfbbbb;
+        box-shadow: 0 0 10px #C4C1B8;
 
         /* Smooth width change when toggling collapse / dragging finishes. */
         transition: width 0.15s ease;
@@ -131,7 +131,7 @@
         display: flex;
         align-items: center;
         background: #ffffff;
-        border: 1px solid #e8e2d3;
+        border: 1px solid #D6D2C4;
         border-radius: 8px;
         padding: 0 10px;
         height: 36px;
@@ -144,7 +144,7 @@
     .search-icon {
         width: 16px;
         height: 16px;
-        color: #888;
+        color: #8A8B83;
         flex-shrink: 0;
     }
 
@@ -158,10 +158,10 @@
         padding: 0 8px;
         flex: 1;
         min-width: 0;
-        color: #333;
+        color: #373A36;
     }
 
     .search-bar::placeholder {
-        color: #999;
+        color: #8A8B83;
     }
 </style>

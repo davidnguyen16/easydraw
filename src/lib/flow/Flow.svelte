@@ -1031,10 +1031,11 @@
       bottom: 40px;
       left: 50%;
       transform: translateX(-50%);
-      background: white;
+      background: #ffffff;
+      border: 1px solid #D6D2C4;
       padding: 10px 20px;
       border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.09);
       display: flex;
       align-items: center;
       gap: 12px;
@@ -1071,16 +1072,17 @@
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #888;
+      color: #8A8B83;
       font-weight: 600;
   }
 
   select {
-      border: 1px solid #eee;
+      border: 1px solid #D6D2C4;
       border-radius: 6px;
       padding: 6px 10px;
       font-size: 0.85rem;
       outline: none;
-      background: #f8f9fa;
+      background: #F5F3EF;
+      color: #373A36;
   }
 </style>

@@ -257,7 +257,7 @@
         flex: 0 0 44px;
         width: 100%;
         background: white;
-        border-bottom: 1px solid #d0d0d0;
+        border-bottom: 1px solid #D6D2C4;
         display: flex;
         align-items: center;
         gap: 6px;
@@ -273,7 +273,7 @@
     .separator {
         width: 1px;
         height: 22px;
-        background: #d8d8d8;
+        background: #D6D2C4;
         margin: 0 6px;
     }
 
@@ -291,15 +291,15 @@
         background: transparent;
         border: 1px solid transparent;
         border-radius: 6px;
-        color: #444;
+        color: #5A5C58;
         cursor: pointer;
         padding: 0;
         transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
     }
 
     .icon-btn:hover:not(:disabled) {
-        background: #f1f1f1;
-        color: #111;
+        background: #EDEBE5;
+        color: #373A36;
     }
 
     .icon-btn:disabled {
@@ -329,7 +329,7 @@
         top: calc(100% + 8px);
         left: 50%;
         transform: translateX(-50%);
-        background: #2a2a2a;
+        background: #373A36;
         color: #fff;
         font-size: 0.72rem;
         font-weight: 500;
@@ -350,7 +350,7 @@
         left: 50%;
         transform: translateX(-50%);
         border: 4px solid transparent;
-        border-bottom-color: #2a2a2a;
+        border-bottom-color: #373A36;
         z-index: 200;
         pointer-events: none;
         opacity: 0;
@@ -378,7 +378,7 @@
         height: 28px;
         padding: 0 8px;
         font-size: 0.82rem;
-        color: #444;
+        color: #5A5C58;
         background: transparent;
         border: 1px solid transparent;
         border-radius: 6px;
@@ -390,8 +390,8 @@
     }
 
     .zoom-trigger:hover {
-        background: #f1f1f1;
-        color: #111;
+        background: #EDEBE5;
+        color: #373A36;
     }
 
     .zoom-trigger.active {
@@ -426,7 +426,7 @@
         font-size: 0.68rem;
         font-weight: 700;
         letter-spacing: 0.08em;
-        color: #999;
+        color: #8A8B83;
         padding: 8px 12px 6px;
     }
 
@@ -436,7 +436,7 @@
         gap: 6px;
         background: transparent;
         border: none;
-        color: #2a2a2a;
+        color: #373A36;
         font-family: inherit;
         font-size: 0.88rem;
         padding: 8px 12px;
@@ -480,7 +480,7 @@
 
     .zoom-divider {
         height: 1px;
-        background: #eee;
+        background: #E8E5DE;
         margin: 4px 4px;
     }
 
@@ -491,7 +491,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: #555;
+        color: #5A5C58;
     }
 
     .zoom-action-icon svg {

@@ -364,13 +364,13 @@
 
     .count {
         font-size: 0.78rem;
-        color: #888;
+        color: #8A8B83;
         font-variant-numeric: tabular-nums;
     }
 
     .field-card {
         background: #ffffff;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         border-radius: 8px;
         padding: 10px;
         display: flex;
@@ -403,9 +403,9 @@
         height: 30px;
         min-width: 52px;
         padding: 0 8px;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         background: #ffffff;
-        color: #888;
+        color: #8A8B83;
         border-radius: 6px;
         font-family: inherit;
         font-size: 0.75rem;
@@ -418,7 +418,7 @@
     }
 
     .key-button:hover {
-        border-color: #d5cbb6;
+        border-color: #C4C1B8;
     }
 
     /* Open state — only the chevron flips; border stays as-is so the
@@ -475,7 +475,7 @@
         margin: 0;
         padding: 4px;
         background: #ffffff;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         border-radius: 8px;
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
         z-index: 200;
@@ -493,7 +493,7 @@
         padding: 8px 10px;
         font-family: inherit;
         font-size: 0.82rem;
-        color: #2c2c2a;
+        color: #373A36;
         text-align: left;
         cursor: pointer;
         border-radius: 4px;
@@ -504,7 +504,7 @@
     }
 
     .key-option:hover {
-        background: #f5f1e8;
+        background: #F5F3EF;
     }
 
     /* Tint the selected row with the key's own color so the dropdown
@@ -528,7 +528,7 @@
     }
 
     .key-option-label.muted {
-        color: #888;
+        color: #8A8B83;
         font-weight: 400;
     }
 
@@ -539,7 +539,7 @@
 
     .dropdown-divider {
         height: 1px;
-        background: #eee;
+        background: #E8E5DE;
         margin: 4px 4px;
     }
 
@@ -586,14 +586,14 @@
     .name-input {
         flex: 1;
         min-width: 0;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         border-radius: 6px;
         padding: 8px 10px;
         font-family: inherit;
         font-size: 0.9rem;
         outline: none;
         background: #ffffff;
-        color: #2c2c2a;
+        color: #373A36;
     }
 
     .name-input:focus {
@@ -605,7 +605,7 @@
         height: 32px;
         border: none;
         background: transparent;
-        color: #888;
+        color: #8A8B83;
         cursor: pointer;
         border-radius: 6px;
         display: flex;
@@ -630,9 +630,9 @@
         width: 100%;
         height: 32px;
         padding: 0 10px;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         background: #ffffff;
-        color: #2c2c2a;
+        color: #373A36;
         border-radius: 6px;
         font-family: inherit;
         font-size: 0.78rem;
@@ -665,7 +665,7 @@
         margin: 0;
         padding: 4px;
         background: #ffffff;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         border-radius: 8px;
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
         z-index: 200;
@@ -685,7 +685,7 @@
         font-family: inherit;
         font-size: 0.78rem;
         font-weight: 600;
-        color: #2c2c2a;
+        color: #373A36;
         text-align: left;
         cursor: pointer;
         border-radius: 4px;
@@ -710,9 +710,9 @@
     .add-field-btn {
         width: 100%;
         padding: 10px;
-        border: 1px dashed #d5cbb6;
+        border: 1px dashed #C4C1B8;
         background: transparent;
-        color: #888;
+        color: #8A8B83;
         border-radius: 8px;
         font-family: inherit;
         font-size: 0.85rem;
@@ -735,7 +735,7 @@
 
     .show-types-label {
         font-size: 0.85rem;
-        color: #2c2c2a;
+        color: #373A36;
     }
 
     .toggle {

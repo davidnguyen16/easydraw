@@ -439,8 +439,8 @@
         top: 16px;
         right: 16px;
         width: 280px;
-        background: #faf6ec;
-        border: 1px solid #e5e0d5;
+        background: #F5F3EF;
+        border: 1px solid #D6D2C4;
         border-radius: 12px;
         padding: 0;
         box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
@@ -454,7 +454,7 @@
 
     .tabs {
         display: flex;
-        border-bottom: 1px solid #e5e0d5;
+        border-bottom: 1px solid #D6D2C4;
         flex-shrink: 0;
     }
 
@@ -465,7 +465,7 @@
         padding: 14px 0;
         font-family: inherit;
         font-size: 0.88rem;
-        color: #2c2c2a;
+        color: #373A36;
         cursor: pointer;
         position: relative;
         transition: color 0.12s ease;
@@ -529,7 +529,7 @@
     }
 
     .swatch.is-white {
-        border-color: #e5e0d5;
+        border-color: #D6D2C4;
     }
 
     .swatch.active {
@@ -549,7 +549,7 @@
 
     .row-label {
         font-size: 0.85rem;
-        color: #2c2c2a;
+        color: #373A36;
     }
 
     .color-pill {
@@ -559,7 +559,7 @@
         background: #ffffff;
         padding: 4px 10px;
         border-radius: 6px;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         cursor: pointer;
         position: relative;
     }
@@ -577,12 +577,12 @@
         width: 14px;
         height: 14px;
         border-radius: 3px;
-        border: 1px solid #d5d0c2;
+        border: 1px solid #D6D2C4;
     }
 
     .color-hex {
         font-size: 0.78rem;
-        color: #2c2c2a;
+        color: #373A36;
         font-variant-numeric: tabular-nums;
     }
 
@@ -591,7 +591,7 @@
         align-items: center;
         gap: 6px;
         background: #ffffff;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         border-radius: 6px;
         padding: 2px 4px;
     }
@@ -617,14 +617,14 @@
         height: 22px;
         border-radius: 4px;
         cursor: pointer;
-        color: #2c2c2a;
+        color: #373A36;
         font-size: 1rem;
         line-height: 1;
         font-family: inherit;
     }
 
     .stepper button:hover {
-        background: #f3eedf;
+        background: #EDEBE5;
     }
 
     .toggle {
@@ -644,7 +644,7 @@
     .toggle-slider {
         position: absolute;
         inset: 0;
-        background: #d0cabd;
+        background: #C4C1B8;
         border-radius: 999px;
         cursor: pointer;
         transition: background 0.15s ease;
@@ -685,13 +685,13 @@
 
     .square-btn {
         background: #ffffff;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         border-radius: 6px;
         padding: 14px 0;
         cursor: pointer;
         font-family: inherit;
         font-size: 0.95rem;
-        color: #2c2c2a;
+        color: #373A36;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -699,7 +699,7 @@
     }
 
     .square-btn:hover {
-        border-color: #d5cbb6;
+        border-color: #C4C1B8;
     }
 
     .square-btn.active {
@@ -712,7 +712,7 @@
         display: flex;
         align-items: center;
         background: #ffffff;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         border-radius: 6px;
         padding: 0 10px;
         gap: 6px;
@@ -752,13 +752,13 @@
 
     .action-btn {
         background: #ffffff;
-        border: 1px solid #e5e0d5;
+        border: 1px solid #D6D2C4;
         border-radius: 6px;
         padding: 10px;
         font-family: inherit;
         font-size: 0.85rem;
         cursor: pointer;
-        color: #2c2c2a;
+        color: #373A36;
         transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
     }
 

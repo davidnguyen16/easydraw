@@ -31,13 +31,13 @@
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        border: 1px solid #ccc;
+        border: 1px solid #D6D2C4;
         background: white;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-        
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+
         font-size: 1rem;
         line-height: 1;
-        color: #333;
+        color: #373A36;
         cursor: pointer;
 
         display: flex;
@@ -49,7 +49,7 @@
     }
 
     .collapse-button:hover {
-        background: #f0f0f0;
+        background: #EDEBE5;
         transform: scale(1.0);
     }
 

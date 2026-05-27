@@ -80,8 +80,8 @@
        behind it, so the line never bleeds through the pill's center. */
     .kind-ghost {
         fill: #ffffff;
-        stroke: #5f5e5a;
-        stroke-opacity: 0.5;
+        stroke: #9B9991;
+        stroke-opacity: 0.55;
     }
 
     .kind-ghost:hover {
@@ -90,15 +90,15 @@
 
     /* Solid = real user bend point. */
     .kind-solid {
-        fill: #5f5e5a;
-        stroke: #5f5e5a;
+        fill: #76232F;
+        stroke: #76232F;
     }
 
     /* Pressed state: bumps the pill forward visually so the user gets
        feedback the moment they grab it, and keeps showing it for the whole
        drag (managed by the `pressing` state, not just :active). */
     .connection-pill.pressing {
-        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25));
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.22));
     }
 
     .kind-ghost.pressing {
@@ -107,8 +107,8 @@
     }
 
     .kind-solid.pressing {
-        fill: #3f3e3a;
-        stroke: #3f3e3a;
+        fill: #5A1220;
+        stroke: #5A1220;
     }
 
     /* Cursor mirrors the drag axis: ghost pills move perpendicular to the

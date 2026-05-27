@@ -90,13 +90,13 @@
 
     .resize-handle:hover,
     .resize-handle.dragging {
-        background-color: rgba(0, 120, 255, 0.4);
+        background-color: rgba(166, 25, 46, 0.35);
     }
 
     /* Visible focus ring for keyboard users */
     .resize-handle:focus-visible {
         outline: none;
-        background: rgba(0, 120, 255, 0.6);
-        box-shadow: 0 0 0 2px rgba(0, 120, 255, 0.5);
+        background: rgba(166, 25, 46, 0.5);
+        box-shadow: 0 0 0 2px rgba(166, 25, 46, 0.4);
     }
 </style>

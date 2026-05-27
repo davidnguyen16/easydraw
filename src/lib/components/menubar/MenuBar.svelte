@@ -489,7 +489,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: #555;
+        color: #5A5C58;
     }
 
     .dropdown-item:hover:not(:disabled) .item-icon-wrap,
@@ -516,20 +516,20 @@
 
     .item-shortcut {
         font-size: 0.78rem;
-        color: #9a9a9a;
+        color: #8A8B83;
         font-variant-numeric: tabular-nums;
     }
 
     .dropdown-item:hover:not(:disabled) .item-shortcut,
     .dropdown-item.active:not(:disabled) .item-shortcut {
-        color: #b06070;
+        color: #A6192E;
     }
 
     .item-chevron {
         display: inline-flex;
         width: 14px;
         height: 14px;
-        color: #888;
+        color: #8A8B83;
     }
 
     .item-chevron .item-icon {
@@ -539,7 +539,7 @@
 
     .dropdown-divider {
         height: 1px;
-        background: #eee;
+        background: #E8E5DE;
         margin: 4px 4px;
     }
 
@@ -547,7 +547,7 @@
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: #6B4DBA;
+        background: #80225F;
         color: white;
         display: flex;
         align-items: center;

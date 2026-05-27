@@ -20,7 +20,7 @@
 <style>
     .connection-endpoint {
         fill: #ffffff;
-        stroke: #5f5e5a;
+        stroke: #9B9991;
         stroke-width: 1.5;
         cursor: crosshair;
     }

@@ -3,37 +3,37 @@
 .svelte-flow {
     direction: ltr;
 
-    --xy-edge-stroke-default: #b1b1b7;
+    --xy-edge-stroke-default: #C4C1B8;
     --xy-edge-stroke-width-default: 1;
-    --xy-edge-stroke-selected-default: #555;
+    --xy-edge-stroke-selected-default: #76232F;
 
-    --xy-connectionline-stroke-default: #b1b1b7;
+    --xy-connectionline-stroke-default: #A6192E;
     --xy-connectionline-stroke-width-default: 1;
 
     --xy-attribution-background-color-default: rgba(255, 255, 255, 0.5);
 
-    --xy-minimap-background-color-default: #fff;
-    --xy-minimap-mask-background-color-default: rgba(240, 240, 240, 0.6);
+    --xy-minimap-background-color-default: #EDEBE5;
+    --xy-minimap-mask-background-color-default: rgba(214, 210, 196, 0.6);
     --xy-minimap-mask-stroke-color-default: transparent;
     --xy-minimap-mask-stroke-width-default: 1;
-    --xy-minimap-node-background-color-default: #e2e2e2;
+    --xy-minimap-node-background-color-default: #D6D2C4;
     --xy-minimap-node-stroke-color-default: transparent;
     --xy-minimap-node-stroke-width-default: 2;
 
     --xy-background-color-default: transparent;
-    --xy-background-pattern-dots-color-default: #91919a;
-    --xy-background-pattern-lines-color-default: #eee;
-    --xy-background-pattern-cross-color-default: #e2e2e2;
+    --xy-background-pattern-dots-color-default: #C4C1B8;
+    --xy-background-pattern-lines-color-default: #D6D2C4;
+    --xy-background-pattern-cross-color-default: #D6D2C4;
     background-color: var(--xy-background-color, var(--xy-background-color-default));
 
-    --xy-theme-selected: #ff4000;
-    --xy-theme-hover: #c5c5c5;
-    --xy-theme-edge-hover: black;
-    --xy-theme-color-focus: #e8e8e8;
+    --xy-theme-selected: #A6192E;
+    --xy-theme-hover: #D6D2C4;
+    --xy-theme-edge-hover: #373A36;
+    --xy-theme-color-focus: #EDEBE5;
 
     --xy-node-color-default: inherit;
 
-    --xy-node-border-default: 1px solid #ededed;
+    --xy-node-border-default: 1px solid #D6D2C4;
     --xy-node-boxshadow-default:
             0px 3.54px 4.55px 0px #00000005, 0px 3.54px 4.55px 0px #0000000d,
             0px 0.51px 1.01px 0px #0000001a;
@@ -41,19 +41,19 @@
     --xy-node-border-radius-default: 8px;
 
     --xy-handle-background-color-default: #ffffff;
-    --xy-handle-border-color-default: #aaaaaa;
+    --xy-handle-border-color-default: #C4C1B8;
 
-    --xy-edge-label-color-default: #505050;
+    --xy-edge-label-color-default: #5A5C58;
 
-    --xy-resize-background-color-default: #9e86ed;
+    --xy-resize-background-color-default: #A6192E;
 
     --xy-node-background-color-default: #fff;
-    --xy-node-group-background-color-default: rgba(240, 240, 240, 0.25);
+    --xy-node-group-background-color-default: rgba(237, 235, 229, 0.35);
     --xy-node-boxshadow-hover-default: 0 1px 4px 1px rgba(0, 0, 0, 0.08);
-    --xy-node-boxshadow-selected-default: 0 0 0 0.5px #1a192b;
+    --xy-node-boxshadow-selected-default: 0 0 0 1.5px #A6192E;
 
-    --xy-selection-background-color-default: rgba(0, 89, 220, 0.08);
-    --xy-selection-border-default: 1px dotted rgba(0, 89, 220, 0.8);
+    --xy-selection-background-color-default: rgba(166, 25, 46, 0.06);
+    --xy-selection-border-default: 1px dotted rgba(166, 25, 46, 0.45);
 
     --xy-controls-button-background-color-default: #fefefe;
     --xy-controls-button-background-color-hover-default: #f4f4f4;

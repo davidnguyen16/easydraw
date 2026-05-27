@@ -147,8 +147,8 @@
 
 		padding: 10px 16px;
 		background: #ffffff;
-		border-top: 1px solid #d8d8d8;
-		box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.05);
+		border-top: 1px solid #D6D2C4;
+		box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.04);
 	}
 
 	/* Horizontal tabs for existing pages. */
@@ -163,9 +163,9 @@
 	}
 
 	button {
-		border: 1px solid #d1d1d1;
-		background: #f8f8f8;
-		color: #222;
+		border: 1px solid #D6D2C4;
+		background: #F5F3EF;
+		color: #373A36;
 		padding: 6px 10px;
 		border-radius: 8px;
 		font-size: 0.9rem;
@@ -174,7 +174,7 @@
 	}
 
 	button:hover {
-		background: #f0f0f0;
+		background: #EDEBE5;
 	}
 
 	/* Groups a page tab and its dropdown trigger together. */
@@ -191,7 +191,7 @@
 		right: -4px;
 		width: 9px;
 		height: 9px;
-		background: #ff6a3d;
+		background: #D6001C;
 		border: 2px solid #ffffff;
 		border-radius: 999px;
 		pointer-events: none;
@@ -200,9 +200,9 @@
 	.page-name-input {
 		appearance: none;
 		-webkit-appearance: none;
-		border: 1px solid #d1d1d1;
-		background: #f8f8f8;
-		color: #222;
+		border: 1px solid #D6D2C4;
+		background: #F5F3EF;
+		color: #373A36;
 		padding: 6px 10px;
 		border-radius: 8px 0 0 8px;
 		font-size: 0.9rem;
@@ -214,7 +214,7 @@
 	}
 
 	.page-name-input:hover {
-		background: #f0f0f0;
+		background: #EDEBE5;
 	}
 
 	.page-name-input:focus {
@@ -230,8 +230,9 @@
 	/* Active page tab state. */
 	.page-name-input.active,
 	.menu-toggle.active {
-		background: #e6f0ff;
-		border-color: #8db3ff;
+		background: #fbeef0;
+		border-color: #A6192E;
+		color: #76232F;
 	}
 
 	/* Dropdown menu anchored to each page item. */
@@ -243,23 +244,24 @@
 		display: flex;
 		flex-direction: column;
 		min-width: 112px;
-		background: #fff;
-		border: 1px solid #d8d8d8;
+		background: #ffffff;
+		border: 1px solid #D6D2C4;
 		border-radius: 8px;
-		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.10);
 		overflow: hidden;
 		z-index: 30;
 	}
 
 	.menu-item {
 		border: none;
-		background: #fff;
+		background: #ffffff;
 		border-radius: 0;
 		text-align: left;
+		color: #373A36;
 	}
 
 	.menu-item:hover {
-		background: #f4f4f4;
+		background: #EDEBE5;
 	}
 
 	.menu-item.danger {
@@ -273,6 +275,7 @@
 
 	.add-page {
 		background: #ffffff;
+		color: #373A36;
 		font-weight: 600;
 		flex: 0 0 auto;
 	}

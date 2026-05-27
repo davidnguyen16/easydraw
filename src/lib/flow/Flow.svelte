@@ -21,6 +21,7 @@
 	import StylePanel, { type NodeStyleData } from '$lib/components/StylePanel.svelte';
 	import { EXPORTERS, getExporter } from '$lib/exporters';
 	import RelationshipEdge from '$lib/flow/edges/RelationshipEdge.svelte';
+	import ConnectionEdge from '$lib/flow/edges/connection/ConnectionEdge.svelte';
 	import CrowsFootMarkers from './edges/CrowsFootMarkers.svelte';
 	import { buildNodeTypesMap, getShape } from '$lib/flow/nodes/registry';
 
@@ -60,7 +61,11 @@
 	// type means adding it to src/lib/flow/nodes/registry.ts, not editing here.
 	const nodeTypes = buildNodeTypesMap();
 
+	// `connection` is the general-purpose orthogonal edge with rounded
+	// corners and draggable bend pills. `relationship` is kept for the older
+	// ER-diagram crow's-foot edges so saved diagrams still resolve.
 	const edgeTypes = {
+		connection: ConnectionEdge,
 		relationship: RelationshipEdge
 	};
 
@@ -141,7 +146,7 @@
 	const type = useDnD();
 
 	const defaultEdgeOptions = {
-		type: 'smoothstep'
+		type: 'connection'
 	};
 
 	// Drag and drop behavior. When locked, we skip preventDefault so the
@@ -887,13 +892,16 @@
         });
     }
 
-	// Function to handle new connections between nodes
+	// New connections use the orthogonal `connection` edge by default.
+	// bendPoints starts empty — the routing layer L-shapes the initial path
+	// from the source/target handle positions, and the user adds bends by
+	// dragging ghost pills.
 	function onConnect(connection: Connection) {
 		const newEdge: Edge = {
 			...connection,
-			id: `${Math.random()}`,
-			type: 'relationship',
-			data: { relationship: 'one-to-many' } // default
+			id: nanoid(),
+			type: 'connection',
+			data: { bendPoints: [] }
 		};
 		edges = addEdge(newEdge, edges);
 	}
@@ -980,7 +988,7 @@
 		{/if}
 
 
-		{#if selectedEdge}
+		{#if selectedEdge && selectedEdge.type === 'relationship'}
 			{@const activeEdge = selectedEdge}
 			{@const edgeData = activeEdge.data as { relationship: string } | undefined}
 			<div class="edge-editor">

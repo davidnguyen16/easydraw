@@ -32,6 +32,7 @@
 	import {
 		clearCanvasDirtyPage,
 		createPage,
+		deletePage,
 		editorMetaData,
 		editorStoreSvelte,
 		exportEditorStateAsJSON,
@@ -40,6 +41,7 @@
 		markCanvasDirtyPage,
 		resetEditorState,
 		saveActivePageToStorage,
+		saveFullStateToStorage,
 		switchPage,
 		updateActiveGraph,
 		visibleUnsavedPageIdsStore,
@@ -283,6 +285,34 @@
 		persistCanvasToStore();
 		createPage();
 		hydrateCanvasFromStore();
+		handlePaneClick();
+	}
+
+	// Deletes a page and ensures both the canvas and localStorage stay consistent.
+	//
+	// Why this can't just call deletePage() directly from EditorFooter:
+	//   1. If the deleted page is the currently active one, the canvas still holds
+	//      its nodes/edges — we need to hydrate the newly-active page immediately
+	//      so the user sees the right content and future Cmd+S saves correct data.
+	//   2. deletePage() only mutates the in-memory store; the deleted page stays
+	//      in localStorage until we explicitly overwrite it. Without this handler,
+	//      a page refresh would restore the "deleted" tab.
+	function handleDeletePage(pageId: string) {
+		const isActivePage = get(editorStoreSvelte).activePageId === pageId;
+
+		// Remove from store (switches activePageId if needed, clears dirty marker).
+		deletePage(pageId);
+
+		if (isActivePage) {
+			// Canvas is showing the deleted page's content — swap it out for the
+			// newly-active page without saving (we're discarding the deleted page).
+			hydrateCanvasFromStore();
+		}
+
+		// Write the updated store state (without the deleted page) to localStorage
+		// so a page refresh doesn't bring the tab back.
+		saveFullStateToStorage();
+
 		handlePaneClick();
 	}
 
@@ -1015,7 +1045,7 @@
 		{/if}
 	</section>
 
-	<EditorFooter onSwitchPage={handleSwitchPage} onCreatePage={handleCreatePage} />
+	<EditorFooter onSwitchPage={handleSwitchPage} onCreatePage={handleCreatePage} onDeletePage={handleDeletePage} />
 </main>
 
 <style>

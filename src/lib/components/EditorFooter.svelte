@@ -11,10 +11,12 @@
 
 	let {
 		onSwitchPage,
-		onCreatePage
+		onCreatePage,
+		onDeletePage
 	}: {
 		onSwitchPage?: (pageId: string) => void;
 		onCreatePage?: () => void;
+		onDeletePage?: (pageId: string) => void;
 	} = $props();
 
 	let openMenuPageId: string | null = $state(null);
@@ -76,7 +78,11 @@
 
 	// Deletes the selected page.
 	function handleDeletePage(pageId: string) {
-		deletePage(pageId);
+		if (onDeletePage) {
+			onDeletePage(pageId);
+		} else {
+			deletePage(pageId);
+		}
 		openMenuPageId = null;
 	}
 </script>

@@ -347,6 +347,29 @@ export function deletePage(pageId: string) {
 	clearCanvasDirtyPage(pageId);
 }
 
+// Persists the complete in-memory editor state to localStorage (full overwrite).
+// Use this after operations that restructure the page list — e.g. page deletion —
+// so that a page removed from the store also disappears from the persisted snapshot.
+// Unlike saveActivePageToStorage (which merges only the active page), this
+// unconditionally overwrites localStorage with whatever is currently in the store.
+// Canvas-only dirty markers are intentionally left untouched; if the active page
+// has unsaved canvas changes the dirty dot will keep showing via canvasDirtyPageIdsStore.
+export function saveFullStateToStorage() {
+	if (!browser) return false;
+
+	const currentState = get(editorStoreSvelte);
+	const nextState: EditorState = {
+		...currentState,
+		fileName: editorMetaData.fileName
+	};
+
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+	// Bring savedPageSignatures in sync with what is now in localStorage so that
+	// the "unsaved changes" indicator correctly reflects the true save state.
+	savedPageSignaturesStore.set(buildPageSignatures(currentState.pages));
+	return true;
+}
+
 // Read-only store for the currently active page object.
 // If activePageId is stale, it falls back to the first page and repairs the id in editorStoreSvelte.
 export const activePageStore = derived(editorStoreSvelte, ($editorState, set) => {

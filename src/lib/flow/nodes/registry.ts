@@ -12,12 +12,38 @@
  * Everything else (xyflow nodeTypes map, sidebar palette grouping, drop
  * defaults, StylePanel custom tabs) is derived from this array.
  */
+import { actorShape } from './actor/shape';
+import { circleShape } from './circle/shape';
+import { cubeShape } from './cube/shape';
+import { diamondShape } from './diamond/shape';
+import { documentShape } from './document/shape';
+import { ellipseShape } from './ellipse/shape';
 import { entityShape } from './entity/shape';
+import { parallelogramShape } from './parallelogram/shape';
+import { pillShape } from './pill/shape';
 import { rectangleShape } from './rectangle/shape';
+import { roundedRectangleShape } from './rounded-rectangle/shape';
+import { textShape } from './text/shape';
+import { triangleShape } from './triangle/shape';
 import type { NodeCategory, NodeShape } from './types';
 
+// Order drives left-to-right, top-to-bottom layout within each sidebar
+// category tile grid. The basic palette matches the row layout shown in the
+// design reference: rectangle / rounded / ellipse / circle, then
+// diamond / parallelogram / triangle / pill, then document / actor / cube / text.
 export const SHAPES: readonly NodeShape[] = [
     rectangleShape,
+    roundedRectangleShape,
+    ellipseShape,
+    circleShape,
+    diamondShape,
+    parallelogramShape,
+    triangleShape,
+    pillShape,
+    documentShape,
+    actorShape,
+    cubeShape,
+    textShape,
     entityShape
 ] as const;
 

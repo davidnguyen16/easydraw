@@ -1,13 +1,10 @@
 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <rect
-        x="3.5"
-        y="7.5"
-        width="17"
-        height="9"
-        rx="1.5"
+    <path
+        d="M4,5 L20,5 L20,17 Q17,20 14,17 T8,17 T4,17 Z"
         fill="none"
         stroke="currentColor"
         stroke-width="1.5"
+        stroke-linejoin="round"
     />
 </svg>
 

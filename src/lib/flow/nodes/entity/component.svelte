@@ -69,7 +69,61 @@
     );
 </script>
 
-<div class="entity-node" class:active={selected} style={cardStyle}>
+<!--
+    Two-layer structure (matches the basic-shape pattern in
+    shared/ShapeNode.svelte):
+      .entity-root  → unclipped wrapper; absolute-positioned children
+                      (handles, resizer) anchor to its edges and aren't sliced.
+      .entity-card  → the visible card; owns overflow:hidden so the header
+                      bar respects the rounded corners and the field rows
+                      don't escape the border.
+    Handles + NodeResizer are SIBLINGS of .entity-card so they render after
+    it in DOM (= painted on top, fully visible) and aren't clipped by
+    .entity-card's overflow:hidden.
+-->
+<div class="entity-root" class:active={selected}>
+    <div class="entity-card" style={cardStyle}>
+        <header class="entity-header" style={headerStyle}>
+            <input
+                class="entity-title nodrag"
+                type="text"
+                value={entity.label ?? ''}
+                placeholder="Entity"
+                spellcheck="false"
+                oninput={(event) => setLabel(event.currentTarget.value)}
+                style={titleStyle}
+            />
+        </header>
+
+        <ul class="entity-fields">
+            {#each entity.fields as field, index}
+                {@const key = resolveFieldKey(field)}
+                <li class="entity-field" class:pk-row={key === 'PK'}>
+                    <span class="badge-cell">
+                        {#if key}
+                            <span class="badge" data-key={key}>{key}</span>
+                        {/if}
+                    </span>
+                    <input
+                        class="field-name nodrag"
+                        type="text"
+                        value={field.name}
+                        placeholder="field"
+                        spellcheck="false"
+                        oninput={(event) => setFieldName(index, event.currentTarget.value)}
+                        style={fieldNameStyle}
+                    />
+                    <!-- Field type rendering is gated by the panel's master
+                         toggle — "physical" mode shows it, "conceptual" hides
+                         it even if a type was previously set. -->
+                    {#if entity.showDataTypes && field.type}
+                        <span class="field-type">{field.type.toUpperCase()}</span>
+                    {/if}
+                </li>
+            {/each}
+        </ul>
+    </div>
+
     <NodeResizer
         isVisible={selected}
         minWidth={180}
@@ -82,53 +136,30 @@
     <Handle type="source" position={Position.Right} id="right" class="entity-handle" />
     <Handle type="source" position={Position.Bottom} id="bottom" class="entity-handle" />
     <Handle type="source" position={Position.Left} id="left" class="entity-handle" />
-
-    <header class="entity-header" style={headerStyle}>
-        <input
-            class="entity-title nodrag"
-            type="text"
-            value={entity.label ?? ''}
-            placeholder="Entity"
-            spellcheck="false"
-            oninput={(event) => setLabel(event.currentTarget.value)}
-            style={titleStyle}
-        />
-    </header>
-
-    <ul class="entity-fields">
-        {#each entity.fields as field, index}
-            {@const key = resolveFieldKey(field)}
-            <li class="entity-field" class:pk-row={key === 'PK'}>
-                <span class="badge-cell">
-                    {#if key}
-                        <span class="badge" data-key={key}>{key}</span>
-                    {/if}
-                </span>
-                <input
-                    class="field-name nodrag"
-                    type="text"
-                    value={field.name}
-                    placeholder="field"
-                    spellcheck="false"
-                    oninput={(event) => setFieldName(index, event.currentTarget.value)}
-                    style={fieldNameStyle}
-                />
-                <!-- Field type rendering is gated by the panel's master
-                     toggle — "physical" mode shows it, "conceptual" hides
-                     it even if a type was previously set. -->
-                {#if entity.showDataTypes && field.type}
-                    <span class="field-type">{field.type.toUpperCase()}</span>
-                {/if}
-            </li>
-        {/each}
-    </ul>
 </div>
 
 <style>
-    .entity-node {
-        min-width: 180px;
+    /* Positioning wrapper. Sits flush with the xyflow bounding box so
+       handles + resizer anchor exactly on the visible card's edge. No
+       overflow rules here — children that extend past the edge (the
+       half-outside handles) stay visible. */
+    .entity-root {
+        position: relative;
         width: 100%;
         height: 100%;
+        min-width: 180px;
+        min-height: 80px;
+    }
+
+    /* The visible card itself. Kept in NORMAL flow (not position:absolute)
+       so its intrinsic content height — header + however many field rows —
+       drives the wrapper's height when no explicit size is set. This is
+       what makes a freshly-dropped entity show all default fields without
+       having to be manually resized. */
+    .entity-card {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
         background: #ffffff;
         border: 1px solid #373A36;
         border-radius: 4px;
@@ -140,8 +171,8 @@
         transition: box-shadow 0.15s ease;
     }
 
-    .entity-node:hover,
-    .entity-node.active {
+    .entity-root:hover .entity-card,
+    .entity-root.active .entity-card {
         box-shadow: 0 4px 12px rgba(166, 25, 46, 0.15);
     }
 
@@ -263,9 +294,10 @@
         transition: opacity 0.12s ease;
     }
 
-    .entity-node:hover :global(.entity-handle),
-    .entity-node.active :global(.entity-handle) {
+    .entity-root:hover :global(.entity-handle),
+    .entity-root.active :global(.entity-handle) {
         opacity: 1;
+        pointer-events: all;
     }
 
     /* NodeResizer corner anchors. */

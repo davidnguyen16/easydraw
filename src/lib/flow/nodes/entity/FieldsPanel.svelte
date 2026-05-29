@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { useSvelteFlow } from '@xyflow/svelte';
     import type { NodePanelProps } from '../types';
     import {
         ENTITY_FIELD_TYPES,
@@ -12,6 +13,10 @@
     } from './types';
 
     let { node, onDataChange }: NodePanelProps = $props();
+
+    // Used to clear the wrapper's explicit height whenever the field count
+    // changes — see commitFields for the why.
+    const { updateNode } = useSvelteFlow();
 
     // Pull typed fields + the conceptual/physical toggle out of the generic
     // node.data bag. The cast is local so the rest of StylePanel stays
@@ -51,6 +56,23 @@
 
     function commitFields(next: EntityField[]) {
         onDataChange({ fields: next });
+
+        // Field count drives the entity's intrinsic content height. If the
+        // user previously drag-resized the card to a fixed height, that
+        // height is now locked in inline style and would clip (or trail)
+        // the new field. Strip the explicit `height` from the node so the
+        // next render lets content drive the size again. Width is left
+        // alone — the user's chosen card width survives field edits.
+        updateNode(node.id, (n) => {
+            const styleStr =
+                typeof n.style === 'string'
+                    ? n.style.replace(/height:\s*[^;]+;?\s*/g, '').trim()
+                    : n.style;
+            return {
+                height: undefined,
+                style: styleStr || undefined
+            };
+        });
     }
 
     function patchField(index: number, patch: Partial<EntityField>) {

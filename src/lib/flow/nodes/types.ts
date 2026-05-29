@@ -17,7 +17,7 @@ import type { Component } from 'svelte';
 import type { Node } from '@xyflow/svelte';
 
 /** Sidebar palette grouping. Add new values here as new categories appear. */
-export type NodeCategory = 'basic' | 'arrows' | 'containers' | 'database';
+export type NodeCategory = 'basic' | 'arrows' | 'containers' | 'database' | 'uml';
 
 /**
  * Optional StylePanel surface that's only relevant to specific shapes.

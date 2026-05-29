@@ -977,6 +977,7 @@
 				bind:edges
 				{defaultEdgeOptions}
 				fitView
+				fitViewOptions={{ maxZoom: 1 }}
 				ondragover={onDragOver}
 				ondrop={onDrop}
 				onnodecontextmenu={handleContextMenu}

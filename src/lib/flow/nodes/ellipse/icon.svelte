@@ -1,10 +1,9 @@
 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <rect
-        x="3.5"
-        y="7.5"
-        width="17"
-        height="9"
-        rx="1.5"
+    <ellipse
+        cx="12"
+        cy="12"
+        rx="8"
+        ry="5"
         fill="none"
         stroke="currentColor"
         stroke-width="1.5"

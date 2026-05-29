@@ -8,13 +8,23 @@
 		sidebarState
 	} from '$lib/stores/sidebar.store.svelte';
 	import {
-		getCategories,
 		getShapesByCategory,
 		type NodeShape,
 		type NodeCategory
 	} from '$lib/flow/nodes/registry';
 
 	let searchBar = $state('');
+
+	// Fixed display order — every palette category is always visible so the
+	// user can see the full taxonomy (BASIC / ARROWS / CONTAINERS / DATABASE /
+	// UML) even before shapes have been authored for each one.
+	const CATEGORY_ORDER: NodeCategory[] = [
+		'basic',
+		'arrows',
+		'containers',
+		'database',
+		'uml'
+	];
 
 	// Stable display titles per category. Add new entries here when a new
 	// NodeCategory is introduced — kept beside the iteration so additions are
@@ -23,8 +33,23 @@
 		basic: 'BASIC',
 		arrows: 'ARROWS',
 		containers: 'CONTAINERS',
-		database: 'DATABASE'
+		database: 'DATABASE',
+		uml: 'UML'
 	};
+
+	// Per-category expand/collapse state. Default to all collapsed so the
+	// palette opens in the compact dropdown-list form.
+	let expandedCategories = $state<Record<NodeCategory, boolean>>({
+		basic: false,
+		arrows: false,
+		containers: false,
+		database: false,
+		uml: false
+	});
+
+	function toggleCategory(category: NodeCategory) {
+		expandedCategories[category] = !expandedCategories[category];
+	}
 
 	function filterShapes(shapes: NodeShape[]): NodeShape[] {
 		const query = searchBar.trim().toLowerCase();
@@ -32,16 +57,20 @@
 		return shapes.filter((s) => s.label.toLowerCase().includes(query));
 	}
 
-	// Sections derived live from the registry — adding a shape with a new
-	// category surfaces automatically without touching this file.
+	const isSearching = $derived(searchBar.trim().length > 0);
+
+	// Sections in fixed order. While searching, only sections with matches
+	// are shown and they auto-expand so results are immediately visible.
 	const sections = $derived(
-		getCategories()
-			.map((category) => ({
+		CATEGORY_ORDER.map((category) => {
+			const shapes = filterShapes(getShapesByCategory(category));
+			return {
 				category,
-				title: CATEGORY_TITLES[category] ?? category.toUpperCase(),
-				shapes: filterShapes(getShapesByCategory(category))
-			}))
-			.filter((section) => section.shapes.length > 0)
+				title: CATEGORY_TITLES[category],
+				shapes,
+				expanded: isSearching ? shapes.length > 0 : expandedCategories[category]
+			};
+		}).filter((section) => (isSearching ? section.shapes.length > 0 : true))
 	);
 
 	onMount(() => {
@@ -75,7 +104,12 @@
 		</div>
 
 		{#each sections as section (section.category)}
-			<NodeContainer heading={section.title} shapes={section.shapes} />
+			<NodeContainer
+				heading={section.title}
+				shapes={section.shapes}
+				expanded={section.expanded}
+				onToggle={() => toggleCategory(section.category)}
+			/>
 		{/each}
 	</div>
 

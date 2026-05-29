@@ -651,6 +651,40 @@ svg.svelte-flow__connectionline {
     color: var(--xy-edge-label-color, var(--xy-edge-label-color-default));
     background: var(--xy-edge-label-background-color, var(--xy-edge-label-background-color-default));
 }
+
+/*
+ * Basic-shape node opt-outs.
+ *
+ * xyflow's default .svelte-flow__node ships a white background, 1px border,
+ * box-shadow and 10px padding so simple labelled nodes look like cards out
+ * of the box. Our outlined shape nodes own their full visual via SVG / CSS
+ * border, so the default styling shows up as a white wrapper around the
+ * shape, plus a 10px gap between the bounding box edge and where the
+ * connection handles sit. Strip them here so the shape outline IS the node.
+ *
+ * Add a new basic shape: append its xyflow `type` id to the selector list.
+ * Single source of truth → grep for "basic shape opt-outs" if you're hunting
+ * for it later.
+ */
+.svelte-flow__node-RectangleNode,
+.svelte-flow__node-RoundedRectangleNode,
+.svelte-flow__node-EllipseNode,
+.svelte-flow__node-CircleNode,
+.svelte-flow__node-DiamondNode,
+.svelte-flow__node-ParallelogramNode,
+.svelte-flow__node-TriangleNode,
+.svelte-flow__node-PillNode,
+.svelte-flow__node-DocumentNode,
+.svelte-flow__node-ActorNode,
+.svelte-flow__node-CubeNode,
+.svelte-flow__node-TextNode,
+.svelte-flow__node-EntityNode {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+}
 .svelte-flow__container {
     -webkit-user-select: none;
     -moz-user-select: none;

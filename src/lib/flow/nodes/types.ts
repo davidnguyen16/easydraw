@@ -49,6 +49,15 @@ export interface NodeShape {
     icon: Component;
     /** Returns the initial data payload when a tile of this shape is dropped. */
     defaultData: () => Record<string, unknown>;
+    /**
+     * Initial bounding-box dimensions applied to the node on drop. Optional —
+     * when omitted, xyflow auto-sizes the node from its content. Use this for
+     * shapes whose identity depends on an aspect ratio: a Circle must drop as
+     * a square box (1:1), an Ellipse needs a wider box, etc. The user can
+     * still resize freely afterwards.
+     */
+    defaultWidth?: number;
+    defaultHeight?: number;
     /** Shape-specific editor surface added as a tab in StylePanel. Optional. */
     panel?: NodePanel;
 }

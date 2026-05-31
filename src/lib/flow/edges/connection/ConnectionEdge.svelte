@@ -1,12 +1,28 @@
 <script lang="ts">
-    import { useSvelteFlow, type EdgeProps } from '@xyflow/svelte';
+    import {
+        EdgeReconnectAnchor,
+        Position,
+        useSvelteFlow,
+        type EdgeProps
+    } from '@xyflow/svelte';
     import EndpointHandle from './EndpointHandle.svelte';
     import Pill from './Pill.svelte';
-    import { buildSegments, buildSvgPath, buildVertices, positionToAxis } from './routing';
+    import {
+        buildSegments,
+        buildSvgPath,
+        buildVertices,
+        longestSegmentMidpoint,
+        positionToAxis,
+        routeOrthogonal,
+        type Rect
+    } from './routing';
+    import { ANCHOR_NODE_TYPE } from '../../nodes/anchor/anchor';
     import type { ConnectionEdgeData, Point, Segment } from './types';
 
     let {
         id,
+        source,
+        target,
         sourceX,
         sourceY,
         targetX,
@@ -27,18 +43,119 @@
     const CORNER_RADIUS = 8;
     const HIT_WIDTH = 20;
 
+    /**
+     * Pixels to push the LINE'S source/target endpoints INWARD past each
+     * shape's bbox edge.
+     *
+     * The bbox edge is where xyflow positions the handle, and it's also
+     * roughly where the shape's visible border sits. Because xyflow renders
+     * nodes ABOVE edges in z-order, a line whose tip lands exactly on the
+     * bbox edge has its last 1–2 px painted over by the border — visually,
+     * the line "stops short" of the node, leaving the gap the user sees.
+     *
+     * Pushing the line tip a few pixels INSIDE the node means the line
+     * visibly traverses the border (it crosses through, instead of stopping
+     * at it). The endpoint markers are still anchored to the original bbox
+     * edge so the marker sits exactly at the border; the marker's solid
+     * white fill hides the inset portion of the line on the selected state.
+     */
+    const ENDPOINT_INSET = 4;
+
     let hovered = $state(false);
 
     const connectionData = $derived((data ?? {}) as ConnectionEdgeData);
     const bendPoints = $derived(connectionData.bendPoints ?? []);
 
-    const sourcePoint = $derived({ x: sourceX, y: sourceY });
-    const targetPoint = $derived({ x: targetX, y: targetY });
+    /**
+     * Returns `p` shifted `ENDPOINT_INSET` px in the direction that goes
+     * AWAY from the connection (i.e. into the node). Used for the line's
+     * source / target only — the endpoint markers stay at the original
+     * point so they mark the actual border.
+     */
+    function insetIntoNode(p: Point, position: Position): Point {
+        switch (position) {
+            case Position.Top:    return { x: p.x, y: p.y + ENDPOINT_INSET };
+            case Position.Right:  return { x: p.x - ENDPOINT_INSET, y: p.y };
+            case Position.Bottom: return { x: p.x, y: p.y - ENDPOINT_INSET };
+            case Position.Left:   return { x: p.x + ENDPOINT_INSET, y: p.y };
+            default:              return p;
+        }
+    }
+
+    // Current rendered box of a node (handles origin/measured size), or null
+    // if it isn't measured yet. Feeds the router's obstacle avoidance.
+    function rectOf(nodeId: string): Rect | null {
+        const node = flow.getInternalNode(nodeId);
+        if (!node) return null;
+        const pos = node.internals?.positionAbsolute ?? node.position;
+        const width = node.measured?.width ?? (node as { width?: number }).width;
+        const height = node.measured?.height ?? (node as { height?: number }).height;
+        if (pos == null || width == null || height == null) return null;
+        return { x: pos.x, y: pos.y, width, height };
+    }
+
+    // A connection anchor is a free wire end — treat it as FLOATING so the
+    // released edge routes exactly like the drag preview (which had no node at
+    // the pointer). See routeOrthogonal's floating handling.
+    function isAnchor(nodeId: string): boolean {
+        return flow.getInternalNode(nodeId)?.type === ANCHOR_NODE_TYPE;
+    }
+
+    const sourceFloating = $derived(isAnchor(source));
+    const targetFloating = $derived(isAnchor(target));
+
+    // Line endpoints. For a real node, shift the tip `ENDPOINT_INSET` px inward
+    // so the line crosses the border instead of stopping at it. For a FLOATING
+    // end (anchor) there is no border to cross — and insetting would pull the
+    // tip off the wire end, breaking the match with the drag preview — so the
+    // raw point is used.
+    const sourcePoint = $derived(
+        sourceFloating
+            ? { x: sourceX, y: sourceY }
+            : insetIntoNode({ x: sourceX, y: sourceY }, sourcePosition)
+    );
+    const targetPoint = $derived(
+        targetFloating
+            ? { x: targetX, y: targetY }
+            : insetIntoNode({ x: targetX, y: targetY }, targetPosition)
+    );
     const sourceAxis = $derived(positionToAxis(sourcePosition));
 
-    const vertices = $derived(buildVertices(sourcePoint, targetPoint, sourceAxis, bendPoints));
+    const isFreeForm = $derived(bendPoints.length === 0);
+
+    // WYSIWYG + no piercing: a pristine edge (no user bends) is routed with the
+    // node-aware orthogonal router — the SAME router the live connection-line
+    // preview uses — so the path you drag is the path you get, and it bends
+    // around nodes instead of cutting through them. Once the user adds a bend
+    // (drags the handle below), the custom waypoint router takes over.
+    const routedPoints = $derived(
+        routeOrthogonal({
+            source: sourcePoint,
+            sourcePosition,
+            sourceRect: sourceFloating ? null : rectOf(source),
+            sourceFloating,
+            target: targetPoint,
+            targetPosition,
+            targetRect: targetFloating ? null : rectOf(target),
+            targetFloating
+        })
+    );
+
+    const vertices = $derived(
+        isFreeForm
+            ? routedPoints.map((point) => ({ point, bendIndex: null as number | null }))
+            : buildVertices(sourcePoint, targetPoint, sourceAxis, bendPoints)
+    );
     const segments = $derived(buildSegments(vertices));
     const pathD = $derived(buildSvgPath(vertices, CORNER_RADIUS));
+
+    // Single "add bend" handle, placed on the longest run of a pristine edge.
+    const freeFormLabel = $derived(longestSegmentMidpoint(routedPoints));
+    const freeFormAxis = $derived(
+        Math.abs(targetPoint.x - sourcePoint.x) >= Math.abs(targetPoint.y - sourcePoint.y)
+            ? 'h'
+            : 'v'
+    );
 
     const active = $derived(hovered || !!selected);
     const strokeColor = $derived(active ? COLOR_ACTIVE : COLOR_DEFAULT);
@@ -167,6 +284,16 @@
         window.addEventListener('pointercancel', onUp);
     }
 
+    // Grabbing the single handle on a pristine (SmoothStep-routed) edge drops
+    // the FIRST user bend at the grab point, which flips the edge into the
+    // custom orthogonal router, then immediately drags that new bend. From
+    // there the normal solid/ghost pill editing takes over.
+    function startAddBendDrag(event: PointerEvent) {
+        const flowPos = flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+        patchBendPoints(() => [{ x: flowPos.x, y: flowPos.y }]);
+        startSolidDrag(0, event);
+    }
+
     // pointerenter/leave on the outer <g> only fire when the pointer enters
     // or leaves the group as a whole — moving from the line into a pill (or
     // vice versa) does NOT toggle hovered, so pills don't flicker out from
@@ -203,17 +330,28 @@
     />
 
     {#if active}
-        {#each segments as segment (segment.index)}
-            {#if segment.pillVisible}
-                <Pill
-                    kind="ghost"
-                    x={segment.mid.x}
-                    y={segment.mid.y}
-                    axis={segment.axis}
-                    onpointerdown={(e) => startGhostDrag(segment, e)}
-                />
-            {/if}
-        {/each}
+        {#if isFreeForm}
+            <!-- Pristine edge: one central handle to add the first bend. -->
+            <Pill
+                kind="ghost"
+                x={freeFormLabel.x}
+                y={freeFormLabel.y}
+                axis={freeFormAxis}
+                onpointerdown={(e) => startAddBendDrag(e)}
+            />
+        {:else}
+            {#each segments as segment (segment.index)}
+                {#if segment.pillVisible}
+                    <Pill
+                        kind="ghost"
+                        x={segment.mid.x}
+                        y={segment.mid.y}
+                        axis={segment.axis}
+                        onpointerdown={(e) => startGhostDrag(segment, e)}
+                    />
+                {/if}
+            {/each}
+        {/if}
     {/if}
 
     {#if selected}
@@ -227,8 +365,29 @@
             />
         {/each}
 
-        <EndpointHandle x={sourceX} y={sourceY} />
-        <EndpointHandle x={targetX} y={targetY} />
+        <!--
+            Endpoint markers stay anchored to the ORIGINAL (un-inset) border
+            point so they mark the border itself, while the line endpoint
+            sits ENDPOINT_INSET px deeper inside the node. The marker's
+            white fill covers the line in the inset zone (border → inset
+            point), so the visible line ends exactly at the marker's outer
+            edge = the border. In the unselected state (no marker) the line
+            still visibly crosses through the border for a clean plug-in
+            look — no gap.
+        -->
+        <EndpointHandle x={sourceX} y={sourceY} position={sourcePosition} />
+        <EndpointHandle x={targetX} y={targetY} position={targetPosition} />
+
+        <!--
+            Draggable reconnect affordances. EdgeReconnectAnchor renders into
+            the HTML edge-label layer (so it can't host the SVG square above —
+            they're intentionally separate: SVG square = visual, this = the
+            grab/drag target stacked over the same point, transparent). Grab
+            an endpoint and drag it onto another handle (native reconnect) or
+            onto empty canvas (left floating via Flow's onReconnectEnd).
+        -->
+        <EdgeReconnectAnchor type="source" position={{ x: sourceX, y: sourceY }} size={18} />
+        <EdgeReconnectAnchor type="target" position={{ x: targetX, y: targetY }} size={18} />
     {/if}
 </g>
 

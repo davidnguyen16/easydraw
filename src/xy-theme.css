@@ -678,7 +678,8 @@ svg.svelte-flow__connectionline {
 .svelte-flow__node-ActorNode,
 .svelte-flow__node-CubeNode,
 .svelte-flow__node-TextNode,
-.svelte-flow__node-EntityNode {
+.svelte-flow__node-EntityNode,
+.svelte-flow__node-connection-anchor {
     padding: 0;
     background: transparent;
     border: none;

@@ -22,9 +22,50 @@
 	 */
 	type ShapeKind = 'boxed' | 'svg' | 'text-only';
 
+	/**
+	 * Per-shape connection-handle placement.
+	 *
+	 * `position` is xyflow's edge-routing hint — it tells the layout engine
+	 * which direction edges should leave the handle from. `style` is an
+	 * optional CSS override for cases where the visual position doesn't sit
+	 * on the bbox edge centre (parallelogram slants, triangle midpoints, …).
+	 * When `style` is omitted the handle sits at the default cardinal point.
+	 */
+	type HandleSpec = {
+		id: string;
+		position: 'top' | 'right' | 'bottom' | 'left';
+		style?: string;
+	};
+
+	/**
+	 * Per-shape resize-anchor placement.
+	 *
+	 * The 8 named positions come straight from xyflow's NodeResizeControl.
+	 * When `resizeAnchors` is omitted on a variant, the standard NodeResizer
+	 * (4 corner anchors + 4 hidden edge lines) is used instead.
+	 */
+	type ResizeAnchorSpec = {
+		position:
+			| 'top'
+			| 'right'
+			| 'bottom'
+			| 'left'
+			| 'top-left'
+			| 'top-right'
+			| 'bottom-left'
+			| 'bottom-right';
+	};
+
 	interface Variant {
 		kind: ShapeKind;
 		boxRadius?: string;
+		/** Custom handle placements. When omitted the default 4 cardinal
+		 *  bbox-edge handles are rendered. */
+		handles?: HandleSpec[];
+		/** Custom resize-anchor placements (for shapes whose vertices don't
+		 *  land on bbox corners — e.g. the triangle's top vertex). When
+		 *  omitted, the default NodeResizer is used. */
+		resizeAnchors?: ResizeAnchorSpec[];
 	}
 
 	export const VARIANTS: Record<string, Variant> = {
@@ -34,9 +75,58 @@
 		TextNode: { kind: 'text-only' },
 		EllipseNode: { kind: 'svg' },
 		CircleNode: { kind: 'svg' },
-		DiamondNode: { kind: 'svg' },
-		ParallelogramNode: { kind: 'svg' },
-		TriangleNode: { kind: 'svg' },
+		// Diamond: the SVG polygon's 4 vertices sit exactly at the bbox edge
+		// MIDPOINTS (top, right, bottom, left) — not at the bbox corners. So
+		// the default 4 cardinal connection handles already land on the
+		// vertices for free; the resize anchors are the part that needs moving
+		// from the bbox corners to the same edge midpoints so each vertex ends
+		// up with a coinciding circle handle inside a red square anchor, as
+		// in the reference.
+		DiamondNode: {
+			kind: 'svg',
+			resizeAnchors: [
+				{ position: 'top' },
+				{ position: 'right' },
+				{ position: 'bottom' },
+				{ position: 'left' }
+			]
+		},
+		// Parallelogram: 4 connection handles at the MIDPOINTS of the four
+		// slanted sides (not the bbox edge centres). SVG polygon points are
+		// top-left(20,1) → top-right(99,1) → bottom-right(80,99) → bottom-left(1,99);
+		// the side midpoints fall at (59.5,1), (89.5,50), (40.5,99), (10.5,50).
+		// `right: auto` / `bottom: auto` cancel xyflow's class-level edge anchor
+		// for right/bottom-positioned handles. The `transform` override flips
+		// xyflow's outward translate(+50%) back to a centring translate(-50%).
+		// Resize anchors use the default 4 bbox corners (matches the picture).
+		ParallelogramNode: {
+			kind: 'svg',
+			handles: [
+				{ id: 'top',    position: 'top',    style: 'top: 1%; left: 59.5%;' },
+				{ id: 'right',  position: 'right',  style: 'top: 50%; left: 89.5%; right: auto; transform: translate(-50%, -50%);' },
+				{ id: 'bottom', position: 'bottom', style: 'top: 99%; left: 40.5%; bottom: auto; transform: translate(-50%, -50%);' },
+				{ id: 'left',   position: 'left',   style: 'top: 50%; left: 10.5%;' }
+			]
+		},
+		// Triangle: 3 connection handles at the midpoints of the 3 sides + 3
+		// resize anchors at the 3 vertices. SVG polygon points are
+		// top(50,3), bottom-right(97,97), bottom-left(3,97). Side midpoints
+		// fall at (26.5,50), (73.5,50), (50,97). The top vertex sits at the
+		// bbox top-centre — NodeResizeControl `position: 'top'` lands there
+		// naturally. Bottom-left/right vertices sit at the bbox corners.
+		TriangleNode: {
+			kind: 'svg',
+			handles: [
+				{ id: 'left',   position: 'left',   style: 'top: 50%; left: 26.5%;' },
+				{ id: 'right',  position: 'right',  style: 'top: 50%; left: 73.5%; right: auto; transform: translate(-50%, -50%);' },
+				{ id: 'bottom', position: 'bottom', style: 'top: 97%; left: 50%; bottom: auto; transform: translate(-50%, -50%);' }
+			],
+			resizeAnchors: [
+				{ position: 'top' },
+				{ position: 'bottom-left' },
+				{ position: 'bottom-right' }
+			]
+		},
 		DocumentNode: { kind: 'svg' },
 		ActorNode: { kind: 'svg' },
 		CubeNode: { kind: 'svg' }
@@ -52,9 +142,20 @@
 		Handle,
 		Position,
 		NodeResizer,
+		NodeResizeControl,
+		ResizeControlVariant,
 		useSvelteFlow,
 		type NodeProps
 	} from '@xyflow/svelte';
+
+	// String → Position lookup so the VARIANTS config can stay as plain JSON-y
+	// values (no enum imports inside the module script).
+	const HANDLE_POSITION = {
+		top: Position.Top,
+		right: Position.Right,
+		bottom: Position.Bottom,
+		left: Position.Left
+	} as const;
 
 	let { id, type, data, selected, isConnectable }: NodeProps = $props();
 	let { updateNodeData } = useSvelteFlow();
@@ -189,8 +290,17 @@
 					vector-effect="non-scaling-stroke"
 				/>
 			{:else if type === 'DocumentNode'}
+				<!--
+					Asymmetric S-curve bottom: a dip on the right side and a
+					peak (hump) on the left, matching the design reference.
+					`Q 75,98 50,82` dips the right half down (apex ≈ y=90);
+					`T 1,82` is a SMOOTH quadratic continuation that reflects
+					the previous control about (50,82) to (25,66), which lifts
+					the left half UP (peak apex ≈ y=74). Both extremes stay
+					well inside the 0-100 viewBox so the curve never clips.
+				-->
 				<path
-					d="M1,1 L99,1 L99,82 Q75,108 50,82 T1,82 Z"
+					d="M1,1 L99,1 L99,82 Q75,98 50,82 T1,82 Z"
 					fill={fillColor}
 					stroke={strokeColor}
 					stroke-width={strokeWidth}
@@ -204,6 +314,14 @@
 				<line x1="50" y1="68" x2="28" y2="98" stroke={strokeColor} stroke-width={strokeWidth} vector-effect="non-scaling-stroke" />
 				<line x1="50" y1="68" x2="72" y2="98" stroke={strokeColor} stroke-width={strokeWidth} vector-effect="non-scaling-stroke" />
 			{:else if type === 'CubeNode'}
+				<!--
+					3D cube faces. Like every other shape, the fill always
+					follows `data.fillColor` so StylePanel colour changes show
+					up immediately, even while the cube is selected. Selection
+					only changes the stroke (handled centrally via strokeColor)
+					— the 3-face depth still reads through the red stroke
+					because each face keeps its own outline.
+				-->
 				<polygon points="2,30 50,5 98,30 50,55" fill={fillColor} stroke={strokeColor} stroke-width={strokeWidth} stroke-linejoin="round" vector-effect="non-scaling-stroke" />
 				<polygon points="2,30 2,80 50,98 50,55" fill={fillColor} stroke={strokeColor} stroke-width={strokeWidth} stroke-linejoin="round" vector-effect="non-scaling-stroke" />
 				<polygon points="98,30 98,80 50,98 50,55" fill={fillColor} stroke={strokeColor} stroke-width={strokeWidth} stroke-linejoin="round" vector-effect="non-scaling-stroke" />
@@ -211,18 +329,48 @@
 		</svg>
 	{/if}
 
-	<NodeResizer
-		isVisible={selected}
-		minWidth={variant.kind === 'text-only' ? 40 : 60}
-		minHeight={variant.kind === 'text-only' ? 24 : 30}
-		handleClass="shape-resize-anchor"
-		lineClass="shape-resize-line"
-	/>
+	{#if variant.resizeAnchors}
+		<!-- Custom resize anchors (triangle vertices, etc.). Each NodeResizeControl
+		     renders one anchor; we only mount them while selected so they don't
+		     paint over the shape at rest. -->
+		{#if selected}
+			{#each variant.resizeAnchors as anchor (anchor.position)}
+				<NodeResizeControl
+					position={anchor.position}
+					variant={ResizeControlVariant.Handle}
+					class="shape-resize-anchor"
+					minWidth={60}
+					minHeight={30}
+				/>
+			{/each}
+		{/if}
+	{:else}
+		<NodeResizer
+			isVisible={selected}
+			minWidth={variant.kind === 'text-only' ? 40 : 60}
+			minHeight={variant.kind === 'text-only' ? 24 : 30}
+			handleClass="shape-resize-anchor"
+			lineClass="shape-resize-line"
+		/>
+	{/if}
 
-	<Handle type="source" position={Position.Top} {isConnectable} id="top" class="shape-conn" />
-	<Handle type="source" position={Position.Right} {isConnectable} id="right" class="shape-conn" />
-	<Handle type="source" position={Position.Bottom} {isConnectable} id="bottom" class="shape-conn" />
-	<Handle type="source" position={Position.Left} {isConnectable} id="left" class="shape-conn" />
+	{#if variant.handles}
+		{#each variant.handles as h (h.id)}
+			<Handle
+				type="source"
+				position={HANDLE_POSITION[h.position]}
+				{isConnectable}
+				id={h.id}
+				class="shape-conn"
+				style={h.style}
+			/>
+		{/each}
+	{:else}
+		<Handle type="source" position={Position.Top} {isConnectable} id="top" class="shape-conn" />
+		<Handle type="source" position={Position.Right} {isConnectable} id="right" class="shape-conn" />
+		<Handle type="source" position={Position.Bottom} {isConnectable} id="bottom" class="shape-conn" />
+		<Handle type="source" position={Position.Left} {isConnectable} id="left" class="shape-conn" />
+	{/if}
 
 	<div class="node-text">
 		<input

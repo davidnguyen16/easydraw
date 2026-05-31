@@ -8,6 +8,11 @@ export const parallelogramShape: NodeShape = {
     category: 'basic',
     component: Component,
     icon: Icon,
+    // Drop with a 2:1 wide box so the slant is visually clear; without an
+    // explicit size xyflow's content-driven default gives a too-narrow box
+    // and the parallelogram looks squashed.
+    defaultWidth: 200,
+    defaultHeight: 100,
     defaultData: () => ({
         label: 'Input / Output'
     })

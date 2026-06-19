@@ -10,23 +10,23 @@
  * be unit-tested in isolation.
  */
 export interface ExportContext {
-    /** File name (without extension). The exporter appends its own extension. */
-    fileName: string;
-    /** Serialized editor state — useful for text-based formats like .easydraw. */
-    serializedState: string;
-    /** The DOM element to rasterize for image/PDF formats. */
-    canvasElement: HTMLElement | null;
+	/** File name (without extension). The exporter appends its own extension. */
+	fileName: string;
+	/** Serialized editor state — useful for text-based formats like .easydraw. */
+	serializedState: string;
+	/** The DOM element to rasterize for image/PDF formats. */
+	canvasElement: HTMLElement | null;
 }
 
 export interface Exporter {
-    /** Stable id used by the registry (e.g. "png"). */
-    id: string;
-    /** Human-readable name shown in the menu (e.g. "PNG"). */
-    label: string;
-    /** File extension including the leading dot (e.g. ".png"). */
-    extension: string;
-    /** MIME type used when constructing the download blob. */
-    mimeType: string;
-    /** Performs the export. Should throw on unrecoverable error. */
-    run: (context: ExportContext) => Promise<void>;
+	/** Stable id used by the registry (e.g. "png"). */
+	id: string;
+	/** Human-readable name shown in the menu (e.g. "PNG"). */
+	label: string;
+	/** File extension including the leading dot (e.g. ".png"). */
+	extension: string;
+	/** MIME type used when constructing the download blob. */
+	mimeType: string;
+	/** Performs the export. Should throw on unrecoverable error. */
+	run: (context: ExportContext) => Promise<void>;
 }

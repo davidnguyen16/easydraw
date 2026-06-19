@@ -3,12 +3,12 @@ import Component from '../shared/ShapeNode.svelte';
 import Icon from './icon.svelte';
 
 export const rectangleShape: NodeShape = {
-    id: 'RectangleNode',
-    label: 'Rectangle',
-    category: 'basic',
-    component: Component,
-    icon: Icon,
-    defaultData: () => ({
-        label: 'New Node'
-    })
+	id: 'RectangleNode',
+	label: 'Rectangle',
+	category: 'basic',
+	component: Component,
+	icon: Icon,
+	defaultData: () => ({
+		label: 'New Node'
+	})
 };

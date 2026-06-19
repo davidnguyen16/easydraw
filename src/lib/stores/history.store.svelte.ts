@@ -20,45 +20,45 @@ let past: string[] = [];
 let future: string[] = [];
 
 export const historyState = $state({
-    canUndo: false,
-    canRedo: false
+	canUndo: false,
+	canRedo: false
 });
 
 function updateFlags() {
-    historyState.canUndo = past.length > 1;
-    historyState.canRedo = future.length > 0;
+	historyState.canUndo = past.length > 1;
+	historyState.canRedo = future.length > 0;
 }
 
 // Replaces the stack with a single baseline snapshot (e.g. after page hydrate).
 export function resetHistory(snapshot: string) {
-    past = [snapshot];
-    future = [];
-    updateFlags();
+	past = [snapshot];
+	future = [];
+	updateFlags();
 }
 
 // Appends a snapshot if it differs from the last recorded one.
 export function recordSnapshot(snapshot: string) {
-    if (past.length > 0 && past[past.length - 1] === snapshot) return;
-    past.push(snapshot);
-    if (past.length > MAX_HISTORY) past.shift();
-    future = [];
-    updateFlags();
+	if (past.length > 0 && past[past.length - 1] === snapshot) return;
+	past.push(snapshot);
+	if (past.length > MAX_HISTORY) past.shift();
+	future = [];
+	updateFlags();
 }
 
 // Pops the current snapshot, pushes it to redo, and returns the previous one.
 export function undo(): string | null {
-    if (past.length <= 1) return null;
-    const current = past.pop()!;
-    future.push(current);
-    updateFlags();
-    return past[past.length - 1];
+	if (past.length <= 1) return null;
+	const current = past.pop()!;
+	future.push(current);
+	updateFlags();
+	return past[past.length - 1];
 }
 
 // Pops the next redo snapshot back onto the past stack and returns it.
 export function redo(): string | null {
-    if (future.length === 0) return null;
-    const next = future.pop()!;
-    past.push(next);
-    updateFlags();
-    return next;
+	if (future.length === 0) return null;
+	const next = future.pop()!;
+	past.push(next);
+	updateFlags();
+	return next;
 }

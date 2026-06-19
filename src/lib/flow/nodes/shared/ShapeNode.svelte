@@ -102,10 +102,18 @@
 		ParallelogramNode: {
 			kind: 'svg',
 			handles: [
-				{ id: 'top',    position: 'top',    style: 'top: 1%; left: 59.5%;' },
-				{ id: 'right',  position: 'right',  style: 'top: 50%; left: 89.5%; right: auto; transform: translate(-50%, -50%);' },
-				{ id: 'bottom', position: 'bottom', style: 'top: 99%; left: 40.5%; bottom: auto; transform: translate(-50%, -50%);' },
-				{ id: 'left',   position: 'left',   style: 'top: 50%; left: 10.5%;' }
+				{ id: 'top', position: 'top', style: 'top: 1%; left: 59.5%;' },
+				{
+					id: 'right',
+					position: 'right',
+					style: 'top: 50%; left: 89.5%; right: auto; transform: translate(-50%, -50%);'
+				},
+				{
+					id: 'bottom',
+					position: 'bottom',
+					style: 'top: 99%; left: 40.5%; bottom: auto; transform: translate(-50%, -50%);'
+				},
+				{ id: 'left', position: 'left', style: 'top: 50%; left: 10.5%;' }
 			]
 		},
 		// Triangle: 3 connection handles at the midpoints of the 3 sides + 3
@@ -117,9 +125,17 @@
 		TriangleNode: {
 			kind: 'svg',
 			handles: [
-				{ id: 'left',   position: 'left',   style: 'top: 50%; left: 26.5%;' },
-				{ id: 'right',  position: 'right',  style: 'top: 50%; left: 73.5%; right: auto; transform: translate(-50%, -50%);' },
-				{ id: 'bottom', position: 'bottom', style: 'top: 97%; left: 50%; bottom: auto; transform: translate(-50%, -50%);' }
+				{ id: 'left', position: 'left', style: 'top: 50%; left: 26.5%;' },
+				{
+					id: 'right',
+					position: 'right',
+					style: 'top: 50%; left: 73.5%; right: auto; transform: translate(-50%, -50%);'
+				},
+				{
+					id: 'bottom',
+					position: 'bottom',
+					style: 'top: 97%; left: 50%; bottom: auto; transform: translate(-50%, -50%);'
+				}
 			],
 			resizeAnchors: [
 				{ position: 'top' },
@@ -160,9 +176,7 @@
 	let { id, type, data, selected, isConnectable }: NodeProps = $props();
 	let { updateNodeData } = useSvelteFlow();
 
-	const variant = $derived<Variant>(
-		VARIANTS[type ?? ''] ?? { kind: 'svg' }
-	);
+	const variant = $derived<Variant>(VARIANTS[type ?? ''] ?? { kind: 'svg' });
 
 	// Style fields populated by StylePanel. Defaults match the design ref:
 	// white fill, black 1.5px border, dark text. Selected state always
@@ -199,9 +213,7 @@
 	// RoundedRectangle and Pill are defined by their rounding so they ignore
 	// the flag.
 	const boxedRadius = $derived(
-		type === 'RectangleNode' && rounded === false
-			? '0'
-			: (variant.boxRadius ?? '0')
+		type === 'RectangleNode' && rounded === false ? '0' : (variant.boxRadius ?? '0')
 	);
 
 	const boxedStyle = $derived(
@@ -230,11 +242,7 @@
 	true bounding box). Handles position absolutely against this container,
 	which puts them exactly on the shape edge — no gap.
 -->
-<div
-	class="shape-node"
-	class:selected
-	style="filter: {containerFilter};"
->
+<div class="shape-node" class:selected style="filter: {containerFilter};">
 	<!--
 		DOM order matters for stacking: paint the shape fill FIRST so that
 		the connection handles + resize anchors render on top of it. Without
@@ -245,12 +253,7 @@
 	{#if variant.kind === 'boxed'}
 		<div class="shape-fill" style={boxedStyle}></div>
 	{:else if variant.kind === 'svg'}
-		<svg
-			class="shape-fill"
-			preserveAspectRatio="none"
-			viewBox="0 0 100 100"
-			aria-hidden="true"
-		>
+		<svg class="shape-fill" preserveAspectRatio="none" viewBox="0 0 100 100" aria-hidden="true">
 			{#if type === 'EllipseNode' || type === 'CircleNode'}
 				<ellipse
 					cx="50"
@@ -308,11 +311,51 @@
 					vector-effect="non-scaling-stroke"
 				/>
 			{:else if type === 'ActorNode'}
-				<circle cx="50" cy="18" r="13" fill={fillColor} stroke={strokeColor} stroke-width={strokeWidth} vector-effect="non-scaling-stroke" />
-				<line x1="50" y1="31" x2="50" y2="68" stroke={strokeColor} stroke-width={strokeWidth} vector-effect="non-scaling-stroke" />
-				<line x1="22" y1="46" x2="78" y2="46" stroke={strokeColor} stroke-width={strokeWidth} vector-effect="non-scaling-stroke" />
-				<line x1="50" y1="68" x2="28" y2="98" stroke={strokeColor} stroke-width={strokeWidth} vector-effect="non-scaling-stroke" />
-				<line x1="50" y1="68" x2="72" y2="98" stroke={strokeColor} stroke-width={strokeWidth} vector-effect="non-scaling-stroke" />
+				<circle
+					cx="50"
+					cy="18"
+					r="13"
+					fill={fillColor}
+					stroke={strokeColor}
+					stroke-width={strokeWidth}
+					vector-effect="non-scaling-stroke"
+				/>
+				<line
+					x1="50"
+					y1="31"
+					x2="50"
+					y2="68"
+					stroke={strokeColor}
+					stroke-width={strokeWidth}
+					vector-effect="non-scaling-stroke"
+				/>
+				<line
+					x1="22"
+					y1="46"
+					x2="78"
+					y2="46"
+					stroke={strokeColor}
+					stroke-width={strokeWidth}
+					vector-effect="non-scaling-stroke"
+				/>
+				<line
+					x1="50"
+					y1="68"
+					x2="28"
+					y2="98"
+					stroke={strokeColor}
+					stroke-width={strokeWidth}
+					vector-effect="non-scaling-stroke"
+				/>
+				<line
+					x1="50"
+					y1="68"
+					x2="72"
+					y2="98"
+					stroke={strokeColor}
+					stroke-width={strokeWidth}
+					vector-effect="non-scaling-stroke"
+				/>
 			{:else if type === 'CubeNode'}
 				<!--
 					3D cube faces. Like every other shape, the fill always
@@ -322,9 +365,30 @@
 					— the 3-face depth still reads through the red stroke
 					because each face keeps its own outline.
 				-->
-				<polygon points="2,30 50,5 98,30 50,55" fill={fillColor} stroke={strokeColor} stroke-width={strokeWidth} stroke-linejoin="round" vector-effect="non-scaling-stroke" />
-				<polygon points="2,30 2,80 50,98 50,55" fill={fillColor} stroke={strokeColor} stroke-width={strokeWidth} stroke-linejoin="round" vector-effect="non-scaling-stroke" />
-				<polygon points="98,30 98,80 50,98 50,55" fill={fillColor} stroke={strokeColor} stroke-width={strokeWidth} stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+				<polygon
+					points="2,30 50,5 98,30 50,55"
+					fill={fillColor}
+					stroke={strokeColor}
+					stroke-width={strokeWidth}
+					stroke-linejoin="round"
+					vector-effect="non-scaling-stroke"
+				/>
+				<polygon
+					points="2,30 2,80 50,98 50,55"
+					fill={fillColor}
+					stroke={strokeColor}
+					stroke-width={strokeWidth}
+					stroke-linejoin="round"
+					vector-effect="non-scaling-stroke"
+				/>
+				<polygon
+					points="98,30 98,80 50,98 50,55"
+					fill={fillColor}
+					stroke={strokeColor}
+					stroke-width={strokeWidth}
+					stroke-linejoin="round"
+					vector-effect="non-scaling-stroke"
+				/>
 			{/if}
 		</svg>
 	{/if}
@@ -367,9 +431,27 @@
 		{/each}
 	{:else}
 		<Handle type="source" position={Position.Top} {isConnectable} id="top" class="shape-conn" />
-		<Handle type="source" position={Position.Right} {isConnectable} id="right" class="shape-conn" />
-		<Handle type="source" position={Position.Bottom} {isConnectable} id="bottom" class="shape-conn" />
-		<Handle type="source" position={Position.Left} {isConnectable} id="left" class="shape-conn" />
+		<Handle
+			type="source"
+			position={Position.Right}
+			{isConnectable}
+			id="right"
+			class="shape-conn"
+		/>
+		<Handle
+			type="source"
+			position={Position.Bottom}
+			{isConnectable}
+			id="bottom"
+			class="shape-conn"
+		/>
+		<Handle
+			type="source"
+			position={Position.Left}
+			{isConnectable}
+			id="left"
+			class="shape-conn"
+		/>
 	{/if}
 
 	<div class="node-text">
@@ -442,7 +524,7 @@
 		width: 12px;
 		height: 12px;
 		background: #ffffff;
-		border: 1.5px solid #A6192E;
+		border: 1.5px solid #a6192e;
 		border-radius: 50%;
 		opacity: 0;
 		transition: opacity 0.12s ease;
@@ -466,7 +548,7 @@
 	:global(.shape-resize-anchor) {
 		width: 8px;
 		height: 8px;
-		background: #A6192E;
+		background: #a6192e;
 		border: none;
 		border-radius: 1px;
 	}

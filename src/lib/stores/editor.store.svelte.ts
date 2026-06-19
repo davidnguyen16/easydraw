@@ -17,7 +17,7 @@ import { parseEasyDraw } from '$lib/exporters/easydraw';
 export const editorMetaData = $state({
 	fileName: 'Untitled',
 	lastSaved: Date.now()
-})
+});
 
 // A single editable page in the diagram editor.
 export interface EditorPage {
@@ -31,7 +31,7 @@ export interface EditorPage {
 export interface EditorState {
 	pages: EditorPage[];
 	activePageId: string;
-	fileName?: string;       // Optional: persisted file name (kept optional for backward compat)
+	fileName?: string; // Optional: persisted file name (kept optional for backward compat)
 }
 
 const STORAGE_KEY = 'easydraw.editor.v1';
@@ -160,14 +160,16 @@ export function saveActivePageToStorage() {
 
 	const nextPages = storedState
 		? storedState.pages.some((page) => page.id === activePage.id)
-			? storedState.pages.map((page) => (page.id === activePage.id ? { ...activePage } : page))
+			? storedState.pages.map((page) =>
+					page.id === activePage.id ? { ...activePage } : page
+				)
 			: [...storedState.pages, { ...activePage }]
 		: [{ ...activePage }];
 
 	const nextState: EditorState = {
 		pages: nextPages,
 		activePageId: activePage.id,
-		fileName: editorMetaData.fileName       // Persist file name alongside pages
+		fileName: editorMetaData.fileName // Persist file name alongside pages
 	};
 
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
@@ -336,7 +338,9 @@ export function deletePage(pageId: string) {
 
 		const nextPages = state.pages.filter((page) => page.id !== pageId);
 		const nextActivePageId =
-			state.activePageId === pageId ? nextPages[0]?.id ?? state.activePageId : state.activePageId;
+			state.activePageId === pageId
+				? (nextPages[0]?.id ?? state.activePageId)
+				: state.activePageId;
 
 		return {
 			...state,

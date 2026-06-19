@@ -15,56 +15,56 @@ export type Axis = 'h' | 'v';
 
 /** One text label pinned to a point along the edge. */
 export interface ConnectionLabel {
-    /** Stable id (used as the Svelte key and for edit/remove targeting). */
-    id: string;
-    /** Position along the path as a fraction of total length, in [0, 1]. */
-    t: number;
-    /** Text content. Empty labels are pruned on commit. */
-    text: string;
+	/** Stable id (used as the Svelte key and for edit/remove targeting). */
+	id: string;
+	/** Position along the path as a fraction of total length, in [0, 1]. */
+	t: number;
+	/** Text content. Empty labels are pruned on commit. */
+	text: string;
 }
 
 export interface ConnectionEdgeData {
-    /** Ordered bend points the user has dropped on this edge. */
-    bendPoints?: Point[];
-    /**
-     * Text labels placed ALONG the edge (Lucidchart-style). Multiple are
-     * allowed; each masks the strip of line it sits on so the line shows a
-     * clean gap between consecutive labels.
-     */
-    labels?: ConnectionLabel[];
-    [key: string]: unknown;
+	/** Ordered bend points the user has dropped on this edge. */
+	bendPoints?: Point[];
+	/**
+	 * Text labels placed ALONG the edge (Lucidchart-style). Multiple are
+	 * allowed; each masks the strip of line it sits on so the line shows a
+	 * clean gap between consecutive labels.
+	 */
+	labels?: ConnectionLabel[];
+	[key: string]: unknown;
 }
 
 /** One vertex along the rendered orthogonal path. */
 export interface Vertex {
-    point: Point;
-    /**
-     * Index into the original `bendPoints` array if this vertex is a user
-     * bend point; null for source, target, or auto-inserted corners.
-     */
-    bendIndex: number | null;
+	point: Point;
+	/**
+	 * Index into the original `bendPoints` array if this vertex is a user
+	 * bend point; null for source, target, or auto-inserted corners.
+	 */
+	bendIndex: number | null;
 }
 
 /** One straight segment between two consecutive vertices. */
 export interface Segment {
-    /** Position in the segments array (also used as Svelte key). */
-    index: number;
-    p1: Point;
-    p2: Point;
-    /** Midpoint — anchor for the ghost pill. */
-    mid: Point;
-    /** Segment orientation. */
-    axis: Axis;
-    /**
-     * Insertion index for a new bend point dropped on this segment.
-     * Equals the count of user bend points among vertices up to and
-     * including this segment's start vertex.
-     */
-    bendInsertIndex: number;
-    /** Index of the user bend point at p1, or null. */
-    startBendIndex: number | null;
-    /** Index of the user bend point at p2, or null. */
-    endBendIndex: number | null;
-    /** Whether the segment has enough length to host a pill without overlap. */
-    pillVisible: boolean;
+	/** Position in the segments array (also used as Svelte key). */
+	index: number;
+	p1: Point;
+	p2: Point;
+	/** Midpoint — anchor for the ghost pill. */
+	mid: Point;
+	/** Segment orientation. */
+	axis: Axis;
+	/**
+	 * Insertion index for a new bend point dropped on this segment.
+	 * Equals the count of user bend points among vertices up to and
+	 * including this segment's start vertex.
+	 */
+	bendInsertIndex: number;
+	/** Index of the user bend point at p1, or null. */
+	startBendIndex: number | null;
+	/** Index of the user bend point at p2, or null. */
+	endBendIndex: number | null;
+	/** Whether the segment has enough length to host a pill without overlap. */
+	pillVisible: boolean;
 }

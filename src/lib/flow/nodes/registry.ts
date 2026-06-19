@@ -32,27 +32,27 @@ import type { NodeCategory, NodeShape } from './types';
 // design reference: rectangle / rounded / ellipse / circle, then
 // diamond / parallelogram / triangle / pill, then document / actor / cube / text.
 export const SHAPES: readonly NodeShape[] = [
-    rectangleShape,
-    roundedRectangleShape,
-    ellipseShape,
-    circleShape,
-    diamondShape,
-    parallelogramShape,
-    triangleShape,
-    pillShape,
-    documentShape,
-    actorShape,
-    cubeShape,
-    textShape,
-    entityShape
+	rectangleShape,
+	roundedRectangleShape,
+	ellipseShape,
+	circleShape,
+	diamondShape,
+	parallelogramShape,
+	triangleShape,
+	pillShape,
+	documentShape,
+	actorShape,
+	cubeShape,
+	textShape,
+	entityShape
 ] as const;
 
 export function getShape(id: string): NodeShape | undefined {
-    return SHAPES.find((s) => s.id === id);
+	return SHAPES.find((s) => s.id === id);
 }
 
 export function getShapesByCategory(category: NodeCategory): NodeShape[] {
-    return SHAPES.filter((s) => s.category === category);
+	return SHAPES.filter((s) => s.category === category);
 }
 
 /**
@@ -61,24 +61,24 @@ export function getShapesByCategory(category: NodeCategory): NodeShape[] {
  * sections without hardcoding the category list.
  */
 export function getCategories(): NodeCategory[] {
-    const seen = new Set<NodeCategory>();
-    const ordered: NodeCategory[] = [];
-    for (const shape of SHAPES) {
-        if (!seen.has(shape.category)) {
-            seen.add(shape.category);
-            ordered.push(shape.category);
-        }
-    }
-    return ordered;
+	const seen = new Set<NodeCategory>();
+	const ordered: NodeCategory[] = [];
+	for (const shape of SHAPES) {
+		if (!seen.has(shape.category)) {
+			seen.add(shape.category);
+			ordered.push(shape.category);
+		}
+	}
+	return ordered;
 }
 
 /** xyflow's `nodeTypes` map, built from the registry. */
 export function buildNodeTypesMap(): Record<string, NodeShape['component']> {
-    const map: Record<string, NodeShape['component']> = {};
-    for (const shape of SHAPES) {
-        map[shape.id] = shape.component;
-    }
-    return map;
+	const map: Record<string, NodeShape['component']> = {};
+	for (const shape of SHAPES) {
+		map[shape.id] = shape.component;
+	}
+	return map;
 }
 
 export type { NodeShape, NodeCategory } from './types';

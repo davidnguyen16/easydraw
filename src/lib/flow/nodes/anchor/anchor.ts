@@ -33,18 +33,18 @@ export const ANCHOR_SIZE = 12;
  * lands exactly where the user released the drag rather than at a corner.
  */
 export function createAnchorNode(id: string, position: { x: number; y: number }): Node {
-    return {
-        id,
-        type: ANCHOR_NODE_TYPE,
-        position,
-        data: {},
-        origin: [0.5, 0.5],
-        width: ANCHOR_SIZE,
-        height: ANCHOR_SIZE
-    } satisfies Node;
+	return {
+		id,
+		type: ANCHOR_NODE_TYPE,
+		position,
+		data: {},
+		origin: [0.5, 0.5],
+		width: ANCHOR_SIZE,
+		height: ANCHOR_SIZE
+	} satisfies Node;
 }
 
 /** True when a node is a connection anchor. */
 export function isAnchorNode(node: Node): boolean {
-    return node.type === ANCHOR_NODE_TYPE;
+	return node.type === ANCHOR_NODE_TYPE;
 }

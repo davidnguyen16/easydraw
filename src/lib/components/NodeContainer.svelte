@@ -23,12 +23,7 @@
 </script>
 
 <section class="shape-section">
-	<button
-		type="button"
-		class="section-toggle"
-		aria-expanded={expanded}
-		onclick={onToggle}
-	>
+	<button type="button" class="section-toggle" aria-expanded={expanded} onclick={onToggle}>
 		<svg
 			class="chevron"
 			class:expanded
@@ -134,7 +129,9 @@
 		cursor: grab;
 		color: #a6192e;
 		padding: 0;
-		transition: border-color 0.12s ease, box-shadow 0.12s ease;
+		transition:
+			border-color 0.12s ease,
+			box-shadow 0.12s ease;
 	}
 
 	.shape-tile:hover {

@@ -3,10 +3,7 @@
 	import NodeContainer from '$lib/components/NodeContainer.svelte';
 	import CollapseButton from '$lib/components/sidebar/CollapseButton.svelte';
 	import ResizeHandle from '$lib/components/sidebar/ResizeHandle.svelte';
-	import {
-		loadSidebarStateFromStorage,
-		sidebarState
-	} from '$lib/stores/sidebar.store.svelte';
+	import { loadSidebarStateFromStorage, sidebarState } from '$lib/stores/sidebar.store.svelte';
 	import {
 		getShapesByCategory,
 		type NodeShape,
@@ -18,13 +15,7 @@
 	// Fixed display order — every palette category is always visible so the
 	// user can see the full taxonomy (BASIC / ARROWS / CONTAINERS / DATABASE /
 	// UML) even before shapes have been authored for each one.
-	const CATEGORY_ORDER: NodeCategory[] = [
-		'basic',
-		'arrows',
-		'containers',
-		'database',
-		'uml'
-	];
+	const CATEGORY_ORDER: NodeCategory[] = ['basic', 'arrows', 'containers', 'database', 'uml'];
 
 	// Stable display titles per category. Add new entries here when a new
 	// NodeCategory is introduced — kept beside the iteration so additions are
@@ -96,11 +87,7 @@
 				<circle cx="11" cy="11" r="7" />
 				<line x1="20" y1="20" x2="16.5" y2="16.5" />
 			</svg>
-			<input
-				class="search-bar"
-				bind:value={searchBar}
-				placeholder="Search shapes"
-			/>
+			<input class="search-bar" bind:value={searchBar} placeholder="Search shapes" />
 		</div>
 
 		{#each sections as section (section.category)}
@@ -120,82 +107,82 @@
 </aside>
 
 <style>
-    aside {
-        position: absolute;
-        top: 0.2%;
-        left: 0;
-        bottom: 0;
+	aside {
+		position: absolute;
+		top: 0.2%;
+		left: 0;
+		bottom: 0;
 
-        margin: 0;
+		margin: 0;
 
-        background: #F5F3EF;
+		background: #f5f3ef;
 
-        border-radius: 0;
-        border-left: 0;
+		border-radius: 0;
+		border-left: 0;
 
-        box-shadow: 0 0 10px #C4C1B8;
+		box-shadow: 0 0 10px #c4c1b8;
 
-        /* Smooth width change when toggling collapse / dragging finishes. */
-        transition: width 0.15s ease;
-    }
+		/* Smooth width change when toggling collapse / dragging finishes. */
+		transition: width 0.15s ease;
+	}
 
-    aside.collapsed {
-        box-shadow: none;
-    }
+	aside.collapsed {
+		box-shadow: none;
+	}
 
-    .sidebar-content {
-        width: 100%;
-        height: 100%;
-        padding: 2.5em 1.2em 1em;
-        gap: 1.4em;
+	.sidebar-content {
+		width: 100%;
+		height: 100%;
+		padding: 2.5em 1.2em 1em;
+		gap: 1.4em;
 
-        display: flex;
-        flex-direction: column;
+		display: flex;
+		flex-direction: column;
 
-        /* Allow vertical scrolling when many sections are present. */
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
+		/* Allow vertical scrolling when many sections are present. */
+		overflow-y: auto;
+		overflow-x: hidden;
+	}
 
-    aside.collapsed .sidebar-content {
-        visibility: hidden;
-    }
+	aside.collapsed .sidebar-content {
+		visibility: hidden;
+	}
 
-    .search-wrapper {
-        display: flex;
-        align-items: center;
-        background: #ffffff;
-        border: 1px solid #D6D2C4;
-        border-radius: 8px;
-        padding: 0 10px;
-        height: 36px;
-    }
+	.search-wrapper {
+		display: flex;
+		align-items: center;
+		background: #ffffff;
+		border: 1px solid #d6d2c4;
+		border-radius: 8px;
+		padding: 0 10px;
+		height: 36px;
+	}
 
-    .search-wrapper:focus-within {
-        border-color: #A6192E;
-    }
+	.search-wrapper:focus-within {
+		border-color: #a6192e;
+	}
 
-    .search-icon {
-        width: 16px;
-        height: 16px;
-        color: #8A8B83;
-        flex-shrink: 0;
-    }
+	.search-icon {
+		width: 16px;
+		height: 16px;
+		color: #8a8b83;
+		flex-shrink: 0;
+	}
 
-    .search-bar {
-        appearance: none;
-        -webkit-appearance: none;
-        border: none;
-        outline: none;
-        background: transparent;
-        font-size: 0.9rem;
-        padding: 0 8px;
-        flex: 1;
-        min-width: 0;
-        color: #373A36;
-    }
+	.search-bar {
+		appearance: none;
+		-webkit-appearance: none;
+		border: none;
+		outline: none;
+		background: transparent;
+		font-size: 0.9rem;
+		padding: 0 8px;
+		flex: 1;
+		min-width: 0;
+		color: #373a36;
+	}
 
-    .search-bar::placeholder {
-        color: #8A8B83;
-    }
+	.search-bar::placeholder {
+		color: #8a8b83;
+	}
 </style>

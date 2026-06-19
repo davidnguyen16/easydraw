@@ -88,7 +88,9 @@
 		height: 100%;
 		padding: 8px 12px;
 		box-sizing: border-box;
-		transition: box-shadow 0.15s ease, background-color 0.12s ease;
+		transition:
+			box-shadow 0.15s ease,
+			background-color 0.12s ease;
 	}
 
 	.node-text {

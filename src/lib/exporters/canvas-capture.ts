@@ -11,51 +11,51 @@
 import { toPng, toJpeg } from 'html-to-image';
 
 export interface CaptureOptions {
-    backgroundColor?: string;
-    pixelRatio?: number;
-    quality?: number;
+	backgroundColor?: string;
+	pixelRatio?: number;
+	quality?: number;
 }
 
 const DEFAULTS: Required<Pick<CaptureOptions, 'backgroundColor' | 'pixelRatio'>> = {
-    backgroundColor: '#ffffff',
-    pixelRatio: 2
+	backgroundColor: '#ffffff',
+	pixelRatio: 2
 };
 
 function pickViewport(root: HTMLElement | null): HTMLElement {
-    if (!root) throw new Error('Canvas element is not mounted');
-    const viewport = root.querySelector<HTMLElement>('.svelte-flow__viewport');
-    if (!viewport) throw new Error('Could not find SvelteFlow viewport to capture');
-    return viewport;
+	if (!root) throw new Error('Canvas element is not mounted');
+	const viewport = root.querySelector<HTMLElement>('.svelte-flow__viewport');
+	if (!viewport) throw new Error('Could not find SvelteFlow viewport to capture');
+	return viewport;
 }
 
 export async function captureAsPng(
-    root: HTMLElement | null,
-    options: CaptureOptions = {}
+	root: HTMLElement | null,
+	options: CaptureOptions = {}
 ): Promise<string> {
-    const viewport = pickViewport(root);
-    return toPng(viewport, {
-        backgroundColor: options.backgroundColor ?? DEFAULTS.backgroundColor,
-        pixelRatio: options.pixelRatio ?? DEFAULTS.pixelRatio,
-        cacheBust: true
-    });
+	const viewport = pickViewport(root);
+	return toPng(viewport, {
+		backgroundColor: options.backgroundColor ?? DEFAULTS.backgroundColor,
+		pixelRatio: options.pixelRatio ?? DEFAULTS.pixelRatio,
+		cacheBust: true
+	});
 }
 
 export async function captureAsJpeg(
-    root: HTMLElement | null,
-    options: CaptureOptions = {}
+	root: HTMLElement | null,
+	options: CaptureOptions = {}
 ): Promise<string> {
-    const viewport = pickViewport(root);
-    return toJpeg(viewport, {
-        backgroundColor: options.backgroundColor ?? DEFAULTS.backgroundColor,
-        pixelRatio: options.pixelRatio ?? DEFAULTS.pixelRatio,
-        quality: options.quality ?? 0.95,
-        cacheBust: true
-    });
+	const viewport = pickViewport(root);
+	return toJpeg(viewport, {
+		backgroundColor: options.backgroundColor ?? DEFAULTS.backgroundColor,
+		pixelRatio: options.pixelRatio ?? DEFAULTS.pixelRatio,
+		quality: options.quality ?? 0.95,
+		cacheBust: true
+	});
 }
 
 /** Measures the rendered viewport in CSS pixels — useful for sizing PDFs. */
 export function getViewportSize(root: HTMLElement | null): { width: number; height: number } {
-    const viewport = pickViewport(root);
-    const rect = viewport.getBoundingClientRect();
-    return { width: rect.width, height: rect.height };
+	const viewport = pickViewport(root);
+	const rect = viewport.getBoundingClientRect();
+	return { width: rect.width, height: rect.height };
 }

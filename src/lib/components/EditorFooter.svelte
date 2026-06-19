@@ -70,7 +70,9 @@
 		openMenuPageId = null;
 
 		queueMicrotask(() => {
-			const input = document.querySelector<HTMLInputElement>(`input[data-page-input-id="${pageId}"]`);
+			const input = document.querySelector<HTMLInputElement>(
+				`input[data-page-input-id="${pageId}"]`
+			);
 			input?.focus();
 			input?.select();
 		});
@@ -101,7 +103,8 @@
 					oninput={(event) => handlePageNameInput(page.id, event)}
 				/>
 				{#if $visibleUnsavedPageIdsStore.includes(page.id)}
-					<span class="unsaved-dot" aria-label="Unsaved changes" title="Unsaved changes"></span>
+					<span class="unsaved-dot" aria-label="Unsaved changes" title="Unsaved changes"
+					></span>
 				{/if}
 				<button
 					type="button"
@@ -117,7 +120,12 @@
 
 				{#if openMenuPageId === page.id}
 					<div class="page-menu" role="menu">
-						<button type="button" role="menuitem" class="menu-item" onclick={() => handleRenamePage(page.id)}>
+						<button
+							type="button"
+							role="menuitem"
+							class="menu-item"
+							onclick={() => handleRenamePage(page.id)}
+						>
 							Rename
 						</button>
 						<button
@@ -135,9 +143,7 @@
 		{/each}
 	</div>
 
-	<button type="button" class="add-page" onclick={handleCreatePage}>
-		+ New Page
-	</button>
+	<button type="button" class="add-page" onclick={handleCreatePage}> + New Page </button>
 </footer>
 
 <style>
@@ -153,7 +159,7 @@
 
 		padding: 10px 16px;
 		background: #ffffff;
-		border-top: 1px solid #D6D2C4;
+		border-top: 1px solid #d6d2c4;
 		box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.04);
 	}
 
@@ -169,9 +175,9 @@
 	}
 
 	button {
-		border: 1px solid #D6D2C4;
-		background: #F5F3EF;
-		color: #373A36;
+		border: 1px solid #d6d2c4;
+		background: #f5f3ef;
+		color: #373a36;
 		padding: 6px 10px;
 		border-radius: 8px;
 		font-size: 0.9rem;
@@ -180,7 +186,7 @@
 	}
 
 	button:hover {
-		background: #EDEBE5;
+		background: #edebe5;
 	}
 
 	/* Groups a page tab and its dropdown trigger together. */
@@ -197,7 +203,7 @@
 		right: -4px;
 		width: 9px;
 		height: 9px;
-		background: #D6001C;
+		background: #d6001c;
 		border: 2px solid #ffffff;
 		border-radius: 999px;
 		pointer-events: none;
@@ -206,9 +212,9 @@
 	.page-name-input {
 		appearance: none;
 		-webkit-appearance: none;
-		border: 1px solid #D6D2C4;
-		background: #F5F3EF;
-		color: #373A36;
+		border: 1px solid #d6d2c4;
+		background: #f5f3ef;
+		color: #373a36;
 		padding: 6px 10px;
 		border-radius: 8px 0 0 8px;
 		font-size: 0.9rem;
@@ -220,7 +226,7 @@
 	}
 
 	.page-name-input:hover {
-		background: #EDEBE5;
+		background: #edebe5;
 	}
 
 	.page-name-input:focus {
@@ -237,8 +243,8 @@
 	.page-name-input.active,
 	.menu-toggle.active {
 		background: #fbeef0;
-		border-color: #A6192E;
-		color: #76232F;
+		border-color: #a6192e;
+		color: #76232f;
 	}
 
 	/* Dropdown menu anchored to each page item. */
@@ -251,9 +257,9 @@
 		flex-direction: column;
 		min-width: 112px;
 		background: #ffffff;
-		border: 1px solid #D6D2C4;
+		border: 1px solid #d6d2c4;
 		border-radius: 8px;
-		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.10);
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 		overflow: hidden;
 		z-index: 30;
 	}
@@ -263,11 +269,11 @@
 		background: #ffffff;
 		border-radius: 0;
 		text-align: left;
-		color: #373A36;
+		color: #373a36;
 	}
 
 	.menu-item:hover {
-		background: #EDEBE5;
+		background: #edebe5;
 	}
 
 	.menu-item.danger {
@@ -281,7 +287,7 @@
 
 	.add-page {
 		background: #ffffff;
-		color: #373A36;
+		color: #373a36;
 		font-weight: 600;
 		flex: 0 0 auto;
 	}

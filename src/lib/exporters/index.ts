@@ -1,4 +1,3 @@
-
 /**
  * Registry of available export formats.
  *
@@ -13,14 +12,14 @@ import { pngExporter } from './png';
 import type { ExportContext, Exporter } from './types';
 
 export const EXPORTERS: readonly Exporter[] = [
-    jpegExporter,
-    pngExporter,
-    pdfExporter,
-    easydrawExporter
+	jpegExporter,
+	pngExporter,
+	pdfExporter,
+	easydrawExporter
 ] as const;
 
 export function getExporter(id: string): Exporter | undefined {
-    return EXPORTERS.find((e) => e.id === id);
+	return EXPORTERS.find((e) => e.id === id);
 }
 
 export type { Exporter, ExportContext };

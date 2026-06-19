@@ -10,7 +10,8 @@
 		addEdge,
 		type Node,
 		type Edge,
-		type NodeEventWithPointer, ConnectionMode,
+		type NodeEventWithPointer,
+		ConnectionMode,
 		type Connection,
 		type OnConnectEnd,
 		type OnReconnectEnd
@@ -51,7 +52,7 @@
 		saveFullStateToStorage,
 		switchPage,
 		updateActiveGraph,
-		visibleUnsavedPageIdsStore,
+		visibleUnsavedPageIdsStore
 	} from '$lib/stores/editor.store.svelte';
 	import {
 		historyState,
@@ -105,15 +106,16 @@
 			return { ...n, data: safeData };
 		});
 
-		const cloned = typeof structuredClone === 'function'
-			? structuredClone(serializable)
-			: (JSON.parse(JSON.stringify(serializable)) as Node[]);
+		const cloned =
+			typeof structuredClone === 'function'
+				? structuredClone(serializable)
+				: (JSON.parse(JSON.stringify(serializable)) as Node[]);
 
 		return cloned.map((n) => ({
 			...n,
 			data: {
-					...n.data,
-					onEdit: (newData: any) => updateNodeData(n.id, newData)
+				...n.data,
+				onEdit: (newData: any) => updateNodeData(n.id, newData)
 			}
 		})) as Node[];
 	};
@@ -224,10 +226,10 @@
 			origin: [0.5, 0.0],
 			...(hasDefaultSize
 				? {
-					width: shape.defaultWidth,
-					height: shape.defaultHeight,
-					style: `width: ${shape.defaultWidth}px; height: ${shape.defaultHeight}px;`
-				}
+						width: shape.defaultWidth,
+						height: shape.defaultHeight,
+						style: `width: ${shape.defaultWidth}px; height: ${shape.defaultHeight}px;`
+					}
 				: {})
 		} satisfies Node;
 
@@ -493,9 +495,7 @@
 	function handleSelectAll() {
 		// Connection anchors are internal floating-endpoint dots, not user
 		// content — don't sweep them into a select-all.
-		nodes = nodes.map((n) =>
-			n.type === ANCHOR_NODE_TYPE ? n : { ...n, selected: true }
-		);
+		nodes = nodes.map((n) => (n.type === ANCHOR_NODE_TYPE ? n : { ...n, selected: true }));
 		edges = edges.map((e) => ({ ...e, selected: true }));
 	}
 
@@ -533,8 +533,7 @@
 	// Cut = copy the current selection to the in-memory clipboard, then remove
 	// it from the canvas. Mirrors the same selection rules as Copy.
 	function handleCut() {
-		const hasSelection =
-			nodes.some((n) => n.selected) || edges.some((e) => e.selected);
+		const hasSelection = nodes.some((n) => n.selected) || edges.some((e) => e.selected);
 		if (!hasSelection) return;
 		handleCopy();
 		handleDeleteSelected();
@@ -606,10 +605,10 @@
 		const minX = Math.min(...selected.map((n) => n.position.x));
 		const minY = Math.min(...selected.map((n) => n.position.y));
 		const maxX = Math.max(
-			...selected.map((n) => n.position.x + (((n as any).width ?? n.measured?.width) ?? 150))
+			...selected.map((n) => n.position.x + ((n as any).width ?? n.measured?.width ?? 150))
 		);
 		const maxY = Math.max(
-			...selected.map((n) => n.position.y + (((n as any).height ?? n.measured?.height) ?? 80))
+			...selected.map((n) => n.position.y + ((n as any).height ?? n.measured?.height ?? 80))
 		);
 
 		const groupId = nanoid();
@@ -758,13 +757,9 @@
 			referenced.add(e.source);
 			referenced.add(e.target);
 		}
-		const hasOrphan = nodes.some(
-			(n) => n.type === ANCHOR_NODE_TYPE && !referenced.has(n.id)
-		);
+		const hasOrphan = nodes.some((n) => n.type === ANCHOR_NODE_TYPE && !referenced.has(n.id));
 		if (hasOrphan) {
-			nodes = nodes.filter(
-				(n) => !(n.type === ANCHOR_NODE_TYPE && !referenced.has(n.id))
-			);
+			nodes = nodes.filter((n) => !(n.type === ANCHOR_NODE_TYPE && !referenced.has(n.id)));
 		}
 	});
 
@@ -803,7 +798,7 @@
 			const unsavedIds = get(visibleUnsavedPageIdsStore);
 			if (unsavedIds.length > 0) {
 				const confirmed = confirm(
-					"You have unsaved changes. Are you sure you want to leave?"
+					'You have unsaved changes. Are you sure you want to leave?'
 				);
 				if (!confirmed) {
 					cancel(); // Stops the navigation
@@ -926,8 +921,7 @@
 
 			if (event.key === 'Delete' || event.key === 'Backspace') {
 				if (isInInput) return;
-				const hasSelected =
-					nodes.some((n) => n.selected) || edges.some((e) => e.selected);
+				const hasSelected = nodes.some((n) => n.selected) || edges.some((e) => e.selected);
 				if (!hasSelected) return;
 				event.preventDefault();
 				handleDeleteSelected();
@@ -953,9 +947,7 @@
 	function handlePositionChange(x: number, y: number) {
 		if (!selectedNode) return;
 		const targetId = selectedNode.id;
-		nodes = nodes.map((n) =>
-			n.id === targetId ? { ...n, position: { x, y } } : n
-		);
+		nodes = nodes.map((n) => (n.id === targetId ? { ...n, position: { x, y } } : n));
 	}
 
 	// Size edits set width/height + an inline style override so resized nodes
@@ -977,18 +969,18 @@
 
 	// Function to update the data of a specific node
 	function updateNodeData(nodeId: string, newData: any) {
-        // Since you use $state.raw, we must trigger a full reassignment
-        nodes = nodes.map((n) => {
-            if (n.id === nodeId) {
-                // Merge existing data with the new data from RightSidebar
-                return {
-                    ...n,
-                    data: { ...n.data, ...newData }
-                };
-            }
-            return n;
-        });
-    }
+		// Since you use $state.raw, we must trigger a full reassignment
+		nodes = nodes.map((n) => {
+			if (n.id === nodeId) {
+				// Merge existing data with the new data from RightSidebar
+				return {
+					...n,
+					data: { ...n.data, ...newData }
+				};
+			}
+			return n;
+		});
+	}
 
 	// New connections use the orthogonal `connection` edge by default.
 	// bendPoints starts empty — the routing layer L-shapes the initial path
@@ -1112,7 +1104,6 @@
 			});
 		}
 	};
-
 </script>
 
 <main class="editor-root">
@@ -1133,30 +1124,30 @@
 		bind:this={canvasShellEl}
 	>
 		<SvelteFlow
-				bind:nodes
-				bind:edges
-				{defaultEdgeOptions}
-				fitView
-				fitViewOptions={{ maxZoom: 1 }}
-				ondragover={onDragOver}
-				ondrop={onDrop}
-				onnodecontextmenu={handleContextMenu}
-				onpaneclick={handlePaneClick}
-				onpointerdown={handlePaneClick}
-				onconnect={onConnect}
-				onconnectend={onConnectEnd}
-				onreconnectstart={onReconnectStart}
-				onreconnectend={onReconnectEnd}
-				onmove={handleViewportMove}
-				snapGrid={editorActionsState.snapToGrid ? [20, 20] : undefined}
-				nodesDraggable={!editorActionsState.locked}
-				nodesConnectable={!editorActionsState.locked}
-				elementsSelectable={!editorActionsState.locked}
-				{nodeTypes}
-				{edgeTypes}
-				connectionMode={ConnectionMode.Loose}
-				connectionLineComponent={ConnectionLinePreview}
-				proOptions={{ hideAttribution: true }}
+			bind:nodes
+			bind:edges
+			{defaultEdgeOptions}
+			fitView
+			fitViewOptions={{ maxZoom: 1 }}
+			ondragover={onDragOver}
+			ondrop={onDrop}
+			onnodecontextmenu={handleContextMenu}
+			onpaneclick={handlePaneClick}
+			onpointerdown={handlePaneClick}
+			onconnect={onConnect}
+			onconnectend={onConnectEnd}
+			onreconnectstart={onReconnectStart}
+			onreconnectend={onReconnectEnd}
+			onmove={handleViewportMove}
+			snapGrid={editorActionsState.snapToGrid ? [20, 20] : undefined}
+			nodesDraggable={!editorActionsState.locked}
+			nodesConnectable={!editorActionsState.locked}
+			elementsSelectable={!editorActionsState.locked}
+			{nodeTypes}
+			{edgeTypes}
+			connectionMode={ConnectionMode.Loose}
+			connectionLineComponent={ConnectionLinePreview}
+			proOptions={{ hideAttribution: true }}
 		>
 			{#if editorActionsState.showGrid}
 				<Background variant={BackgroundVariant.Dots} />
@@ -1190,15 +1181,19 @@
 		{/if}
 	</section>
 
-	<EditorFooter onSwitchPage={handleSwitchPage} onCreatePage={handleCreatePage} onDeletePage={handleDeletePage} />
+	<EditorFooter
+		onSwitchPage={handleSwitchPage}
+		onCreatePage={handleCreatePage}
+		onDeletePage={handleDeletePage}
+	/>
 </main>
 
 <style>
-    main {
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
+	main {
+		height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
 
 	/* Canvas shell reserves all remaining height above the footer. */
 	.canvas-shell {
@@ -1225,5 +1220,4 @@
 		width: 100%;
 		height: 100%;
 	}
-
 </style>

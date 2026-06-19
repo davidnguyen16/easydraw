@@ -46,75 +46,75 @@ export const COLLAPSE_THRESHOLD = 80;
 const STORAGE_KEY = 'easydraw.sidebar.v1';
 
 interface SidebarSnapshot {
-    width: number;
-    isCollapsed: boolean;
+	width: number;
+	isCollapsed: boolean;
 }
 
 // Reactive panel state shared by Sidebar.svelte and its children.
 export const sidebarState = $state<SidebarSnapshot>({
-    width: DEFAULT_WIDTH,
-    isCollapsed: false
-})
+	width: DEFAULT_WIDTH,
+	isCollapsed: false
+});
 
 // Validates a parsed localStorage payload before applying it.
 function isSidebarSnapshot(value: unknown): value is SidebarSnapshot {
-    if (!value || typeof value !== 'object') return false;
-    const snapshot = value as Partial<SidebarSnapshot>;
-    return typeof snapshot.width === 'number' && typeof snapshot.isCollapsed === 'boolean';
+	if (!value || typeof value !== 'object') return false;
+	const snapshot = value as Partial<SidebarSnapshot>;
+	return typeof snapshot.width === 'number' && typeof snapshot.isCollapsed === 'boolean';
 }
 
 // Clamps a value into [min, max] inclusive
 function clamp(value: number, min: number, max: number) {
-    return Math.min(Math.max(value, min), max);
+	return Math.min(Math.max(value, min), max);
 }
 
 // Applies a new width with clamping and auto-collapse logic
 export function setWidth(nextWidth: number) {
-    // Dragging below the collapse threshold auto-collapses the sidebar without changing width.
-    if (nextWidth < COLLAPSE_THRESHOLD) {
-        sidebarState.isCollapsed = true;
-        return;
-    }
+	// Dragging below the collapse threshold auto-collapses the sidebar without changing width.
+	if (nextWidth < COLLAPSE_THRESHOLD) {
+		sidebarState.isCollapsed = true;
+		return;
+	}
 
-    sidebarState.width = clamp(nextWidth, MIN_WIDTH, MAX_WIDTH);
-    sidebarState.isCollapsed = false;
+	sidebarState.width = clamp(nextWidth, MIN_WIDTH, MAX_WIDTH);
+	sidebarState.isCollapsed = false;
 }
 
 // Flips the collapsed state. Width is preserved the last expanded width.
 export function toggleCollapse() {
-    sidebarState.isCollapsed = !sidebarState.isCollapsed;
+	sidebarState.isCollapsed = !sidebarState.isCollapsed;
 }
 
 // Forces the sidebar open; used when user clicks the reopen knob.
 export function expand() {
-    sidebarState.isCollapsed = false;
+	sidebarState.isCollapsed = false;
 }
 
 // Persists current sidebar state to localStorage. No operations outside the browser.
 export function persistSidebarState() {
-    if (!browser) return;
-    const snapshot: SidebarSnapshot = {
-        width: sidebarState.width,
-        isCollapsed: sidebarState.isCollapsed
-    };
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
-    } catch {
-        // Fail silently if storage is unavailable.
-    }
+	if (!browser) return;
+	const snapshot: SidebarSnapshot = {
+		width: sidebarState.width,
+		isCollapsed: sidebarState.isCollapsed
+	};
+	try {
+		localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+	} catch {
+		// Fail silently if storage is unavailable.
+	}
 }
 
 // Loads sidebar state from localStorage if valid. Otherwise, silently falls back to defaults.
 export function loadSidebarStateFromStorage() {
-    if (!browser) return;
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return; 
-        const parsed = JSON.parse(raw) as unknown;
-        if (!isSidebarSnapshot(parsed)) return;
-        sidebarState.width = clamp(parsed.width, MIN_WIDTH, MAX_WIDTH);
-        sidebarState.isCollapsed = parsed.isCollapsed;
-    } catch {
-        // Fail silently if storage is unavailable or data is corrupted.        
-    }
+	if (!browser) return;
+	try {
+		const raw = localStorage.getItem(STORAGE_KEY);
+		if (!raw) return;
+		const parsed = JSON.parse(raw) as unknown;
+		if (!isSidebarSnapshot(parsed)) return;
+		sidebarState.width = clamp(parsed.width, MIN_WIDTH, MAX_WIDTH);
+		sidebarState.isCollapsed = parsed.isCollapsed;
+	} catch {
+		// Fail silently if storage is unavailable or data is corrupted.
+	}
 }

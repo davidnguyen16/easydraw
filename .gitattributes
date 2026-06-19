@@ -1,0 +1,4 @@
+# Normalise line endings: store everything as LF in the repo, regardless of OS.
+# This stops the "LF will be replaced by CRLF" warnings on Windows and keeps
+# diffs clean across machines. Matches Prettier's LF output.
+* text=auto eol=lf

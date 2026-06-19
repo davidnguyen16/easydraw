@@ -44,7 +44,6 @@
 	}
 </script>
 
-
 <div
 	role="button"
 	tabindex="0"
@@ -68,48 +67,53 @@
 </div>
 
 <style>
-    small {
-        font-weight: 700;
-        font-size: 0.72rem;
-        letter-spacing: 0.06em;
-        color: #8A8B83;
-        text-transform: uppercase;
-    }
+	small {
+		font-weight: 700;
+		font-size: 0.72rem;
+		letter-spacing: 0.06em;
+		color: #8a8b83;
+		text-transform: uppercase;
+	}
 
-    .context-menu {
-        background: #ffffff;
-        border: 1px solid #D6D2C4;
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
-        position: absolute;
-        z-index: 10;
-        border-radius: 10px;
-        padding: 4px;
-        min-width: 140px;
-        font-family: system-ui, -apple-system, sans-serif;
-    }
+	.context-menu {
+		background: #ffffff;
+		border: 1px solid #d6d2c4;
+		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+		position: absolute;
+		z-index: 10;
+		border-radius: 10px;
+		padding: 4px;
+		min-width: 140px;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
+	}
 
-    button:last-child {
-        border-radius: 0 0 7px 7px;
-    }
+	button:last-child {
+		border-radius: 0 0 7px 7px;
+	}
 
-    .context-menu button {
-        border: none;
-        display: block;
-        padding: 8px 12px;
-        text-align: left;
-        width: 100%;
-        border-radius: 6px;
-        background: transparent;
-        color: #373A36;
-        font: inherit;
-        font-size: 0.875rem;
-        cursor: pointer;
-        outline: inherit;
-        transition: background 0.1s ease, color 0.1s ease;
-    }
+	.context-menu button {
+		border: none;
+		display: block;
+		padding: 8px 12px;
+		text-align: left;
+		width: 100%;
+		border-radius: 6px;
+		background: transparent;
+		color: #373a36;
+		font: inherit;
+		font-size: 0.875rem;
+		cursor: pointer;
+		outline: inherit;
+		transition:
+			background 0.1s ease,
+			color 0.1s ease;
+	}
 
-    .context-menu button:hover {
-        background: #EDEBE5;
-        color: #2C2C2A;
-    }
+	.context-menu button:hover {
+		background: #edebe5;
+		color: #2c2c2a;
+	}
 </style>

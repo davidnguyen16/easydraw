@@ -18,14 +18,14 @@ export const FORMAT_VERSION = '1';
 
 /** Serializes editor JSON into the .easydraw XML envelope. */
 export function serializeEasyDraw(serializedState: string): string {
-    // CDATA can't contain "]]>"; split it across two sections if present.
-    const safe = serializedState.replace(/]]>/g, ']]]]><![CDATA[>');
-    return (
-        `<?xml version="1.0" encoding="UTF-8"?>\n` +
-        `<easydraw version="${FORMAT_VERSION}">\n` +
-        `  <state><![CDATA[${safe}]]></state>\n` +
-        `</easydraw>\n`
-    );
+	// CDATA can't contain "]]>"; split it across two sections if present.
+	const safe = serializedState.replace(/]]>/g, ']]]]><![CDATA[>');
+	return (
+		`<?xml version="1.0" encoding="UTF-8"?>\n` +
+		`<easydraw version="${FORMAT_VERSION}">\n` +
+		`  <state><![CDATA[${safe}]]></state>\n` +
+		`</easydraw>\n`
+	);
 }
 
 /**
@@ -34,24 +34,24 @@ export function serializeEasyDraw(serializedState: string): string {
  * fall back to plain-JSON parsing.
  */
 export function parseEasyDraw(content: string): string | null {
-    const trimmed = content.trimStart();
-    if (!trimmed.startsWith('<?xml')) return null;
+	const trimmed = content.trimStart();
+	if (!trimmed.startsWith('<?xml')) return null;
 
-    const match = trimmed.match(/<state>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/state>/);
-    if (!match) return null;
+	const match = trimmed.match(/<state>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/state>/);
+	if (!match) return null;
 
-    // Reverse the escaping applied during serialization.
-    return match[1].replace(/]]]]><!\[CDATA\[>/g, ']]>');
+	// Reverse the escaping applied during serialization.
+	return match[1].replace(/]]]]><!\[CDATA\[>/g, ']]>');
 }
 
 export const easydrawExporter: Exporter = {
-    id: 'easydraw',
-    label: 'XML',
-    extension: '.easydraw',
-    mimeType: 'application/xml',
-    async run({ fileName, serializedState }) {
-        const xml = serializeEasyDraw(serializedState);
-        const blob = new Blob([xml], { type: 'application/xml' });
-        downloadBlob(blob, `${fileName}.easydraw`);
-    }
+	id: 'easydraw',
+	label: 'XML',
+	extension: '.easydraw',
+	mimeType: 'application/xml',
+	async run({ fileName, serializedState }) {
+		const xml = serializeEasyDraw(serializedState);
+		const blob = new Blob([xml], { type: 'application/xml' });
+		downloadBlob(blob, `${fileName}.easydraw`);
+	}
 };

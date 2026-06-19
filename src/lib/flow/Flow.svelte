@@ -22,10 +22,8 @@
 
 	import StylePanel, { type NodeStyleData } from '$lib/components/StylePanel.svelte';
 	import { EXPORTERS, getExporter } from '$lib/exporters';
-	import RelationshipEdge from '$lib/flow/edges/RelationshipEdge.svelte';
 	import ConnectionEdge from '$lib/flow/edges/connection/ConnectionEdge.svelte';
 	import ConnectionLinePreview from '$lib/flow/edges/connection/ConnectionLinePreview.svelte';
-	import CrowsFootMarkers from './edges/CrowsFootMarkers.svelte';
 	import { buildNodeTypesMap, getShape } from '$lib/flow/nodes/registry';
 	import AnchorNode from '$lib/flow/nodes/anchor/AnchorNode.svelte';
 	import {
@@ -63,7 +61,8 @@
 		redo as historyRedo
 	} from '$lib/stores/history.store.svelte';
 
-	// import '@xyflow/svelte/dist/style.css';
+	// xy-theme.css is our customised copy of @xyflow/svelte's default
+	// stylesheet — imported instead of the upstream `dist/style.css`.
 	import '../../xy-theme.css';
 
 	setContext('updateNode', (id: string, data: any) => updateNodeData(id, data));
@@ -78,11 +77,9 @@
 	};
 
 	// `connection` is the general-purpose orthogonal edge with rounded
-	// corners and draggable bend pills. `relationship` is kept for the older
-	// ER-diagram crow's-foot edges so saved diagrams still resolve.
+	// corners and draggable bend pills — the only edge type in the editor.
 	const edgeTypes = {
-		connection: ConnectionEdge,
-		relationship: RelationshipEdge
+		connection: ConnectionEdge
 	};
 
 	// Returns the active page snapshot from editor store.
@@ -1116,15 +1113,6 @@
 		}
 	};
 
-	let selectedEdge = $derived(
-		edges.find((e: any) => e.selected)
-	);
-
-	function updateEdgeData(edgeId: string, newData: any) {
-		edges = edges.map((e) =>
-			e.id === edgeId ? { ...e, data: { ...e.data, ...newData}} : e
-		);
-	}
 </script>
 
 <main class="editor-root">
@@ -1170,7 +1158,6 @@
 				connectionLineComponent={ConnectionLinePreview}
 				proOptions={{ hideAttribution: true }}
 		>
-			<CrowsFootMarkers />
 			{#if editorActionsState.showGrid}
 				<Background variant={BackgroundVariant.Dots} />
 			{/if}
@@ -1201,25 +1188,6 @@
 				onDelete={handleDeleteSelected}
 			/>
 		{/if}
-
-
-		{#if selectedEdge && selectedEdge.type === 'relationship'}
-			{@const activeEdge = selectedEdge}
-			{@const edgeData = activeEdge.data as { relationship: string } | undefined}
-			<div class="edge-editor">
-				<span class="context-label">RELATIONSHIP</span>
-				<select
-					value={edgeData?.relationship ?? 'one-to-many'}
-					onchange={(e) => updateEdgeData(activeEdge.id, {
-						relationship: e.currentTarget.value
-					})}
-				>
-					<option value="one-to-one">One to One</option>
-					<option value="one-to-many">One to Many</option>
-					<option value="many-to-many">Many to Many</option>
-				</select>
-			</div>
-		{/if}
 	</section>
 
 	<EditorFooter onSwitchPage={handleSwitchPage} onCreatePage={handleCreatePage} onDeletePage={handleDeletePage} />
@@ -1231,23 +1199,6 @@
         display: flex;
         flex-direction: column;
     }
-
-	/* Root editor layout: canvas on top, footer pinned as the last row. */
-  .edge-editor {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #ffffff;
-      border: 1px solid #D6D2C4;
-      padding: 10px 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.09);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 100;
-  }
 
 	/* Canvas shell reserves all remaining height above the footer. */
 	.canvas-shell {
@@ -1275,21 +1226,4 @@
 		height: 100%;
 	}
 
-  .context-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #8A8B83;
-      font-weight: 600;
-  }
-
-  select {
-      border: 1px solid #D6D2C4;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 0.85rem;
-      outline: none;
-      background: #F5F3EF;
-      color: #373A36;
-  }
 </style>

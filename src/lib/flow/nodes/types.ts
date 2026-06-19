@@ -14,7 +14,7 @@
  * editing required when the catalog grows.
  */
 import type { Component } from 'svelte';
-import type { Node } from '@xyflow/svelte';
+import type { Node, NodeProps } from '@xyflow/svelte';
 
 /** Sidebar palette grouping. Add new values here as new categories appear. */
 export type NodeCategory = 'basic' | 'arrows' | 'containers' | 'database' | 'uml';
@@ -44,7 +44,7 @@ export interface NodeShape {
     /** Sidebar palette grouping. */
     category: NodeCategory;
     /** The Svelte component xyflow renders for this node. */
-    component: Component;
+    component: Component<NodeProps>;
     /** SVG icon component rendered inside the sidebar palette tile. */
     icon: Component;
     /** Returns the initial data payload when a tile of this shape is dropped. */

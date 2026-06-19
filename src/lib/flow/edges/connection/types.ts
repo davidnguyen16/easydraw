@@ -13,9 +13,25 @@ export type Point = { x: number; y: number };
 /** Segment orientation. */
 export type Axis = 'h' | 'v';
 
+/** One text label pinned to a point along the edge. */
+export interface ConnectionLabel {
+    /** Stable id (used as the Svelte key and for edit/remove targeting). */
+    id: string;
+    /** Position along the path as a fraction of total length, in [0, 1]. */
+    t: number;
+    /** Text content. Empty labels are pruned on commit. */
+    text: string;
+}
+
 export interface ConnectionEdgeData {
     /** Ordered bend points the user has dropped on this edge. */
     bendPoints?: Point[];
+    /**
+     * Text labels placed ALONG the edge (Lucidchart-style). Multiple are
+     * allowed; each masks the strip of line it sits on so the line shows a
+     * clean gap between consecutive labels.
+     */
+    labels?: ConnectionLabel[];
     [key: string]: unknown;
 }
 

@@ -697,9 +697,9 @@
 		user-select: none;
 	}
 
-	/* Editing: blue selection-highlight background, blinking caret, no border. */
+	/* Editing: clean light-blue highlight, blinking caret, no border. */
 	.conn-label--editing {
-		background: #b3d4f5;
+		background: #d6e8fb;
 		cursor: text;
 		outline: none;
 		min-width: 6px;

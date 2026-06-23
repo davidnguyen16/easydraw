@@ -19,7 +19,7 @@
 	} from './routing';
 	import { ANCHOR_NODE_TYPE } from '../../nodes/anchor/anchor';
 	import { nanoid } from 'nanoid';
-	import type { ConnectionEdgeData, ConnectionLabel, Point, Segment } from './types';
+	import type { Axis, ConnectionEdgeData, ConnectionLabel, Point, Segment } from './types';
 
 	let {
 		id,
@@ -253,6 +253,27 @@
 			? 'h'
 			: 'v'
 	);
+
+	// The pristine edge's lone "add bend" pill. Normally sits at the longest-run
+	// midpoint, but if a label already covers that spot we SLIDE it along the
+	// line to the nearest clear point — dodging the text instead of vanishing,
+	// so a labelled edge is always still draggable.
+	const freeFormPill = $derived.by<{ x: number; y: number; axis: Axis }>(() => {
+		const natural = freeFormLabel;
+		if (labels.length === 0 || !nearLabel(natural)) {
+			return { x: natural.x, y: natural.y, axis: freeFormAxis };
+		}
+		const base = tAtFlowPoint(natural);
+		for (let step = 0.04; step <= 0.5; step += 0.04) {
+			for (const t of [base + step, base - step]) {
+				if (t <= 0.05 || t >= 0.95) continue;
+				const p = pointAtT(t);
+				if (!nearLabel(p)) return { x: p.x, y: p.y, axis: freeFormAxis };
+			}
+		}
+		// Whole line is covered by labels — keep the natural spot as a fallback.
+		return { x: natural.x, y: natural.y, axis: freeFormAxis };
+	});
 
 	const active = $derived(hovered || !!selected);
 	const strokeColor = $derived(active ? COLOR_ACTIVE : COLOR_DEFAULT);
@@ -553,17 +574,15 @@
 
 	{#if active && !isEditing}
 		{#if isFreeForm}
-			<!-- Pristine edge: one central handle to add the first bend.
-                 Suppressed if a label already sits there. -->
-			{#if !nearLabel(freeFormLabel)}
-				<Pill
-					kind="ghost"
-					x={freeFormLabel.x}
-					y={freeFormLabel.y}
-					axis={freeFormAxis}
-					onpointerdown={(e) => startAddBendDrag(e)}
-				/>
-			{/if}
+			<!-- Pristine edge: one handle to add the first bend. It slides along
+                 the line to dodge any label, so it's never hidden entirely. -->
+			<Pill
+				kind="ghost"
+				x={freeFormPill.x}
+				y={freeFormPill.y}
+				axis={freeFormPill.axis}
+				onpointerdown={(e) => startAddBendDrag(e)}
+			/>
 		{:else}
 			{#each segments as segment (segment.index)}
 				{#if segment.pillVisible && !nearLabel(segment.mid)}
@@ -697,9 +716,9 @@
 		user-select: none;
 	}
 
-	/* Editing: clean light-blue highlight, blinking caret, no border. */
+	/* Editing: light selection-blue highlight, blinking caret, no border. */
 	.conn-label--editing {
-		background: #d6e8fb;
+		background: #b3d4f5;
 		cursor: text;
 		outline: none;
 		min-width: 6px;

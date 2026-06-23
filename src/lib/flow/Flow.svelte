@@ -36,7 +36,7 @@
 	import EditorFooter from '$lib/components/EditorFooter.svelte';
 	import MenuBar from '$lib/components/menubar/MenuBar.svelte';
 	import ToolBar from '$lib/components/toolbar/ToolBar.svelte';
-	import ContextMenu from '$lib/flow/ContextMenu.svelte';
+	import ContextMenu from '$lib/flow/context-menu/ContextMenu.svelte';
 	import {
 		clearCanvasDirtyPage,
 		createPage,

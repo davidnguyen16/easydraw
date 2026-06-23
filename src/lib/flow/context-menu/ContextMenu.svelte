@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { useEdges, useNodes, useSvelteFlow } from '@xyflow/svelte';
+	import { useNodes, useSvelteFlow } from '@xyflow/svelte';
 	import { nanoid } from 'nanoid';
 
 	let {

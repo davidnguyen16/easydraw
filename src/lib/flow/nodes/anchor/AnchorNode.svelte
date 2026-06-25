@@ -1,22 +1,24 @@
 <script lang="ts">
 	/**
-	 * Visual for a connection anchor — see anchor.ts for the why.
+	 * Connection anchor host — see anchor.ts for the why.
 	 *
-	 * A single small WHITE circle that marks the free wire end. There is no
-	 * second marker: the circle IS the handle, centred on the endpoint, so the
-	 * edge resolves its endpoint exactly to the wire end (which also keeps the
-	 * released edge lined up with the drag preview).
+	 * Renders NOTHING visible. It exists only so a floating edge endpoint has a
+	 * real node + handle to resolve its position from (xyflow edges must point at
+	 * a real node). The visible endpoint dot — and the grab-to-drag affordance —
+	 * is drawn by the EDGE itself (EndpointHandle in ConnectionEdge) and only on
+	 * hover / selection. So at rest a free wire end is just a clean line ending in
+	 * space, with no stray dot left floating on the canvas.
 	 *
-	 * The handle is `isConnectable={false}` ON PURPOSE: an anchor is the
-	 * passive host for an existing edge endpoint, NOT a connection point — you
-	 * must not be able to start a brand-new connection from a floating wire.
-	 * Being non-connectable it gets the theme's `pointer-events: none`, so a
-	 * click falls through to the draggable node body and just repositions the
-	 * end (the white circle "drags" the wire, no extra affordance needed).
+	 * The handle stays in the DOM (fully transparent) purely so xyflow can measure
+	 * its bounds and place the endpoint at the anchor's centre. The whole node is
+	 * `pointer-events: none` so it never steals a grab from the edge's endpoint
+	 * handle below it in the z-order — all endpoint interaction lives on the edge.
 	 */
 	import { Handle, Position, type NodeProps } from '@xyflow/svelte';
 	import { ANCHOR_HANDLE_ID } from './anchor';
 
+	// The anchor draws nothing and reads no data, but must still accept NodeProps
+	// to type as a valid xyflow node component.
 	let { selected }: NodeProps = $props();
 </script>
 
@@ -37,12 +39,26 @@
 		height: 100%;
 	}
 
+	/* The anchor node is purely a position host — never an interaction target.
+	   Endpoint grabbing happens on the edge's EndpointHandle (one z-layer below),
+	   so NOTHING in the anchor subtree may intercept the pointer — otherwise the
+	   invisible 12×12 node box steals the grab over the dot's centre (cursor
+	   flickers, drag dies in the middle). `!important` + the whole subtree (`*`)
+	   because the theme's `.svelte-flow__node { pointer-events: all }` would
+	   otherwise win on load order, and a child could re-enable it. The dedicated
+	   `connection-anchor-node` class (set in createAnchorNode) is used so the rule
+	   can't be missed by a class-name mismatch. */
+	:global(.connection-anchor-node),
+	:global(.connection-anchor-node *) {
+		pointer-events: none !important;
+	}
+
 	/*
-     * Small white circle, centred on the node (= the wire end). The
-     * two-class selector (`.svelte-flow__handle.anchor-handle`) outranks the
-     * theme's `.svelte-flow__handle-top` rule so the centring transform wins —
-     * without it the handle would sit at the box top and the edge endpoint
-     * would be offset from the drop point.
+     * Invisible handle, centred on the node (= the wire end). No fill or border:
+     * it's just a measurable anchor point for the edge endpoint. The two-class
+     * selector outranks the theme's `.svelte-flow__handle-top` rule so the
+     * centring transform wins (otherwise the handle sits at the box top and the
+     * endpoint is offset from the actual wire end).
      */
 	:global(.svelte-flow__handle.anchor-handle) {
 		position: absolute;
@@ -53,14 +69,8 @@
 		height: 9px;
 		min-width: 9px;
 		min-height: 9px;
-		background: #ffffff;
-		border: 1.5px solid #9b9991;
-		border-radius: 50%;
+		background: transparent;
+		border: none;
 		box-sizing: border-box;
-	}
-
-	.anchor:hover :global(.svelte-flow__handle.anchor-handle),
-	.anchor.selected :global(.svelte-flow__handle.anchor-handle) {
-		border-color: #a6192e;
 	}
 </style>

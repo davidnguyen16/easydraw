@@ -234,6 +234,37 @@
 		const target = evt.target as HTMLInputElement;
 		updateNodeData(id, { label: target.value });
 	}
+
+	// ─── Label editing (double-click to type, like connection labels) ───
+	// At rest the label is read-only and ignores the pointer, so a single click
+	// just selects the node (xyflow). Only a double-click enters edit mode, which
+	// focuses the field and lets you type; Enter / Escape / blur leaves it.
+	let inputEl = $state<HTMLInputElement>();
+	let editing = $state(false);
+
+	function startEditing() {
+		editing = true;
+		// Wait for `readonly` to clear so focus + select actually take.
+		requestAnimationFrame(() => {
+			inputEl?.focus();
+			inputEl?.select();
+		});
+	}
+
+	function onLabelKeydown(evt: KeyboardEvent) {
+		evt.stopPropagation(); // keep keys out of xyflow's global shortcuts
+		if (evt.key === 'Enter' && !evt.shiftKey) {
+			evt.preventDefault();
+			inputEl?.blur(); // → onLabelBlur ends editing
+		} else if (evt.key === 'Escape') {
+			evt.preventDefault();
+			inputEl?.blur();
+		}
+	}
+
+	function onLabelBlur() {
+		editing = false;
+	}
 </script>
 
 <!--
@@ -242,7 +273,16 @@
 	true bounding box). Handles position absolutely against this container,
 	which puts them exactly on the shape edge — no gap.
 -->
-<div class="shape-node" class:selected style="filter: {containerFilter};">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	class="shape-node"
+	class:selected
+	style="filter: {containerFilter};"
+	ondblclick={(e) => {
+		e.stopPropagation();
+		startEditing();
+	}}
+>
 	<!--
 		DOM order matters for stacking: paint the shape fill FIRST so that
 		the connection handles + resize anchors render on top of it. Without
@@ -454,12 +494,18 @@
 		/>
 	{/if}
 
-	<div class="node-text">
+	<div class="node-text" class:editing>
 		<input
+			bind:this={inputEl}
 			type="text"
 			value={data.label ?? ''}
 			oninput={onInput}
+			readonly={!editing}
+			onkeydown={onLabelKeydown}
+			onblur={onLabelBlur}
+			onpointerdown={(e) => editing && e.stopPropagation()}
 			class="nodrag"
+			class:editing
 			placeholder={variant.kind === 'text-only' ? 'Text' : 'Type here...'}
 			style={labelStyle}
 		/>
@@ -507,6 +553,16 @@
 		width: 100%;
 		background: transparent;
 		font-family: inherit;
+		/* Read-only by default: ignore the pointer so a single click falls through
+		   to the node (selects it) instead of focusing the field. Double-click on
+		   .node-text flips `editing`, which re-enables typing below. */
+		pointer-events: none;
+		cursor: inherit;
+	}
+
+	input.editing {
+		pointer-events: auto;
+		cursor: text;
 	}
 
 	/*

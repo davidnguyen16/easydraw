@@ -83,20 +83,13 @@ function isEditorState(value: unknown): value is EditorState {
 	return state.pages.some((page) => page.id === state.activePageId);
 }
 
-// Bootstraps the editor with one default page and one starter node.
+// Bootstraps the editor with one empty default page (no starter/demo node).
 export const initialEditorState: EditorState = {
 	pages: [
 		{
 			id: 'page-1',
 			name: 'Page 1',
-			nodes: [
-				{
-					id: '1',
-					type: 'RectangleNode',
-					data: { label: 'Drag nodes to the canvas' },
-					position: { x: 0, y: 0 }
-				}
-			],
+			nodes: [],
 			edges: []
 		}
 	],

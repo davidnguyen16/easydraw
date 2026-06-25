@@ -13,8 +13,7 @@
 		type NodeEventWithPointer,
 		ConnectionMode,
 		type Connection,
-		type OnConnectEnd,
-		type OnReconnectEnd
+		type OnConnectEnd
 	} from '@xyflow/svelte';
 	import { get } from 'svelte/store';
 
@@ -67,6 +66,16 @@
 	import '../../xy-theme.css';
 
 	setContext('updateNode', (id: string, data: any) => updateNodeData(id, data));
+
+	// Lets the connection edge create a floating-endpoint anchor during an
+	// endpoint reconnect drag (the edge component can't add nodes itself — only
+	// Flow owns the `nodes` array). Returns the new anchor's id so the edge can
+	// repoint its end onto it. Orphaned anchors are swept by the prune effect.
+	setContext('addAnchorNode', (position: { x: number; y: number }): string => {
+		const id = nanoid();
+		nodes = [...nodes, createAnchorNode(id, position)];
+		return id;
+	});
 
 	// Palette node types come from the shape registry. The connection anchor
 	// is an INTERNAL type (floating edge endpoints) — never a palette shape —
@@ -1035,23 +1044,15 @@
 		return flow.screenToFlowPosition({ x: pt.clientX, y: pt.clientY });
 	}
 
-	// EdgeReconnectAnchor drives endpoint reconnection through xyflow's
-	// connection machinery, which means it ALSO fires the global `onconnectend`
-	// (our onConnectEnd) at the end of a reconnect drag — not just the fresh-
-	// connection case. This flag lets onConnectEnd ignore reconnect drags so it
-	// doesn't spawn a spurious extra edge; onReconnectEnd owns that case. Set on
-	// reconnect start, cleared a microtask after reconnect end so it stays true
-	// across both synchronous end-callbacks regardless of their firing order.
-	let isReconnecting = false;
-
 	// Req #1 / #2 — when a freshly dragged connection is released over EMPTY
 	// canvas (no valid handle under the pointer), xyflow fires no `onconnect`,
 	// so without this the edge would simply vanish. Instead we drop a floating
 	// anchor at the release point and keep the edge, with that end attached to
 	// the anchor. We only act when there's no target handle, so this never
-	// double-creates alongside `onConnect`.
+	// double-creates alongside `onConnect`. (Endpoint RECONNECTION is handled
+	// entirely inside ConnectionEdge's manual drag — it never goes through
+	// xyflow's connection machinery, so it doesn't reach here.)
 	const onConnectEnd: OnConnectEnd = (event, connectionState) => {
-		if (isReconnecting) return; // a reconnect drag → onReconnectEnd owns it
 		if (connectionState.toHandle) return; // landed on a real handle → onConnect handled it
 		const fromHandle = connectionState.fromHandle;
 		if (!fromHandle) return;
@@ -1067,42 +1068,6 @@
 		// (below) always sees the anchor as referenced and never collects it.
 		nodes = [...nodes, anchor];
 		edges = [...edges, newEdge];
-	};
-
-	// Req #3b — an existing endpoint dragged OFF its handle and released over
-	// empty canvas. EdgeReconnectAnchor reverts (leaves the edge unchanged) on
-	// an empty drop, so to "leave it floating" we rewrite the dragged end onto
-	// a fresh anchor here. `handleType` is the FIXED end; the dragged end is
-	// its inverse. Any anchor orphaned by this rewrite is collected by the
-	// prune effect.
-	const onReconnectStart = () => {
-		isReconnecting = true;
-	};
-
-	const onReconnectEnd: OnReconnectEnd<Edge> = (event, edge, handleType, connectionState) => {
-		// Always release the guard a microtask later — after any onConnectEnd
-		// that fires synchronously alongside this callback has already seen the
-		// flag as still-true. `try/finally` so the early-return (successful
-		// reconnect onto a handle) path clears it too.
-		try {
-			if (connectionState.toHandle) return; // reconnected onto a real handle → nothing to float
-
-			const draggedEnd: 'source' | 'target' = handleType === 'source' ? 'target' : 'source';
-			const anchorId = nanoid();
-			const anchor = createAnchorNode(anchorId, dropFlowPosition(event));
-
-			nodes = [...nodes, anchor];
-			edges = edges.map((e) => {
-				if (e.id !== edge.id) return e;
-				return draggedEnd === 'source'
-					? { ...e, source: anchorId, sourceHandle: ANCHOR_HANDLE_ID }
-					: { ...e, target: anchorId, targetHandle: ANCHOR_HANDLE_ID };
-			});
-		} finally {
-			queueMicrotask(() => {
-				isReconnecting = false;
-			});
-		}
 	};
 </script>
 
@@ -1136,8 +1101,6 @@
 			onpointerdown={handlePaneClick}
 			onconnect={onConnect}
 			onconnectend={onConnectEnd}
-			onreconnectstart={onReconnectStart}
-			onreconnectend={onReconnectEnd}
 			onmove={handleViewportMove}
 			snapGrid={editorActionsState.snapToGrid ? [20, 20] : undefined}
 			nodesDraggable={!editorActionsState.locked}

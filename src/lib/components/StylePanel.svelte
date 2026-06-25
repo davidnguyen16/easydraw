@@ -116,7 +116,7 @@
 	});
 
 	function adjustBorderWidth(delta: number) {
-		const next = Math.max(0, Math.min(20, borderWidth + delta));
+		const next = Math.max(0, Math.min(10, borderWidth + delta));
 		onStyleChange({ borderWidth: next });
 	}
 

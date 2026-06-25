@@ -40,7 +40,16 @@ export function createAnchorNode(id: string, position: { x: number; y: number })
 		data: {},
 		origin: [0.5, 0.5],
 		width: ANCHOR_SIZE,
-		height: ANCHOR_SIZE
+		height: ANCHOR_SIZE,
+		// The anchor is a pure position host — never directly draggable or
+		// selectable. All endpoint interaction (grab + drag-to-reconnect) lives on
+		// the edge's EndpointHandle one z-layer below; if the anchor stayed
+		// interactive it would steal the pointer over the dot's centre (cursor
+		// flicker, dead drag). The `class` is the hook for the CSS that forces
+		// `pointer-events: none` on the whole node subtree.
+		draggable: false,
+		selectable: false,
+		class: 'connection-anchor-node'
 	} satisfies Node;
 }
 

@@ -55,6 +55,37 @@
 
 	// Field name text follows the same color choice for visual consistency.
 	const fieldNameStyle = $derived(entity.textColor ? `color: ${entity.textColor}` : '');
+
+	// ─── Double-click to edit (title + each field), like connection labels ──
+	// At rest every input is read-only and ignores the pointer, so a single click
+	// just selects the node. `editingKey` marks which one (`'title'` or
+	// `'field:<i>'`) is currently editable; only a double-click on its row sets it.
+	let editingKey = $state<string | null>(null);
+
+	function startEdit(key: string) {
+		editingKey = key;
+	}
+
+	function endEdit() {
+		editingKey = null;
+	}
+
+	function onFieldKeydown(evt: KeyboardEvent) {
+		evt.stopPropagation(); // keep keys out of xyflow's global shortcuts
+		if ((evt.key === 'Enter' && !evt.shiftKey) || evt.key === 'Escape') {
+			evt.preventDefault();
+			(evt.currentTarget as HTMLInputElement).blur(); // → endEdit
+		}
+	}
+
+	// Focus + select the input the moment its row becomes editable.
+	function editable(node: HTMLInputElement, active: boolean) {
+		const apply = (on: boolean) => {
+			if (on) requestAnimationFrame(() => (node.focus(), node.select()));
+		};
+		apply(active);
+		return { update: apply };
+	}
 </script>
 
 <!--
@@ -71,14 +102,28 @@
 -->
 <div class="entity-root" class:active={selected}>
 	<div class="entity-card" style={cardStyle}>
-		<header class="entity-header" style={headerStyle}>
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<header
+			class="entity-header"
+			class:editing={editingKey === 'title'}
+			style={headerStyle}
+			ondblclick={(e) => {
+				e.stopPropagation();
+				startEdit('title');
+			}}
+		>
 			<input
 				class="entity-title nodrag"
+				class:editing={editingKey === 'title'}
 				type="text"
 				value={entity.label ?? ''}
 				placeholder="Entity"
 				spellcheck="false"
+				readonly={editingKey !== 'title'}
+				use:editable={editingKey === 'title'}
 				oninput={(event) => setLabel(event.currentTarget.value)}
+				onkeydown={onFieldKeydown}
+				onblur={endEdit}
 				style={titleStyle}
 			/>
 		</header>
@@ -86,7 +131,16 @@
 		<ul class="entity-fields">
 			{#each entity.fields as field, index}
 				{@const key = resolveFieldKey(field)}
-				<li class="entity-field" class:pk-row={key === 'PK'}>
+				{@const editKey = `field:${index}`}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<li
+					class="entity-field"
+					class:pk-row={key === 'PK'}
+					ondblclick={(e) => {
+						e.stopPropagation();
+						startEdit(editKey);
+					}}
+				>
 					<span class="badge-cell">
 						{#if key}
 							<span class="badge" data-key={key}>{key}</span>
@@ -94,11 +148,16 @@
 					</span>
 					<input
 						class="field-name nodrag"
+						class:editing={editingKey === editKey}
 						type="text"
 						value={field.name}
 						placeholder="field"
 						spellcheck="false"
+						readonly={editingKey !== editKey}
+						use:editable={editingKey === editKey}
 						oninput={(event) => setFieldName(index, event.currentTarget.value)}
+						onkeydown={onFieldKeydown}
+						onblur={endEdit}
 						style={fieldNameStyle}
 					/>
 					<!-- Field type rendering is gated by the panel's master
@@ -186,6 +245,16 @@
 		text-align: center;
 		padding: 0;
 		font-family: inherit;
+		/* Read-only at rest: a single click selects the node instead of focusing
+		   the field. Double-click on the row flips `editing` (below). */
+		pointer-events: none;
+		cursor: inherit;
+	}
+
+	.entity-title.editing,
+	.field-name.editing {
+		pointer-events: auto;
+		cursor: text;
 	}
 
 	.entity-title::placeholder {
@@ -258,6 +327,9 @@
 		font-size: 12px;
 		font-family: inherit;
 		padding: 0;
+		/* Read-only at rest (see .entity-title). */
+		pointer-events: none;
+		cursor: inherit;
 	}
 
 	.pk-row .field-name {

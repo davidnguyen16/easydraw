@@ -1,11 +1,6 @@
 <script lang="ts">
-	import {
-		EdgeLabel,
-		EdgeReconnectAnchor,
-		Position,
-		useSvelteFlow,
-		type EdgeProps
-	} from '@xyflow/svelte';
+	import { getContext } from 'svelte';
+	import { EdgeLabel, Position, useSvelteFlow, type EdgeProps } from '@xyflow/svelte';
 	import EndpointHandle from './EndpointHandle.svelte';
 	import Pill from './Pill.svelte';
 	import {
@@ -17,7 +12,7 @@
 		routeOrthogonal,
 		type Rect
 	} from './routing';
-	import { ANCHOR_NODE_TYPE } from '../../nodes/anchor/anchor';
+	import { ANCHOR_HANDLE_ID, ANCHOR_NODE_TYPE } from '../../nodes/anchor/anchor';
 	import { nanoid } from 'nanoid';
 	import type { Axis, ConnectionEdgeData, ConnectionLabel, Point, Segment } from './types';
 
@@ -31,11 +26,17 @@
 		targetY,
 		sourcePosition,
 		targetPosition,
+		sourceHandleId,
+		targetHandleId,
 		selected,
 		data
 	}: EdgeProps = $props();
 
 	const flow = useSvelteFlow();
+
+	// Provided by Flow.svelte — adds a floating-endpoint anchor (only Flow owns
+	// the nodes array) and returns its id. Used by the endpoint reconnect drag.
+	const addAnchorNode = getContext<(p: Point) => string>('addAnchorNode');
 
 	// ─── Visual constants ───────────────────────────────────────────────
 	const COLOR_DEFAULT = '#B4B2A9';
@@ -64,6 +65,11 @@
 	const ENDPOINT_INSET = 4;
 
 	let hovered = $state(false);
+
+	// Which end (if any) is currently being reconnect-dragged. Kept so the
+	// endpoint handles + active styling stay visible for the whole drag even if
+	// the pointer leaves the line (which would otherwise clear `hovered`).
+	let draggingEnd = $state<'source' | 'target' | null>(null);
 
 	// ─── Label editing (Lucidchart-style text ALONG the edge) ───────────
 	// Multiple labels live on one edge, each pinned to a normalised position
@@ -275,7 +281,7 @@
 		return { x: natural.x, y: natural.y, axis: freeFormAxis };
 	});
 
-	const active = $derived(hovered || !!selected);
+	const active = $derived(hovered || !!selected || draggingEnd !== null);
 	const strokeColor = $derived(active ? COLOR_ACTIVE : COLOR_DEFAULT);
 	const strokeWidth = $derived(active ? WIDTH_ACTIVE : WIDTH_DEFAULT);
 
@@ -398,14 +404,188 @@
 		window.addEventListener('pointercancel', onUp);
 	}
 
-	// Grabbing the single handle on a pristine (SmoothStep-routed) edge drops
-	// the FIRST user bend at the grab point, which flips the edge into the
-	// custom orthogonal router, then immediately drags that new bend. From
-	// there the normal solid/ghost pill editing takes over.
+	// Grabbing the single handle on a pristine (SmoothStep-routed) edge has to
+	// flip the edge into the custom bend router. The naive way — dropping one
+	// bend at the grab point — reshapes a multi-corner route into a different
+	// shape the instant the routers switch ("the line jumps / distorts").
+	//
+	// To avoid that we SEED the bend list with the route's CURRENT interior
+	// corners: buildVertices walks those same orthogonal corners and reproduces
+	// the exact polyline, so nothing moves. Then we hand off to a normal segment
+	// slide on the longest run (where the pill sits) — drag it and only that run
+	// moves, like editing any other bend.
 	function startAddBendDrag(event: PointerEvent) {
-		const flowPos = flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
-		patchBendPoints(() => [{ x: flowPos.x, y: flowPos.y }]);
-		startSolidDrag(0, event);
+		const interior = routedPoints.slice(1, -1);
+
+		// Straight pristine edge (no interior corners): a single bend at the grab
+		// point IS the whole path, so it can't reshape — keep the simple "pull a
+		// point out" behaviour.
+		if (interior.length === 0) {
+			const flowPos = flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+			patchBendPoints(() => [{ x: flowPos.x, y: flowPos.y }]);
+			startSolidDrag(0, event);
+			return;
+		}
+
+		// Multi-corner edge: seed the existing corners (no visual change), then
+		// slide the longest segment — computed from the SEEDED path directly,
+		// since the reactive `segments` haven't re-derived yet this tick.
+		patchBendPoints(() => interior);
+		const seeded = buildSegments(buildVertices(sourcePoint, targetPoint, sourceAxis, interior));
+		let longest = seeded[0];
+		let bestLen = -1;
+		for (const seg of seeded) {
+			const len = Math.hypot(seg.p2.x - seg.p1.x, seg.p2.y - seg.p1.y);
+			if (len > bestLen) {
+				bestLen = len;
+				longest = seg;
+			}
+		}
+		startGhostDrag(longest, event);
+	}
+
+	// ─── Endpoint reconnect drag (draw.io / drawnode style) ─────────────
+	// Within this many flow px of a real node's handle, the dragged end SNAPS
+	// onto it; released anywhere else it's left floating at the pointer.
+	const SNAP_DIST = 22;
+
+	// Repoints one end of THIS edge at a node + handle (or an anchor + its
+	// handle). The other end is left untouched.
+	function repointEdge(end: 'source' | 'target', nodeId: string, handleId: string | null) {
+		flow.updateEdge(id, () =>
+			end === 'source'
+				? { source: nodeId, sourceHandle: handleId }
+				: { target: nodeId, targetHandle: handleId }
+		);
+	}
+
+	// The node/handle the endpoint should snap onto for `flowPos`, or null.
+	// Snaps when the pointer is INSIDE a node's box (drop "into the node" → its
+	// nearest handle) OR within SNAP_DIST of any handle (precise edge snap).
+	// Anchors are skipped; so is ONLY the exact handle the OTHER end already
+	// occupies (a zero-length self-edge) — self-loops onto a DIFFERENT handle of
+	// the same node are allowed, so they highlight + connect like any other node.
+	// Handle positions come from xyflow's measured handleBounds, so custom
+	// (non-cardinal) handles snap correctly too.
+	function nearestHandle(flowPos: Point, exclude: { nodeId: string; handleId: string | null }) {
+		type Hit = { nodeId: string; handleId: string | null; x: number; y: number };
+		let best: Hit | null = null;
+		let bestDist = SNAP_DIST;
+		let inside: Hit | null = null; // node whose box contains the pointer (wins)
+		for (const node of flow.getNodes()) {
+			if (node.type === ANCHOR_NODE_TYPE) continue;
+			const internal = flow.getInternalNode(node.id);
+			const pos = internal?.internals?.positionAbsolute;
+			const bounds = internal?.internals?.handleBounds;
+			if (!pos || !bounds) continue;
+
+			// Nearest handle of THIS node (skipping the other end's exact handle).
+			let nodeBest: Hit | null = null;
+			let nodeBestDist = Infinity;
+			for (const h of [...(bounds.source ?? []), ...(bounds.target ?? [])]) {
+				const hid = h.id ?? null;
+				if (node.id === exclude.nodeId && hid === exclude.handleId) continue;
+				const hx = pos.x + h.x + h.width / 2;
+				const hy = pos.y + h.y + h.height / 2;
+				const d = Math.hypot(hx - flowPos.x, hy - flowPos.y);
+				if (d < nodeBestDist) {
+					nodeBestDist = d;
+					nodeBest = { nodeId: node.id, handleId: hid, x: hx, y: hy };
+				}
+			}
+			if (!nodeBest) continue;
+
+			const w = internal.measured?.width ?? 0;
+			const h = internal.measured?.height ?? 0;
+			if (
+				flowPos.x >= pos.x &&
+				flowPos.x <= pos.x + w &&
+				flowPos.y >= pos.y &&
+				flowPos.y <= pos.y + h
+			) {
+				inside = nodeBest; // pointer over the node body → snap here
+			}
+			if (nodeBestDist < bestDist) {
+				bestDist = nodeBestDist;
+				best = nodeBest;
+			}
+		}
+		return inside ?? best;
+	}
+
+	// Grab an endpoint and drag it. The dragged end always rides a (temporary)
+	// anchor so the wire end follows the cursor exactly — no separate preview to
+	// leave a dot stranded in mid-air. On release: snapped onto a handle → repoint
+	// the edge there (the temp anchor is then orphaned and the Flow prune effect
+	// collects it); otherwise the anchor stays as the floating end.
+	function startEndpointDrag(end: 'source' | 'target', event: PointerEvent) {
+		event.stopPropagation();
+		event.preventDefault();
+		draggingEnd = end;
+		// Lock the cursor to "grabbing" for the whole gesture so it doesn't flip
+		// back to the default arrow as the pointer rides over the pane / nodes.
+		document.body.classList.add('endpoint-dragging');
+
+		const endNodeId = end === 'source' ? source : target;
+		// The fixed (other) end — its exact node+handle is the only thing the drag
+		// may NOT snap onto (would make a zero-length self-edge). Snapping back onto
+		// the SAME node via a different handle is allowed (a self-loop).
+		const otherEnd = {
+			nodeId: end === 'source' ? target : source,
+			handleId: (end === 'source' ? targetHandleId : sourceHandleId) ?? null
+		};
+		const startPoint =
+			end === 'source' ? { x: sourceX, y: sourceY } : { x: targetX, y: targetY };
+
+		// Reuse an already-floating anchor; otherwise detach from the node onto a
+		// fresh anchor at the current endpoint so the edge is anchor-bound for the
+		// whole drag (always referenced → never pruned mid-drag).
+		let anchorId: string;
+		if (isAnchor(endNodeId)) {
+			anchorId = endNodeId;
+		} else {
+			anchorId = addAnchorNode(startPoint);
+			repointEdge(end, anchorId, ANCHOR_HANDLE_ID);
+		}
+
+		let snapped: { nodeId: string; handleId: string | null } | null = null;
+
+		// Highlight the node the endpoint will snap onto: light it up + reveal its
+		// 4 handles (via the `conn-snap-target` class on the node wrapper), so it's
+		// obvious where the drop will connect. Tracks the current target so the
+		// previous one is cleared as the pointer moves between nodes.
+		let snapNodeId: string | null = null;
+		const setSnapTarget = (nodeId: string | null) => {
+			if (snapNodeId === nodeId) return;
+			if (snapNodeId) flow.updateNode(snapNodeId, { class: undefined });
+			snapNodeId = nodeId;
+			if (snapNodeId) flow.updateNode(snapNodeId, { class: 'conn-snap-target' });
+		};
+
+		const onMove = (ev: PointerEvent) => {
+			const flowPos = flow.screenToFlowPosition({ x: ev.clientX, y: ev.clientY });
+			const hit = nearestHandle(flowPos, otherEnd);
+			snapped = hit ? { nodeId: hit.nodeId, handleId: hit.handleId } : null;
+			setSnapTarget(hit ? hit.nodeId : null);
+			// Park the anchor on the handle while snapped (endpoint reads as
+			// attached), else let it follow the pointer freely.
+			const at = hit ? { x: hit.x, y: hit.y } : flowPos;
+			flow.updateNode(anchorId, { position: at });
+		};
+
+		const onUp = () => {
+			window.removeEventListener('pointermove', onMove);
+			window.removeEventListener('pointerup', onUp);
+			window.removeEventListener('pointercancel', onUp);
+			document.body.classList.remove('endpoint-dragging');
+			setSnapTarget(null); // clear the highlight
+			draggingEnd = null;
+			if (snapped) repointEdge(end, snapped.nodeId, snapped.handleId);
+		};
+
+		window.addEventListener('pointermove', onMove);
+		window.addEventListener('pointerup', onUp);
+		window.addEventListener('pointercancel', onUp);
 	}
 
 	// ─── Labels along the edge ──────────────────────────────────────────
@@ -610,30 +790,29 @@
 				/>
 			{/if}
 		{/each}
+	{/if}
 
-		<!--
-            Endpoint markers stay anchored to the ORIGINAL (un-inset) border
-            point so they mark the border itself, while the line endpoint
-            sits ENDPOINT_INSET px deeper inside the node. The marker's
-            white fill covers the line in the inset zone (border → inset
-            point), so the visible line ends exactly at the marker's outer
-            edge = the border. In the unselected state (no marker) the line
-            still visibly crosses through the border for a clean plug-in
-            look — no gap.
-        -->
-		<EndpointHandle x={sourceX} y={sourceY} position={sourcePosition} />
-		<EndpointHandle x={targetX} y={targetY} position={targetPosition} />
-
-		<!--
-            Draggable reconnect affordances. EdgeReconnectAnchor renders into
-            the HTML edge-label layer (so it can't host the SVG square above —
-            they're intentionally separate: SVG square = visual, this = the
-            grab/drag target stacked over the same point, transparent). Grab
-            an endpoint and drag it onto another handle (native reconnect) or
-            onto empty canvas (left floating via Flow's onReconnectEnd).
-        -->
-		<EdgeReconnectAnchor type="source" position={{ x: sourceX, y: sourceY }} size={18} />
-		<EdgeReconnectAnchor type="target" position={{ x: targetX, y: targetY }} size={18} />
+	<!--
+        Endpoint handles (draw.io / drawnode style). Shown while hovered OR
+        selected, so an end can be grabbed straight off a hover. Each rides a
+        temporary anchor for the duration of the drag (startEndpointDrag): drop
+        it on a node's handle to reconnect there, or on empty canvas to leave it
+        floating. `floating` styles a free end as a dashed white dot, vs a solid
+        dot when it's pinned to a node.
+    -->
+	{#if active && !isEditing}
+		<EndpointHandle
+			x={sourceX}
+			y={sourceY}
+			floating={sourceFloating}
+			onpointerdown={(e) => startEndpointDrag('source', e)}
+		/>
+		<EndpointHandle
+			x={targetX}
+			y={targetY}
+			floating={targetFloating}
+			onpointerdown={(e) => startEndpointDrag('target', e)}
+		/>
 	{/if}
 </g>
 
@@ -687,6 +866,27 @@
 		transition:
 			stroke 0.12s ease,
 			stroke-width 0.12s ease;
+	}
+
+	/* While an endpoint is being dragged, force the move cursor everywhere so it
+	   never flickers back to the arrow over the pane / a node. Toggled by
+	   startEndpointDrag via a class on <body>. */
+	:global(body.endpoint-dragging),
+	:global(body.endpoint-dragging *) {
+		cursor: move !important;
+	}
+
+	/* The node the dragged endpoint will snap onto — shown EXACTLY like that
+	   node's own hover state (reveal its handles; entity also gets its soft hover
+	   shadow), NOT a bolder ring. The `conn-snap-target` class is set on the node
+	   wrapper during the drag. */
+	:global(.svelte-flow__node.conn-snap-target .shape-conn),
+	:global(.svelte-flow__node.conn-snap-target .entity-handle) {
+		opacity: 1 !important;
+		pointer-events: all;
+	}
+	:global(.svelte-flow__node.conn-snap-target .entity-card) {
+		box-shadow: 0 4px 12px rgba(166, 25, 46, 0.15);
 	}
 
 	/* Strip xyflow's default edge-label padding/background so our inner chip

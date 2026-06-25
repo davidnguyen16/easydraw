@@ -1,48 +1,55 @@
 <script lang="ts">
-	import { Position } from '@xyflow/svelte';
-
+	/**
+	 * Draggable endpoint handle on a connection (draw.io / drawnode style).
+	 *
+	 * Two concentric circles at the wire end:
+	 *  - a larger TRANSPARENT circle = a generous hit area so the small dot is
+	 *    easy to grab;
+	 *  - a small VISIBLE circle whose look encodes attachment:
+	 *      • attached to a node → solid filled dot,
+	 *      • floating (free end) → white dot with a DASHED ring,
+	 *    so you can tell at a glance whether an end is pinned to a shape.
+	 *
+	 * Purely presentational + a pointerdown hook: the drag itself (follow the
+	 * cursor, snap to a nearby handle, or drop floating) lives in ConnectionEdge,
+	 * mirroring how Pill delegates its drag upward.
+	 */
 	interface Props {
 		x: number;
 		y: number;
-		/**
-		 * The xyflow Position the connection enters / leaves this point from
-		 * (Top / Right / Bottom / Left). When provided, the marker is
-		 * offset so it sits ENTIRELY OUTSIDE the node, with the edge facing
-		 * the node touching (x, y). Falls back to a centred square when the
-		 * direction isn't known so this stays drop-in compatible with older
-		 * call sites.
-		 */
-		position?: Position;
+		/** True when this end is a free/floating wire end (not pinned to a node). */
+		floating?: boolean;
+		onpointerdown?: (event: PointerEvent) => void;
 	}
 
-	let { x, y, position }: Props = $props();
+	let { x, y, floating = false, onpointerdown }: Props = $props();
 
-	const SIZE = 8;
-
-	// Marker is positioned INSIDE the node, with the edge touching the
-	// border at (x, y). This is what kills the visible gap: the connection
-	// line is drawn to (x, y) and the marker's solid white fill would
-	// otherwise hide the last `SIZE` pixels of the line if the marker sat
-	// on the outside of the border — making the line look like it stops
-	// short. With the marker tucked inside, the line stays visible all
-	// the way to the border, and the marker reads as a small square
-	// plugged into the inner face of the border.
-	const rectX = $derived(
-		position === Position.Left ? x : position === Position.Right ? x - SIZE : x - SIZE / 2
-	);
-
-	const rectY = $derived(
-		position === Position.Top ? y : position === Position.Bottom ? y - SIZE : y - SIZE / 2
-	);
+	const COLOR = '#a6192e';
+	const R = 5; // visible dot radius
+	const HIT = 10; // transparent grab radius
 </script>
 
-<rect x={rectX} y={rectY} width={SIZE} height={SIZE} class="connection-endpoint" />
+<g class="endpoint" onpointerdown={(e) => onpointerdown?.(e)} role="presentation">
+	<circle cx={x} cy={y} r={HIT} fill="transparent" />
+	<circle
+		cx={x}
+		cy={y}
+		r={R}
+		fill={floating ? '#ffffff' : COLOR}
+		stroke={floating ? COLOR : '#ffffff'}
+		stroke-width="1.5"
+		stroke-dasharray={floating ? '2 2' : undefined}
+	/>
+</g>
 
 <style>
-	.connection-endpoint {
-		fill: #ffffff;
-		stroke: #9b9991;
-		stroke-width: 1.5;
-		cursor: crosshair;
+	/* `move` = the 4-way arrow, signalling "drag this end to reconnect". Forced on
+	   the whole group (incl. the visible dot) so the icon never reverts to the
+	   arrow while the pointer is anywhere on the handle. `pointer-events: all` so
+	   the transparent hit circle is reliably grabbable. */
+	.endpoint,
+	.endpoint * {
+		cursor: move;
+		pointer-events: all;
 	}
 </style>

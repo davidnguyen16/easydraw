@@ -148,9 +148,10 @@
 		CubeNode: { kind: 'svg' }
 	};
 
-	/** Selected stroke colour (MQ red) — applies to both boxed and svg shapes. */
+	/** Selected stroke colour (MQ red) — applies to both boxed and svg shapes.
+	 *  Drawn thicker than the resting border so a selected shape reads clearly. */
 	export const SELECTED_STROKE = '#A6192E';
-	export const SELECTED_STROKE_WIDTH = 1.5;
+	export const SELECTED_STROKE_WIDTH = 2.5;
 </script>
 
 <script lang="ts">
@@ -185,13 +186,14 @@
 	const fillColor = $derived((data.fillColor as string) ?? '#ffffff');
 	const userBorderColor = $derived((data.borderColor as string) ?? '#2c2c2a');
 	const userBorderWidth = $derived((data.borderWidth as number) ?? 1.5);
-	const rounded = $derived((data.rounded as boolean) ?? true);
+	const rounded = $derived((data.rounded as boolean) ?? false);
 	const shadow = $derived((data.shadow as boolean) ?? false);
 
 	const strokeColor = $derived(selected ? SELECTED_STROKE : userBorderColor);
 	const strokeWidth = $derived(selected ? SELECTED_STROKE_WIDTH : userBorderWidth);
 
 	const textColor = $derived((data.textColor as string) ?? '#2c2c2a');
+	const fontFamily = $derived((data.fontFamily as string) ?? 'inherit');
 	const fontSize = $derived((data.fontSize as number) ?? 14);
 	const bold = $derived((data.bold as boolean) ?? false);
 	const italic = $derived((data.italic as boolean) ?? false);
@@ -201,6 +203,7 @@
 	const labelStyle = $derived(
 		[
 			`color: ${textColor}`,
+			`font-family: ${fontFamily}`,
 			`font-size: ${fontSize}px`,
 			`font-weight: ${bold ? '700' : '400'}`,
 			`font-style: ${italic ? 'italic' : 'normal'}`,
@@ -576,9 +579,11 @@
 	 * parallelogram the cardinal points still mark the bounding box, which
 	 * is the conventional connection target.
 	 */
-	:global(.shape-conn) {
-		width: 12px;
-		height: 12px;
+	/* Must out-specify xyflow's `.svelte-flow__handle` (width/height: 6px) or the
+	   size below is ignored — two classes (0,2,0) beats the library's (0,1,0). */
+	:global(.svelte-flow__handle.shape-conn) {
+		width: 15px;
+		height: 15px;
 		background: #ffffff;
 		border: 1.5px solid #a6192e;
 		border-radius: 50%;
@@ -601,12 +606,16 @@
 	 * still functional via the corners; we trade off some flexibility for
 	 * visual clarity.
 	 */
-	:global(.shape-resize-anchor) {
-		width: 8px;
-		height: 8px;
-		background: #a6192e;
-		border: none;
-		border-radius: 1px;
+	/* Selector must out-specify xyflow's `.svelte-flow__resize-control.handle`
+	   (which hard-codes width/height: 5px), or the size below is ignored. Adding
+	   the two library classes makes this rule (0,3,0) > the library's (0,2,0). */
+	:global(.svelte-flow__resize-control.handle.shape-resize-anchor) {
+		width: 15px;
+		height: 15px;
+		background: #ffffff;
+		border: 2px solid #a6192e;
+		border-radius: 4px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
 	}
 
 	:global(.shape-resize-line) {

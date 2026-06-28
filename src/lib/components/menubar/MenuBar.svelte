@@ -42,12 +42,12 @@
 		ungroup: () => void;
 		toggleShowGrid: () => void;
 		toggleSnapToGrid: () => void;
+		share: () => void;
 	}
 
 	const editor = getContext<EditorContext>('editor');
 
-	const APP_INITIAL = 'E';
-	const USER_INITIALS = 'SK';
+	const USER_INITIALS = 'MD';
 
 	let openMenu: string | null = $state(null);
 	let openSubmenu: string | null = $state(null);
@@ -315,105 +315,173 @@
 {/snippet}
 
 <header class="menu-bar">
-	<div class="brand-icon">{APP_INITIAL}</div>
-
-	<div class="center-stack">
-		<input
-			class="file-name"
-			bind:value={editorMetaData.fileName}
-			aria-label="Document file name"
-			placeholder="Untitled"
-		/>
-
-		<nav class="menus">
-			{#each menuLabels as label}
-				<div class="menu-wrapper">
-					<button
-						class="menu-trigger"
-						class:active={openMenu === label}
-						type="button"
-						aria-haspopup="menu"
-						aria-expanded={openMenu === label}
-						onclick={() => toggleMenu(label)}
-					>
-						{label}
-					</button>
-					{#if openMenu === label}
-						<div class="dropdown" role="menu">
-							{#each menus[label] as item}
-								{#if item.type === 'divider'}
-									<div class="dropdown-divider" role="separator"></div>
-								{:else}
-									<div class="item-wrapper">
-										<button
-											type="button"
-											role="menuitem"
-											class="dropdown-item"
-											class:danger={item.danger}
-											class:has-submenu={!!item.submenu}
-											class:active={item.submenu &&
-												openSubmenu === item.label}
-											disabled={item.disabled}
-											onclick={() => runItem(item)}
-										>
-											<span class="item-icon-wrap">
-												{#if item.toggle}
-													{#if item.checked}
-														{@render menuIcon('check')}
-													{/if}
-												{:else if item.icon}
-													{@render menuIcon(item.icon)}
-												{/if}
-											</span>
-											<span class="item-label">{item.label}</span>
-											{#if item.shortcut}
-												<span class="item-shortcut">{item.shortcut}</span>
-											{:else if item.submenu}
-												<span class="item-chevron"
-													>{@render menuIcon('chevron-right')}</span
-												>
-											{/if}
-										</button>
-										{#if item.submenu && openSubmenu === item.label}
-											<div class="dropdown submenu" role="menu">
-												{#each item.submenu as sub}
-													<button
-														type="button"
-														role="menuitem"
-														class="dropdown-item"
-														disabled={sub.disabled}
-														onclick={() => runItem(sub)}
-													>
-														<span class="item-icon-wrap"></span>
-														<span class="item-label">{sub.label}</span>
-														{#if sub.shortcut}
-															<span class="item-shortcut"
-																>{sub.shortcut}</span
-															>
-														{/if}
-													</button>
-												{/each}
-											</div>
-										{/if}
-									</div>
-								{/if}
-							{/each}
-						</div>
-					{/if}
-				</div>
-			{/each}
-		</nav>
+	<div class="brand-icon" aria-label="EasyDraw">
+		<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+			<rect x="3" y="3" width="8" height="8" rx="2" fill="#ffffff" />
+			<rect x="13" y="13" width="8" height="8" rx="2" fill="#ffffff" />
+			<path d="M11 7h4a2 2 0 0 1 2 2v4" stroke="#ffffff" stroke-width="1.8" />
+		</svg>
 	</div>
 
-	<div class="avatar">{USER_INITIALS}</div>
+	<input
+		class="file-name"
+		bind:value={editorMetaData.fileName}
+		aria-label="Document file name"
+		placeholder="Untitled"
+	/>
+
+	<span class="status-badge"><span class="status-dot"></span>Draft</span>
+
+	<nav class="menus">
+		{#each menuLabels as label}
+			<div class="menu-wrapper">
+				<button
+					class="menu-trigger"
+					class:active={openMenu === label}
+					type="button"
+					aria-haspopup="menu"
+					aria-expanded={openMenu === label}
+					onclick={() => toggleMenu(label)}
+				>
+					{label}
+				</button>
+				{#if openMenu === label}
+					<div class="dropdown" role="menu">
+						{#each menus[label] as item}
+							{#if item.type === 'divider'}
+								<div class="dropdown-divider" role="separator"></div>
+							{:else}
+								<div class="item-wrapper">
+									<button
+										type="button"
+										role="menuitem"
+										class="dropdown-item"
+										class:danger={item.danger}
+										class:has-submenu={!!item.submenu}
+										class:active={item.submenu && openSubmenu === item.label}
+										disabled={item.disabled}
+										onclick={() => runItem(item)}
+									>
+										<span class="item-icon-wrap">
+											{#if item.toggle}
+												{#if item.checked}
+													{@render menuIcon('check')}
+												{/if}
+											{:else if item.icon}
+												{@render menuIcon(item.icon)}
+											{/if}
+										</span>
+										<span class="item-label">{item.label}</span>
+										{#if item.shortcut}
+											<span class="item-shortcut">{item.shortcut}</span>
+										{:else if item.submenu}
+											<span class="item-chevron"
+												>{@render menuIcon('chevron-right')}</span
+											>
+										{/if}
+									</button>
+									{#if item.submenu && openSubmenu === item.label}
+										<div class="dropdown submenu" role="menu">
+											{#each item.submenu as sub}
+												<button
+													type="button"
+													role="menuitem"
+													class="dropdown-item"
+													disabled={sub.disabled}
+													onclick={() => runItem(sub)}
+												>
+													<span class="item-icon-wrap"></span>
+													<span class="item-label">{sub.label}</span>
+													{#if sub.shortcut}
+														<span class="item-shortcut"
+															>{sub.shortcut}</span
+														>
+													{/if}
+												</button>
+											{/each}
+										</div>
+									{/if}
+								</div>
+							{/if}
+						{/each}
+					</div>
+				{/if}
+			</div>
+		{/each}
+	</nav>
+
+	<div class="spacer"></div>
+
+	<div class="right-cluster">
+		<button type="button" class="hbtn" aria-label="Collaborators">
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.7"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<circle cx="9" cy="8" r="3" />
+				<path d="M3 20c0-3 2.7-5 6-5s6 2 6 5" />
+				<path d="M16 4a3 3 0 0 1 0 6" />
+				<path d="M17.5 14c2.2.4 3.5 2 3.5 4" />
+			</svg>
+		</button>
+
+		<div class="avatar">{USER_INITIALS}</div>
+
+		<button type="button" class="hbtn" aria-label="Present">
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.7"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M8 5v14l11-7z" />
+			</svg>
+		</button>
+
+		<button type="button" class="share-btn" onclick={editor.share}>
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.7"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M22 2 11 13" />
+				<path d="M22 2 15 22l-4-9-9-4 20-7z" />
+			</svg>
+			Share
+		</button>
+
+		<button type="button" class="hbtn" aria-label="Copy link" onclick={editor.share}>
+			<svg
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.7"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" />
+				<path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
+			</svg>
+		</button>
+	</div>
 </header>
 
 <style>
 	.menu-bar {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.25rem 1rem;
+		gap: 0.4rem;
+		padding: 0 0.85rem;
+		height: 52px;
 		background: #76232f;
 		color: white;
 		font-family:
@@ -422,29 +490,30 @@
 			sans-serif;
 	}
 
-	.center-stack {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-		min-width: 0;
-	}
-
 	.menus {
 		display: flex;
-		gap: 0.25rem;
+		gap: 0.1rem;
+		margin-left: 0.5rem;
+	}
+
+	.spacer {
+		flex: 1 1 auto;
 	}
 
 	.brand-icon {
-		width: 48px;
-		height: 48px;
-		background: #8b2a38;
-		color: white;
+		width: 30px;
+		height: 30px;
+		flex-shrink: 0;
+		background: #a6192e;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: 4px;
-		font-weight: 700;
-		font-size: 0.95rem;
+		border-radius: 7px;
+	}
+
+	.brand-icon svg {
+		width: 18px;
+		height: 18px;
 	}
 
 	.file-name {
@@ -452,15 +521,94 @@
 		border: 1px solid transparent;
 		color: white;
 		font-weight: 700;
-		font-size: 1rem;
+		font-size: 0.95rem;
 		font-family: inherit;
 		padding: 0.25rem 0.5rem;
-		border-radius: 4px;
-		min-width: 8rem;
-		max-width: 22rem;
+		border-radius: 6px;
+		min-width: 6rem;
+		max-width: 18rem;
 		transition:
 			background 0.15s ease,
 			border-color 0.15s ease;
+	}
+
+	/* "Draft" status pill: faint translucent chip with a red dot. */
+	.status-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		flex-shrink: 0;
+		height: 24px;
+		padding: 0 10px;
+		border-radius: 999px;
+		background: rgba(0, 0, 0, 0.18);
+		color: rgba(255, 255, 255, 0.92);
+		font-size: 0.78rem;
+		font-weight: 600;
+	}
+
+	.status-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #ff5a5f;
+	}
+
+	/* Right-side cluster (collaborators / avatar / present / share / link). */
+	.right-cluster {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-shrink: 0;
+	}
+
+	.hbtn {
+		width: 32px;
+		height: 32px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: transparent;
+		border: none;
+		border-radius: 7px;
+		color: rgba(255, 255, 255, 0.92);
+		cursor: pointer;
+		transition: background 0.12s ease;
+	}
+
+	.hbtn:hover {
+		background: rgba(255, 255, 255, 0.16);
+	}
+
+	.hbtn svg {
+		width: 19px;
+		height: 19px;
+	}
+
+	.share-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		height: 34px;
+		padding: 0 16px;
+		background: #a6192e;
+		color: #ffffff;
+		border: none;
+		border-radius: 8px;
+		font-family: inherit;
+		font-size: 0.88rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background 0.12s ease;
+	}
+
+	.share-btn:hover {
+		background: #c01933;
+	}
+
+	.share-btn svg {
+		width: 16px;
+		height: 16px;
 	}
 
 	.file-name:hover {
@@ -629,16 +777,17 @@
 	}
 
 	.avatar {
-		width: 32px;
-		height: 32px;
+		width: 30px;
+		height: 30px;
+		flex-shrink: 0;
 		border-radius: 50%;
-		background: #80225f;
+		background: #c01933;
 		color: white;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-weight: 600;
-		font-size: 0.8rem;
+		font-weight: 700;
+		font-size: 0.75rem;
 		letter-spacing: 0.02em;
 	}
 </style>

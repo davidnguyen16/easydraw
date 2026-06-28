@@ -1,5 +1,105 @@
 /*@import url('./xy-theme.css');*/
 
+/* ---------------------------------------------------------------------------
+   Editor fonts.
+   Put one .woff2 file per font into static/fonts/ (served at /fonts/).
+   File names and the font-family names must match exactly the list in
+   ToolBar.svelte. Inter is the default font (see the `body` rule below).
+   `font-display: swap` shows fallback text first, then swaps when the
+   font has loaded, so text is never invisible while loading.
+--------------------------------------------------------------------------- */
+@font-face {
+	font-family: 'Bergamo Std';
+	src: url('/fonts/bergamo-std.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Cousine';
+	src: url('/fonts/cousine.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Dustismo';
+	src: url('/fonts/dustismo.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Gentium Basic';
+	src: url('/fonts/gentium-basic.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Inter';
+	src: url('/fonts/inter.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Kirsty';
+	src: url('/fonts/kirsty.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Komika Hand';
+	src: url('/fonts/komika-hand.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Liberation Mono';
+	src: url('/fonts/liberation-mono.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Liberation Sans';
+	src: url('/fonts/liberation-sans.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Liberation Serif';
+	src: url('/fonts/liberation-serif.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Orbitron';
+	src: url('/fonts/orbitron.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'SF Arch Rival';
+	src: url('/fonts/sf-arch-rival.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'SF Cartoonist Hand';
+	src: url('/fonts/sf-cartoonist-hand.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
 /* 1. Use a more-intuitive box-sizing model */
 *,
 *::before,
@@ -20,6 +120,8 @@
 }
 
 body {
+	/* Default app font; falls back to the system UI font until Inter loads. */
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 	/* 4. Add accessible line-height */
 	line-height: 1.5;
 	/* 5. Improve text rendering */

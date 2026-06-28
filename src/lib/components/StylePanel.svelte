@@ -8,6 +8,7 @@
 		rounded?: boolean;
 		shadow?: boolean;
 		textColor?: string;
+		fontFamily?: string;
 		fontSize?: number;
 		bold?: boolean;
 		italic?: boolean;
@@ -19,6 +20,7 @@
 <script lang="ts">
 	import type { Node } from '@xyflow/svelte';
 	import { getShape } from '$lib/flow/nodes/registry';
+	import { FONT_FAMILIES, DEFAULT_FONT_FAMILY } from '$lib/fonts';
 
 	type StyleTab = 'style' | 'text' | 'panel' | 'arrange';
 
@@ -75,10 +77,11 @@
 	let fillColor = $derived(style.fillColor ?? '#76232F');
 	let borderColor = $derived(style.borderColor ?? '#2C2C2A');
 	let borderWidth = $derived(style.borderWidth ?? 1);
-	let rounded = $derived(style.rounded ?? true);
+	let rounded = $derived(style.rounded ?? false);
 	let shadow = $derived(style.shadow ?? false);
 
 	let textColor = $derived(style.textColor ?? '#2C2C2A');
+	let fontFamily = $derived(style.fontFamily ?? DEFAULT_FONT_FAMILY);
 	let fontSize = $derived(style.fontSize ?? 14);
 	let bold = $derived(style.bold ?? false);
 	let italic = $derived(style.italic ?? false);
@@ -120,9 +123,40 @@
 		onStyleChange({ borderWidth: next });
 	}
 
+	const FONT_SIZE_MIN = 8;
+	const FONT_SIZE_MAX = 96;
+
 	function adjustFontSize(delta: number) {
-		const next = Math.max(8, Math.min(96, fontSize + delta));
+		const next = Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, fontSize + delta));
 		onStyleChange({ fontSize: next });
+	}
+
+	// Editable size field: show the live value until focused, then a local draft
+	// string so typing isn't clobbered by reactive updates. Enter / blur commits
+	// (clamped); Escape cancels.
+	let sizeDraft = $state<string | null>(null);
+
+	function commitFontSize() {
+		if (sizeDraft !== null) {
+			const n = parseInt(sizeDraft, 10);
+			if (!Number.isNaN(n)) {
+				onStyleChange({ fontSize: Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, n)) });
+			}
+		}
+		sizeDraft = null;
+	}
+
+	function onSizeKeydown(event: KeyboardEvent) {
+		const input = event.currentTarget as HTMLInputElement;
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			commitFontSize();
+			input.blur();
+		} else if (event.key === 'Escape') {
+			event.preventDefault();
+			sizeDraft = null;
+			input.blur();
+		}
 	}
 
 	function commitPosition() {
@@ -301,19 +335,62 @@
 			</section>
 
 			<section class="group">
-				<h3 class="group-label">SIZE</h3>
-				<div class="stepper stepper-wide">
-					<button
-						type="button"
-						aria-label="Decrease font size"
-						onclick={() => adjustFontSize(-1)}>−</button
+				<h3 class="group-label">FONT</h3>
+				<div class="font-field">
+					<select
+						class="font-select"
+						style="font-family: {fontFamily};"
+						value={fontFamily}
+						onchange={(e) => onStyleChange({ fontFamily: e.currentTarget.value })}
+						aria-label="Font family"
 					>
-					<span class="stepper-value">{fontSize}</span>
-					<button
-						type="button"
-						aria-label="Increase font size"
-						onclick={() => adjustFontSize(1)}>+</button
-					>
+						{#each FONT_FAMILIES as family}
+							<option value={family} style="font-family: {family};">{family}</option>
+						{/each}
+					</select>
+					<span class="font-chev" aria-hidden="true">
+						<svg
+							viewBox="0 0 24 24"
+							width="12"
+							height="12"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<polyline points="6 9 12 15 18 9" />
+						</svg>
+					</span>
+				</div>
+				<div class="row">
+					<span class="row-label">Size</span>
+					<div class="stepper">
+						<button
+							type="button"
+							aria-label="Decrease font size"
+							onclick={() => adjustFontSize(-1)}>−</button
+						>
+						<input
+							class="size-input tabular"
+							type="text"
+							inputmode="numeric"
+							aria-label="Font size"
+							value={sizeDraft ?? `${fontSize}`}
+							oninput={(e) => (sizeDraft = e.currentTarget.value)}
+							onfocus={(e) => {
+								sizeDraft = `${fontSize}`;
+								e.currentTarget.select();
+							}}
+							onblur={commitFontSize}
+							onkeydown={onSizeKeydown}
+						/>
+						<button
+							type="button"
+							aria-label="Increase font size"
+							onclick={() => adjustFontSize(1)}>+</button
+						>
+					</div>
 				</div>
 			</section>
 
@@ -637,11 +714,66 @@
 		padding: 2px 4px;
 	}
 
-	.stepper-wide {
-		display: flex;
-		justify-content: space-between;
+	/* Font family dropdown: a styled native <select> (its option popup escapes
+	   the panel's overflow, unlike a custom menu). The closed control and each
+	   option render in their own typeface for a live preview. */
+	.font-field {
+		position: relative;
+	}
+
+	.font-select {
 		width: 100%;
-		padding: 4px 10px;
+		appearance: none;
+		-webkit-appearance: none;
+		background: #ffffff;
+		border: 1px solid #d6d2c4;
+		border-radius: 6px;
+		padding: 9px 30px 9px 10px;
+		font-size: 0.9rem;
+		color: #373a36;
+		cursor: pointer;
+		line-height: 1.2;
+	}
+
+	.font-select:hover {
+		border-color: #c4c1b8;
+	}
+
+	.font-select:focus {
+		outline: none;
+		border-color: #a6192e;
+	}
+
+	.font-chev {
+		position: absolute;
+		top: 50%;
+		right: 10px;
+		transform: translateY(-50%);
+		display: inline-flex;
+		color: #8a8b83;
+		pointer-events: none;
+	}
+
+	.size-input {
+		width: 32px;
+		min-width: 0;
+		border: none;
+		outline: none;
+		background: transparent;
+		text-align: center;
+		font-family: inherit;
+		font-size: 0.85rem;
+		color: #373a36;
+		padding: 0;
+		appearance: textfield;
+		-moz-appearance: textfield;
+	}
+
+	.size-input::-webkit-outer-spin-button,
+	.size-input::-webkit-inner-spin-button {
+		-webkit-appearance: none;
+		appearance: none;
+		margin: 0;
 	}
 
 	.stepper-value {

@@ -43,6 +43,7 @@
 	const titleStyle = $derived(
 		[
 			entity.textColor ? `color: ${entity.textColor}` : '',
+			entity.fontFamily ? `font-family: ${entity.fontFamily}` : '',
 			entity.fontSize ? `font-size: ${entity.fontSize}px` : '',
 			entity.bold !== undefined ? `font-weight: ${entity.bold ? '700' : '500'}` : '',
 			entity.italic ? 'font-style: italic' : '',
@@ -53,8 +54,15 @@
 			.join('; ')
 	);
 
-	// Field name text follows the same color choice for visual consistency.
-	const fieldNameStyle = $derived(entity.textColor ? `color: ${entity.textColor}` : '');
+	// Field name text follows the same color/font choice for visual consistency.
+	const fieldNameStyle = $derived(
+		[
+			entity.textColor ? `color: ${entity.textColor}` : '',
+			entity.fontFamily ? `font-family: ${entity.fontFamily}` : ''
+		]
+			.filter(Boolean)
+			.join('; ')
+	);
 
 	// ─── Double-click to edit (title + each field), like connection labels ──
 	// At rest every input is read-only and ignores the pointer, so a single click

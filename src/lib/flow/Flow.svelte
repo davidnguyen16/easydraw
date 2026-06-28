@@ -77,6 +77,18 @@
 		return id;
 	});
 
+	// A connection label swallows pointer events (so a click on the text doesn't
+	// drag the line), which means editing a label never selects its edge through
+	// xyflow. Without a selected edge the toolbar font / size / colour controls
+	// have nothing to target. So when a label enters edit mode the edge calls
+	// this to make ITSELF the sole selection — clearing any node/other-edge
+	// selection so it wins the toolbar's style target, and staying selected after
+	// the editor blurs (e.g. when the user clicks a toolbar control).
+	setContext('selectEdgeForStyling', (edgeId: string) => {
+		nodes = nodes.map((n) => (n.selected ? { ...n, selected: false } : n));
+		edges = edges.map((e) => ({ ...e, selected: e.id === edgeId }));
+	});
+
 	// Palette node types come from the shape registry. The connection anchor
 	// is an INTERNAL type (floating edge endpoints) — never a palette shape —
 	// so it's merged in here rather than added to the sidebar registry. New
@@ -167,6 +179,12 @@
 
 	// In-memory clipboard for Copy / Paste. JSON-clean (no function refs).
 	let clipboardSnapshot: { nodes: Node[]; edges: Edge[] } | null = null;
+
+	// Successive pastes cascade diagonally so each Ctrl+V lands offset from the
+	// previous one (and from the originals) instead of stacking on the same spot
+	// — that way it's obvious a new copy appeared. Reset on every fresh copy.
+	const PASTE_OFFSET_STEP = 32;
+	let pasteCount = 0;
 
 	// Keep the full hook return so method lookups happen at call time. xyflow
 	// returns `zoomIn`/`zoomOut` as direct property captures (not lazy wrappers
@@ -537,6 +555,8 @@
 			nodes: JSON.parse(JSON.stringify(selectedNodes)),
 			edges: JSON.parse(JSON.stringify(selectedEdges))
 		};
+		// Fresh copy → restart the paste cascade from the first offset.
+		pasteCount = 0;
 	}
 
 	// Cut = copy the current selection to the in-memory clipboard, then remove
@@ -553,13 +573,17 @@
 
 		const idMap = new Map<string, string>();
 
+		// Each paste steps further down-right than the previous one.
+		pasteCount += 1;
+		const offset = PASTE_OFFSET_STEP * pasteCount;
+
 		const pastedNodes = clipboardSnapshot.nodes.map((n) => {
 			const newId = nanoid();
 			idMap.set(n.id, newId);
 			return {
 				...n,
 				id: newId,
-				position: { x: n.position.x + 40, y: n.position.y + 40 },
+				position: { x: n.position.x + offset, y: n.position.y + offset },
 				selected: true,
 				data: {
 					...n.data,
@@ -745,7 +769,38 @@
 		toggleSnapToGrid: handleToggleSnapToGrid,
 		setZoom: handleSetZoom,
 		fitSelection: handleFitSelection,
-		toggleLock: handleToggleLock
+		toggleLock: handleToggleLock,
+		// Text style of the current selection (or null) + a patcher — drives the
+		// ToolBar's font / size / B / I / U / colour controls. A getter so reads
+		// stay reactive to the current selection. A selected NODE wins; otherwise
+		// a selected EDGE exposes its label text style (different defaults so the
+		// controls read the connection-label look).
+		get nodeStyle() {
+			if (selectedNode) {
+				const d = (selectedNode.data ?? {}) as Record<string, unknown>;
+				return {
+					fontFamily: (d.fontFamily as string) ?? 'Inter',
+					fontSize: (d.fontSize as number) ?? 14,
+					bold: !!d.bold,
+					italic: !!d.italic,
+					underline: !!d.underline,
+					textColor: (d.textColor as string) ?? '#2c2c2a'
+				};
+			}
+			if (selectedEdge) {
+				const d = (selectedEdge.data ?? {}) as Record<string, unknown>;
+				return {
+					fontFamily: (d.fontFamily as string) ?? 'Inter',
+					fontSize: (d.fontSize as number) ?? 13,
+					bold: !!d.bold,
+					italic: !!d.italic,
+					underline: !!d.underline,
+					textColor: (d.textColor as string) ?? '#1f1d1a'
+				};
+			}
+			return null;
+		},
+		applyStyle: handleStyleChange
 	});
 
 	// Centralized orphan-anchor cleanup. A connection anchor only ever exists
@@ -884,6 +939,16 @@
 				return;
 			}
 
+			// Text formatting (Ctrl+B / Ctrl+I / Ctrl+U). Only act when something
+			// is selected, otherwise let the browser keep its own shortcut.
+			if (meta && !event.shiftKey && (key === 'b' || key === 'i' || key === 'u')) {
+				if (isInInput) return;
+				if (!selectedNode && !selectedEdge) return;
+				event.preventDefault();
+				toggleTextStyle(key === 'b' ? 'bold' : key === 'i' ? 'italic' : 'underline');
+				return;
+			}
+
 			if (meta && event.shiftKey && key === 'f') {
 				event.preventDefault();
 				handleBringToFront();
@@ -946,10 +1011,35 @@
 	// Any selected node — drives the StylePanel.
 	let selectedNode = $derived(nodes.find((n) => n.selected));
 
-	// Style edits land on node.data so they ride existing persistence + history.
+	// Any selected edge — lets the toolbar text controls style connection labels
+	// when no node is selected.
+	let selectedEdge = $derived(edges.find((e) => e.selected));
+
+	// Style edits land on node.data (or edge.data) so they ride existing
+	// persistence + history. A selected node takes priority; otherwise the patch
+	// applies to a selected edge's label style.
 	function handleStyleChange(patch: NodeStyleData) {
-		if (!selectedNode) return;
-		updateNodeData(selectedNode.id, patch);
+		if (selectedNode) {
+			updateNodeData(selectedNode.id, patch);
+			return;
+		}
+		if (selectedEdge) {
+			updateEdgeData(selectedEdge.id, patch);
+		}
+	}
+
+	// Flip a boolean text-style field (bold / italic / underline) on the current
+	// selection — the Ctrl+B / Ctrl+I / Ctrl+U shortcuts. Reads the current value
+	// off the selected node/edge data so the toggle mirrors the toolbar buttons.
+	function toggleTextStyle(field: 'bold' | 'italic' | 'underline') {
+		const data = (selectedNode?.data ?? selectedEdge?.data) as
+			| Record<string, unknown>
+			| undefined;
+		if (!data) return;
+		const next = !data[field];
+		if (field === 'bold') handleStyleChange({ bold: next });
+		else if (field === 'italic') handleStyleChange({ italic: next });
+		else handleStyleChange({ underline: next });
 	}
 
 	// Position edits replace node.position; xyflow re-renders from the new value.
@@ -989,6 +1079,14 @@
 			}
 			return n;
 		});
+	}
+
+	// Merge a data patch into a specific edge (e.g. label text style). Mirrors
+	// updateNodeData — edges is $state.raw, so reassign the whole array.
+	function updateEdgeData(edgeId: string, newData: any) {
+		edges = edges.map((e) =>
+			e.id === edgeId ? { ...e, data: { ...e.data, ...newData } } : e
+		);
 	}
 
 	// New connections use the orthogonal `connection` edge by default.

@@ -32,6 +32,18 @@ export interface ConnectionEdgeData {
 	 * clean gap between consecutive labels.
 	 */
 	labels?: ConnectionLabel[];
+	/**
+	 * Text style applied to ALL labels on this edge. Driven by the toolbar
+	 * font / size / B / I / U / colour controls when the edge is selected,
+	 * mirroring the per-node text-style fields. Omitted fields fall back to
+	 * the default connection-label look.
+	 */
+	fontFamily?: string;
+	fontSize?: number;
+	bold?: boolean;
+	italic?: boolean;
+	underline?: boolean;
+	textColor?: string;
 	[key: string]: unknown;
 }
 

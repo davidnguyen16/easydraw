@@ -80,6 +80,7 @@ export interface EntityData {
 	rounded?: boolean;
 	shadow?: boolean;
 	textColor?: string;
+	fontFamily?: string;
 	fontSize?: number;
 	bold?: boolean;
 	italic?: boolean;

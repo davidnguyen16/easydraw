@@ -38,6 +38,11 @@
 	// the nodes array) and returns its id. Used by the endpoint reconnect drag.
 	const addAnchorNode = getContext<(p: Point) => string>('addAnchorNode');
 
+	// Provided by Flow.svelte — makes this edge the sole selection so the toolbar
+	// text controls target it while its label is being edited (the label eats
+	// pointer events, so editing never selects the edge on its own).
+	const selectEdgeForStyling = getContext<(edgeId: string) => void>('selectEdgeForStyling');
+
 	// ─── Visual constants ───────────────────────────────────────────────
 	const COLOR_DEFAULT = '#B4B2A9';
 	const COLOR_ACTIVE = '#5F5E5A';
@@ -87,6 +92,31 @@
 
 	const connectionData = $derived((data ?? {}) as ConnectionEdgeData);
 	const bendPoints = $derived(connectionData.bendPoints ?? []);
+
+	// ─── Label text style ───────────────────────────────────────────────
+	// Applied to every label on this edge. Set via the toolbar font / size /
+	// B / I / U / colour controls while the edge is selected (stored on
+	// edge.data). Defaults reproduce the original connection-label look
+	// (Inter, 13px, semibold, near-black) so unstyled edges are unchanged.
+	const labelFontFamily = $derived(connectionData.fontFamily ?? 'Inter');
+	const labelFontSize = $derived(connectionData.fontSize ?? 13);
+	const labelBold = $derived(!!connectionData.bold);
+	const labelItalic = $derived(!!connectionData.italic);
+	const labelUnderline = $derived(!!connectionData.underline);
+	const labelColor = $derived(connectionData.textColor ?? '#1f1d1a');
+
+	const labelStyle = $derived(
+		[
+			`color: ${labelColor}`,
+			`font-family: ${labelFontFamily}`,
+			`font-size: ${labelFontSize}px`,
+			// Unbolded labels stay semibold (600) for legibility over the line;
+			// the Bold toggle pushes them to 700.
+			`font-weight: ${labelBold ? '700' : '600'}`,
+			`font-style: ${labelItalic ? 'italic' : 'normal'}`,
+			`text-decoration: ${labelUnderline ? 'underline' : 'none'}`
+		].join('; ')
+	);
 
 	/**
 	 * Returns `p` shifted `ENDPOINT_INSET` px in the direction that goes
@@ -182,15 +212,18 @@
 	// instead of being buried under it. Text is always horizontal, so the box
 	// is axis-aligned: width follows the text length, height ≈ the chip height.
 	// A pill whose centre falls inside a (padded) box is suppressed.
-	const LABEL_CHAR_PX = 7; // ~advance width at 13px / 600 weight
+	// Per-character advance + half-height scale with the label font size so the
+	// dodge box still fits the text when the user enlarges/​shrinks the label.
+	// (~0.55em advance reproduces the original 7px at the default 13px size.)
+	const labelCharPx = $derived(Math.max(7, labelFontSize * 0.55));
 	const labelBoxes = $derived(
 		labels.map((l) => {
 			const c = pointAtT(l.t);
 			return {
 				cx: c.x,
 				cy: c.y,
-				halfW: Math.max(10, (l.text.length * LABEL_CHAR_PX) / 2) + 12,
-				halfH: 21
+				halfW: Math.max(10, (l.text.length * labelCharPx) / 2) + 12,
+				halfH: Math.max(21, labelFontSize + 8)
 			};
 		})
 	);
@@ -613,6 +646,8 @@
 		editingT = t;
 		draft = '';
 		editingId = nanoid();
+		// Select this edge so the toolbar can style the label as it's typed.
+		selectEdgeForStyling(id);
 	}
 
 	function startEditingLabel(labelId: string) {
@@ -622,6 +657,9 @@
 		editingT = found.t;
 		draft = found.text;
 		editingId = labelId;
+		// Select this edge so the toolbar targets it (clicking a toolbar control
+		// blurs the editor, but the edge stays selected so the font still applies).
+		selectEdgeForStyling(id);
 	}
 
 	// xyflow's pane swallows the bubbling dblclick: d3-zoom's `dblclick.zoom`
@@ -830,11 +868,13 @@
 		<EdgeLabel x={p.x} y={p.y} transparent class="conn-label-host">
 			<div
 				class="conn-label conn-label--committed nodrag nopan"
+				class:conn-label--selected={selected}
 				role="button"
 				tabindex="-1"
 				aria-label="Connection label, double-click to edit"
 				use:dblclickEditLabel={lab.id}
 				onpointerdown={(e) => e.stopPropagation()}
+				style={labelStyle}
 			>
 				{lab.text}
 			</div>
@@ -857,6 +897,7 @@
 			onkeydown={onEditorKeydown}
 			onblur={onEditorBlur}
 			onpointerdown={(e) => e.stopPropagation()}
+			style={labelStyle}
 		></div>
 	</EdgeLabel>
 {/if}
@@ -914,6 +955,15 @@
 		background: #ffffff;
 		cursor: text;
 		user-select: none;
+	}
+
+	/* While the edge is selected the label is the toolbar's style target, so it
+	   keeps the SAME blue highlight as the editing state. This makes it obvious
+	   which text the font/size/colour controls affect, and means the highlight
+	   doesn't disappear when the editor blurs as you reach for a toolbar control
+	   (the edge stays selected). */
+	.conn-label--committed.conn-label--selected {
+		background: #b3d4f5;
 	}
 
 	/* Editing: light selection-blue highlight, blinking caret, no border. */

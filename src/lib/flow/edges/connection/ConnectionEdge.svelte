@@ -151,6 +151,47 @@
 		return { x: pos.x, y: pos.y, width, height };
 	}
 
+	// Shapes whose connection dots sit on the bbox edge (default cardinal
+	// position) but whose visible outline is inset from that edge on some side.
+	// The dot marker stays on the bbox edge; the WIRE endpoint is pushed inward
+	// toward the outline by the listed fraction of the node's width (left/right)
+	// or height (top/bottom), so the line visibly reaches the shape. Values are
+	// read off each shape's SVG at the handle's position:
+	//   Triangle L/R:      slant at mid-height is ~25.5% in (50,1 99,99 1,99).
+	//   Parallelogram L/R: slant at mid-height is ~10.5% in (20,1 99,1 80,99 1,99).
+	//   Document bottom:   wavy edge at mid-width sits at y≈82%, i.e. ~18% up from
+	//                      the bbox bottom (path …L99,82 Q75,98 50,82 T1,82).
+	type OutlineInset = Partial<Record<Position, number>>;
+	const OUTLINE_INSET: Record<string, OutlineInset> = {
+		TriangleNode: { [Position.Left]: 0.255, [Position.Right]: 0.255 },
+		ParallelogramNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
+		DocumentNode: { [Position.Bottom]: 0.18 }
+	};
+
+	// Inset fraction for a node's end at `position`, or 0 when it doesn't inset.
+	// Also the "is an inset outline end" test (ratio > 0), which tells
+	// routedPoints to skip self-avoidance for that node.
+	function outlineInsetRatio(nodeId: string, position: Position): number {
+		const type = flow.getInternalNode(nodeId)?.type;
+		return (type && OUTLINE_INSET[type]?.[position]) || 0;
+	}
+
+	function insetForEnd(nodeId: string, p: Point, position: Position): Point {
+		const ratio = outlineInsetRatio(nodeId, position);
+		if (ratio > 0) {
+			const rect = rectOf(nodeId);
+			if (rect) {
+				const dx = rect.width * ratio + ENDPOINT_INSET;
+				const dy = rect.height * ratio + ENDPOINT_INSET;
+				if (position === Position.Left) return { x: p.x + dx, y: p.y };
+				if (position === Position.Right) return { x: p.x - dx, y: p.y };
+				if (position === Position.Top) return { x: p.x, y: p.y + dy };
+				if (position === Position.Bottom) return { x: p.x, y: p.y - dy };
+			}
+		}
+		return insetIntoNode(p, position);
+	}
+
 	// A connection anchor is a free wire end — treat it as FLOATING so the
 	// released edge routes exactly like the drag preview (which had no node at
 	// the pointer). See routeOrthogonal's floating handling.
@@ -169,12 +210,12 @@
 	const sourcePoint = $derived(
 		sourceFloating
 			? { x: sourceX, y: sourceY }
-			: insetIntoNode({ x: sourceX, y: sourceY }, sourcePosition)
+			: insetForEnd(source, { x: sourceX, y: sourceY }, sourcePosition)
 	);
 	const targetPoint = $derived(
 		targetFloating
 			? { x: targetX, y: targetY }
-			: insetIntoNode({ x: targetX, y: targetY }, targetPosition)
+			: insetForEnd(target, { x: targetX, y: targetY }, targetPosition)
 	);
 	const sourceAxis = $derived(positionToAxis(sourcePosition));
 
@@ -189,11 +230,17 @@
 		routeOrthogonal({
 			source: sourcePoint,
 			sourcePosition,
-			sourceRect: sourceFloating ? null : rectOf(source),
+			// An inset-outline end (triangle/parallelogram sides, document bottom)
+			// sits inside its own bbox in an empty region, so skip avoiding that
+			// node's own rect — otherwise the leaving stub is bent around the shape
+			// even though it only crosses that empty region, not the body.
+			sourceRect:
+				sourceFloating || outlineInsetRatio(source, sourcePosition) > 0 ? null : rectOf(source),
 			sourceFloating,
 			target: targetPoint,
 			targetPosition,
-			targetRect: targetFloating ? null : rectOf(target),
+			targetRect:
+				targetFloating || outlineInsetRatio(target, targetPosition) > 0 ? null : rectOf(target),
 			targetFloating
 		})
 	);

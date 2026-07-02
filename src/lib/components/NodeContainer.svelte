@@ -22,11 +22,15 @@
 	}
 </script>
 
-<section class="shape-section">
-	<button type="button" class="section-toggle" aria-expanded={expanded} onclick={onToggle}>
+<section class="flex flex-col gap-[0.6rem]">
+	<button
+		type="button"
+		class="group flex w-full cursor-pointer items-center gap-2 border-none bg-transparent px-0 py-[0.2rem] text-left text-mq-maroon focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mq-red"
+		aria-expanded={expanded}
+		onclick={onToggle}
+	>
 		<svg
-			class="chevron"
-			class:expanded
+			class="size-3.5 shrink-0 transition-transform duration-150 {expanded ? 'rotate-90' : ''}"
 			viewBox="0 0 24 24"
 			fill="none"
 			stroke="currentColor"
@@ -37,19 +41,21 @@
 		>
 			<polyline points="9 6 15 12 9 18" />
 		</svg>
-		<span class="section-heading">{heading}</span>
+		<span class="text-[0.72rem] font-bold tracking-[0.06em] uppercase group-hover:underline"
+			>{heading}</span
+		>
 	</button>
 
 	{#if expanded}
 		{#if shapes.length === 0}
-			<p class="empty-hint">No shapes yet.</p>
+			<p class="m-0 pl-[1.4rem] text-[0.75rem] text-ink-muted italic">No shapes yet.</p>
 		{:else}
-			<div class="shape-grid">
+			<div class="grid grid-cols-3 gap-2">
 				{#each shapes as shape (shape.id)}
 					{@const Icon = shape.icon}
 					<button
 						type="button"
-						class="shape-tile"
+						class="flex aspect-square cursor-grab items-center justify-center rounded-lg border border-[#e8e2d3] bg-white p-0 text-mq-red transition-[border-color,box-shadow] duration-150 hover:border-mq-red hover:shadow-[0_1px_4px_rgba(166,25,46,0.15)] active:cursor-grabbing"
 						aria-label={shape.label}
 						title={shape.label}
 						draggable={true}
@@ -62,92 +68,3 @@
 		{/if}
 	{/if}
 </section>
-
-<style>
-	.shape-section {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-	}
-
-	.section-toggle {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		background: transparent;
-		border: none;
-		padding: 0.2rem 0;
-		margin: 0;
-		cursor: pointer;
-		color: #76232f;
-		text-align: left;
-		width: 100%;
-	}
-
-	.section-toggle:hover .section-heading {
-		text-decoration: underline;
-	}
-
-	.section-toggle:focus-visible {
-		outline: 2px solid #a6192e;
-		outline-offset: 2px;
-		border-radius: 4px;
-	}
-
-	.chevron {
-		width: 14px;
-		height: 14px;
-		flex-shrink: 0;
-		transition: transform 0.15s ease;
-	}
-
-	.chevron.expanded {
-		transform: rotate(90deg);
-	}
-
-	.section-heading {
-		font-size: 0.72rem;
-		font-weight: 700;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-
-	.shape-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 8px;
-	}
-
-	.shape-tile {
-		background: #ffffff;
-		border: 1px solid #e8e2d3;
-		border-radius: 8px;
-		aspect-ratio: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: grab;
-		color: #a6192e;
-		padding: 0;
-		transition:
-			border-color 0.12s ease,
-			box-shadow 0.12s ease;
-	}
-
-	.shape-tile:hover {
-		border-color: #a6192e;
-		box-shadow: 0 1px 4px rgba(166, 25, 46, 0.15);
-	}
-
-	.shape-tile:active {
-		cursor: grabbing;
-	}
-
-	.empty-hint {
-		font-size: 0.75rem;
-		color: #8a8b83;
-		font-style: italic;
-		margin: 0;
-		padding-left: 1.4rem;
-	}
-</style>

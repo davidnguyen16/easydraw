@@ -48,7 +48,7 @@
 	role="button"
 	tabindex="0"
 	style="top: {top}px; left: {left}px; right: {right}px; bottom: {bottom}px;"
-	class="context-menu"
+	class="absolute z-10 min-w-[140px] rounded-[10px] border border-line bg-white p-1 shadow-[0_12px_28px_rgba(0,0,0,0.1)]"
 	{onclick}
 	onkeydown={(e) => {
 		if (e.key === 'Enter' || e.key === ' ') {
@@ -57,63 +57,19 @@
 	}}
 	onpointerdown={(e) => e.stopPropagation()}
 >
-	<p style="margin: 0.5em;">
-		<small>Edit Node:</small>
+	<p class="m-2">
+		<small class="text-[0.72rem] font-bold tracking-[0.06em] text-ink-muted uppercase"
+			>Edit Node:</small
+		>
 	</p>
-	<span class="button-list">
-		<button onclick={duplicateNode}>Duplicate</button>
-		<button onclick={deleteNode}>Delete</button>
+	<span>
+		<button
+			class="block w-full cursor-pointer rounded-md px-3 py-2 text-left text-[0.875rem] text-ink-soft transition-colors duration-100 hover:bg-[#edebe5] hover:text-ink"
+			onclick={duplicateNode}>Duplicate</button
+		>
+		<button
+			class="block w-full cursor-pointer rounded-md px-3 py-2 text-left text-[0.875rem] text-ink-soft transition-colors duration-100 hover:bg-[#edebe5] hover:text-ink"
+			onclick={deleteNode}>Delete</button
+		>
 	</span>
 </div>
-
-<style>
-	small {
-		font-weight: 700;
-		font-size: 0.72rem;
-		letter-spacing: 0.06em;
-		color: #8a8b83;
-		text-transform: uppercase;
-	}
-
-	.context-menu {
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
-		position: absolute;
-		z-index: 10;
-		border-radius: 10px;
-		padding: 4px;
-		min-width: 140px;
-		font-family:
-			system-ui,
-			-apple-system,
-			sans-serif;
-	}
-
-	button:last-child {
-		border-radius: 0 0 7px 7px;
-	}
-
-	.context-menu button {
-		border: none;
-		display: block;
-		padding: 8px 12px;
-		text-align: left;
-		width: 100%;
-		border-radius: 6px;
-		background: transparent;
-		color: #373a36;
-		font: inherit;
-		font-size: 0.875rem;
-		cursor: pointer;
-		outline: inherit;
-		transition:
-			background 0.1s ease,
-			color 0.1s ease;
-	}
-
-	.context-menu button:hover {
-		background: #edebe5;
-		color: #2c2c2a;
-	}
-</style>

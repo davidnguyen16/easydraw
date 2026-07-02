@@ -69,12 +69,22 @@
 	});
 </script>
 
+<!-- Smooth width change when toggling collapse / dragging finishes. -->
 <aside
-	class:collapsed={sidebarState.isCollapsed}
+	class="absolute top-[0.2%] bottom-0 left-0 m-0 rounded-none border-l-0 bg-panel transition-[width] duration-150 {sidebarState.isCollapsed
+		? 'shadow-none'
+		: 'shadow-[0_0_10px_#c4c1b8]'}"
 	style:width={sidebarState.isCollapsed ? '0px' : `${sidebarState.width}px`}
 >
-	<div class="sidebar-content" aria-hidden={sidebarState.isCollapsed}>
-		<div class="search-wrapper">
+	<div
+		class="flex h-full w-full flex-col gap-[1.4em] overflow-x-hidden overflow-y-auto px-[1.2em] pt-[2.5em] pb-[1em] {sidebarState.isCollapsed
+			? 'invisible'
+			: ''}"
+		aria-hidden={sidebarState.isCollapsed}
+	>
+		<div
+			class="flex h-9 items-center rounded-lg border border-line bg-white px-2.5 focus-within:border-mq-red"
+		>
 			<svg
 				viewBox="0 0 24 24"
 				fill="none"
@@ -82,12 +92,16 @@
 				stroke-width="1.8"
 				stroke-linecap="round"
 				stroke-linejoin="round"
-				class="search-icon"
+				class="size-4 shrink-0 text-ink-muted"
 			>
 				<circle cx="11" cy="11" r="7" />
 				<line x1="20" y1="20" x2="16.5" y2="16.5" />
 			</svg>
-			<input class="search-bar" bind:value={searchBar} placeholder="Search shapes" />
+			<input
+				class="min-w-0 flex-1 appearance-none border-none bg-transparent px-2 text-[0.9rem] text-ink-soft outline-none placeholder:text-ink-muted"
+				bind:value={searchBar}
+				placeholder="Search shapes"
+			/>
 		</div>
 
 		{#each sections as section (section.category)}
@@ -105,84 +119,3 @@
 		<ResizeHandle />
 	{/if}
 </aside>
-
-<style>
-	aside {
-		position: absolute;
-		top: 0.2%;
-		left: 0;
-		bottom: 0;
-
-		margin: 0;
-
-		background: #f5f3ef;
-
-		border-radius: 0;
-		border-left: 0;
-
-		box-shadow: 0 0 10px #c4c1b8;
-
-		/* Smooth width change when toggling collapse / dragging finishes. */
-		transition: width 0.15s ease;
-	}
-
-	aside.collapsed {
-		box-shadow: none;
-	}
-
-	.sidebar-content {
-		width: 100%;
-		height: 100%;
-		padding: 2.5em 1.2em 1em;
-		gap: 1.4em;
-
-		display: flex;
-		flex-direction: column;
-
-		/* Allow vertical scrolling when many sections are present. */
-		overflow-y: auto;
-		overflow-x: hidden;
-	}
-
-	aside.collapsed .sidebar-content {
-		visibility: hidden;
-	}
-
-	.search-wrapper {
-		display: flex;
-		align-items: center;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		padding: 0 10px;
-		height: 36px;
-	}
-
-	.search-wrapper:focus-within {
-		border-color: #a6192e;
-	}
-
-	.search-icon {
-		width: 16px;
-		height: 16px;
-		color: #8a8b83;
-		flex-shrink: 0;
-	}
-
-	.search-bar {
-		appearance: none;
-		-webkit-appearance: none;
-		border: none;
-		outline: none;
-		background: transparent;
-		font-size: 0.9rem;
-		padding: 0 8px;
-		flex: 1;
-		min-width: 0;
-		color: #373a36;
-	}
-
-	.search-bar::placeholder {
-		color: #8a8b83;
-	}
-</style>

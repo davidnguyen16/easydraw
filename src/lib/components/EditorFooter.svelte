@@ -89,41 +89,55 @@
 	}
 </script>
 
-<footer class="editor-footer" onpointerdown={(event) => event.stopPropagation()}>
-	<div class="page-tabs" aria-label="Editor pages">
+<footer
+	class="relative z-[1] flex items-center justify-between gap-3 border-t border-line bg-white px-4 py-2.5 shadow-[0_-3px_10px_rgba(0,0,0,0.04)] max-[900px]:flex-col max-[900px]:items-stretch"
+	onpointerdown={(event) => event.stopPropagation()}
+>
+	<!-- Keep dropdowns visible above tabs instead of clipping in a scroll container. -->
+	<div class="flex flex-auto flex-wrap items-center gap-2 overflow-visible" aria-label="Editor pages">
 		{#each $editorStoreSvelte.pages as page}
-			<div class="page-item" role="presentation">
+			<div class="relative inline-flex items-stretch" role="presentation">
 				<input
 					type="text"
-					class="page-name-input"
-					class:active={$editorStoreSvelte.activePageId === page.id}
+					class="min-w-[50px] max-w-[90px] appearance-none rounded-l-lg border border-r-0 border-line bg-panel px-2.5 py-1.5 text-[0.9rem] leading-none text-ink-soft outline-none hover:bg-[#edebe5] focus:bg-white {$editorStoreSvelte.activePageId ===
+					page.id
+						? 'border-mq-red bg-mq-pink text-mq-maroon'
+						: ''}"
 					value={page.name}
 					data-page-input-id={page.id}
 					onfocus={() => handleSwitchPage(page.id)}
 					oninput={(event) => handlePageNameInput(page.id, event)}
 				/>
 				{#if $visibleUnsavedPageIdsStore.includes(page.id)}
-					<span class="unsaved-dot" aria-label="Unsaved changes" title="Unsaved changes"
+					<span
+						class="pointer-events-none absolute -top-1 -right-1 size-[9px] rounded-full border-2 border-white bg-[#d6001c]"
+						aria-label="Unsaved changes"
+						title="Unsaved changes"
 					></span>
 				{/if}
 				<button
 					type="button"
-					class="menu-toggle"
+					class="min-w-[32px] cursor-pointer whitespace-nowrap rounded-r-lg border border-line bg-panel px-2 py-1.5 text-[0.9rem] text-ink-soft hover:bg-[#edebe5] {$editorStoreSvelte.activePageId ===
+					page.id
+						? 'border-mq-red bg-mq-pink text-mq-maroon'
+						: ''}"
 					aria-label="Open page options"
 					aria-haspopup="menu"
 					aria-expanded={openMenuPageId === page.id}
-					class:active={$editorStoreSvelte.activePageId === page.id}
 					onclick={() => handleTogglePageMenu(page.id)}
 				>
 					▾
 				</button>
 
 				{#if openMenuPageId === page.id}
-					<div class="page-menu" role="menu">
+					<div
+						class="absolute right-0 bottom-[calc(100%+6px)] z-30 flex min-w-[112px] flex-col overflow-hidden rounded-lg border border-line bg-white shadow-[0_6px_20px_rgba(0,0,0,0.1)]"
+						role="menu"
+					>
 						<button
 							type="button"
 							role="menuitem"
-							class="menu-item"
+							class="cursor-pointer whitespace-nowrap bg-white px-2.5 py-1.5 text-left text-[0.9rem] text-ink-soft hover:bg-[#edebe5]"
 							onclick={() => handleRenamePage(page.id)}
 						>
 							Rename
@@ -131,7 +145,7 @@
 						<button
 							type="button"
 							role="menuitem"
-							class="menu-item danger"
+							class="cursor-pointer whitespace-nowrap bg-white px-2.5 py-1.5 text-left text-[0.9rem] text-[#b42318] hover:bg-[#edebe5] disabled:cursor-not-allowed disabled:opacity-50"
 							onclick={() => handleDeletePage(page.id)}
 							disabled={$editorStoreSvelte.pages.length <= 1}
 						>
@@ -143,159 +157,11 @@
 		{/each}
 	</div>
 
-	<button type="button" class="add-page" onclick={handleCreatePage}> + New Page </button>
+	<button
+		type="button"
+		class="flex-none cursor-pointer whitespace-nowrap rounded-lg border border-line bg-white px-2.5 py-1.5 text-[0.9rem] font-semibold text-ink-soft hover:bg-[#edebe5]"
+		onclick={handleCreatePage}
+	>
+		+ New Page
+	</button>
 </footer>
-
-<style>
-	/* Footer row that sits below the editor canvas and sidebar area. */
-	.editor-footer {
-		position: relative;
-		z-index: 1;
-
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-
-		padding: 10px 16px;
-		background: #ffffff;
-		border-top: 1px solid #d6d2c4;
-		box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.04);
-	}
-
-	/* Horizontal tabs for existing pages. */
-	.page-tabs {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		/* Keep dropdowns visible above tabs instead of clipping in a scroll container. */
-		overflow: visible;
-		flex-wrap: wrap;
-		flex: 1 1 auto;
-	}
-
-	button {
-		border: 1px solid #d6d2c4;
-		background: #f5f3ef;
-		color: #373a36;
-		padding: 6px 10px;
-		border-radius: 8px;
-		font-size: 0.9rem;
-		cursor: pointer;
-		white-space: nowrap;
-	}
-
-	button:hover {
-		background: #edebe5;
-	}
-
-	/* Groups a page tab and its dropdown trigger together. */
-	.page-item {
-		position: relative;
-		display: inline-flex;
-		align-items: stretch;
-	}
-
-	/* Shows unsaved status when store data is newer than localStorage snapshot. */
-	.unsaved-dot {
-		position: absolute;
-		top: -4px;
-		right: -4px;
-		width: 9px;
-		height: 9px;
-		background: #d6001c;
-		border: 2px solid #ffffff;
-		border-radius: 999px;
-		pointer-events: none;
-	}
-
-	.page-name-input {
-		appearance: none;
-		-webkit-appearance: none;
-		border: 1px solid #d6d2c4;
-		background: #f5f3ef;
-		color: #373a36;
-		padding: 6px 10px;
-		border-radius: 8px 0 0 8px;
-		font-size: 0.9rem;
-		line-height: 1;
-		min-width: 50px;
-		max-width: 90px;
-		border-right: none;
-		outline: none;
-	}
-
-	.page-name-input:hover {
-		background: #edebe5;
-	}
-
-	.page-name-input:focus {
-		background: #ffffff;
-	}
-
-	.menu-toggle {
-		padding: 6px 8px;
-		border-radius: 0 8px 8px 0;
-		min-width: 32px;
-	}
-
-	/* Active page tab state. */
-	.page-name-input.active,
-	.menu-toggle.active {
-		background: #fbeef0;
-		border-color: #a6192e;
-		color: #76232f;
-	}
-
-	/* Dropdown menu anchored to each page item. */
-	.page-menu {
-		position: absolute;
-		right: 0;
-		top: auto;
-		bottom: calc(100% + 6px);
-		display: flex;
-		flex-direction: column;
-		min-width: 112px;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-		overflow: hidden;
-		z-index: 30;
-	}
-
-	.menu-item {
-		border: none;
-		background: #ffffff;
-		border-radius: 0;
-		text-align: left;
-		color: #373a36;
-	}
-
-	.menu-item:hover {
-		background: #edebe5;
-	}
-
-	.menu-item.danger {
-		color: #b42318;
-	}
-
-	.menu-item:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.add-page {
-		background: #ffffff;
-		color: #373a36;
-		font-weight: 600;
-		flex: 0 0 auto;
-	}
-
-	@media (max-width: 900px) {
-		.editor-footer {
-			flex-direction: column;
-			align-items: stretch;
-		}
-	}
-</style>

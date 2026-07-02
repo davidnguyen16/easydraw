@@ -75,83 +75,46 @@
 		TextNode: { kind: 'text-only' },
 		EllipseNode: { kind: 'svg' },
 		CircleNode: { kind: 'svg' },
-		// Diamond: the SVG polygon's 4 vertices sit exactly at the bbox edge
-		// MIDPOINTS (top, right, bottom, left) — not at the bbox corners. So
-		// the default 4 cardinal connection handles already land on the
-		// vertices for free; the resize anchors are the part that needs moving
-		// from the bbox corners to the same edge midpoints so each vertex ends
-		// up with a coinciding circle handle inside a red square anchor, as
-		// in the reference.
-		DiamondNode: {
-			kind: 'svg',
-			resizeAnchors: [
-				{ position: 'top' },
-				{ position: 'right' },
-				{ position: 'bottom' },
-				{ position: 'left' }
-			]
-		},
-		// Parallelogram: 4 connection handles at the MIDPOINTS of the four
-		// slanted sides (not the bbox edge centres). SVG polygon points are
-		// top-left(20,1) → top-right(99,1) → bottom-right(80,99) → bottom-left(1,99);
-		// the side midpoints fall at (59.5,1), (89.5,50), (40.5,99), (10.5,50).
-		// `right: auto` / `bottom: auto` cancel xyflow's class-level edge anchor
-		// for right/bottom-positioned handles. The `transform` override flips
-		// xyflow's outward translate(+50%) back to a centring translate(-50%).
+		// Diamond: the default 4 cardinal connection handles land on the bbox
+		// edge midpoints — which ARE the diamond's vertices — so each vertex gets
+		// a connection circle. Resize uses the default NodeResizer, whose anchors
+		// sit at the 4 bbox CORNERS (red squares), matching the reference.
+		DiamondNode: { kind: 'svg' },
+		// Parallelogram. SVG polygon: top-left(20,1) → top-right(99,1) →
+		// bottom-right(80,99) → bottom-left(1,99).
+		//   TOP / BOTTOM dots sit at the midpoints of the two horizontal edges
+		//     (59.5%, 40.5%) — those points ARE on the shape outline.
+		//   LEFT / RIGHT dots sit on the bbox edge centres (default cardinal
+		//     position) — like the triangle. The slanted side is inset ~10.5% of
+		//     the width from there, so the connection layer pushes the WIRE
+		//     endpoint in to the slant (see SIDE_INSET_RATIO in the edge files)
+		//     while the dot marker itself stays on the bbox edge.
+		// `bottom: auto` cancels xyflow's class-level edge anchor for the
+		// bottom-positioned handle; the `transform` re-centres it.
 		// Resize anchors use the default 4 bbox corners (matches the picture).
 		ParallelogramNode: {
 			kind: 'svg',
 			handles: [
 				{ id: 'top', position: 'top', style: 'top: 1%; left: 59.5%;' },
-				{
-					id: 'right',
-					position: 'right',
-					style: 'top: 50%; left: 89.5%; right: auto; transform: translate(-50%, -50%);'
-				},
+				{ id: 'right', position: 'right' },
 				{
 					id: 'bottom',
 					position: 'bottom',
 					style: 'top: 99%; left: 40.5%; bottom: auto; transform: translate(-50%, -50%);'
 				},
-				{ id: 'left', position: 'left', style: 'top: 50%; left: 10.5%;' }
+				{ id: 'left', position: 'left' }
 			]
 		},
-		// Triangle: 3 connection handles at the midpoints of the 3 sides + 3
-		// resize anchors at the 3 vertices. SVG polygon points are
-		// top(50,3), bottom-right(97,97), bottom-left(3,97). Side midpoints
-		// fall at (26.5,50), (73.5,50), (50,97). The top vertex sits at the
-		// bbox top-centre — NodeResizeControl `position: 'top'` lands there
-		// naturally. Bottom-left/right vertices sit at the bbox corners.
-		TriangleNode: {
-			kind: 'svg',
-			handles: [
-				{ id: 'left', position: 'left', style: 'top: 50%; left: 26.5%;' },
-				{
-					id: 'right',
-					position: 'right',
-					style: 'top: 50%; left: 73.5%; right: auto; transform: translate(-50%, -50%);'
-				},
-				{
-					id: 'bottom',
-					position: 'bottom',
-					style: 'top: 97%; left: 50%; bottom: auto; transform: translate(-50%, -50%);'
-				}
-			],
-			resizeAnchors: [
-				{ position: 'top' },
-				{ position: 'bottom-left' },
-				{ position: 'bottom-right' }
-			]
-		},
+		// Triangle: fully default handles + resizer — 4 cardinal connection dots at
+		// the bbox edge midpoints + the default 4-corner NodeResizer — so a
+		// selected triangle reads exactly like the reference (red box, corner
+		// squares, edge-midpoint circles).
+		TriangleNode: { kind: 'svg' },
 		DocumentNode: { kind: 'svg' },
 		ActorNode: { kind: 'svg' },
 		CubeNode: { kind: 'svg' }
 	};
 
-	/** Selected stroke colour (MQ red) — applies to both boxed and svg shapes.
-	 *  Drawn thicker than the resting border so a selected shape reads clearly. */
-	export const SELECTED_STROKE = '#A6192E';
-	export const SELECTED_STROKE_WIDTH = 2.5;
 </script>
 
 <script lang="ts">
@@ -189,8 +152,12 @@
 	const rounded = $derived((data.rounded as boolean) ?? false);
 	const shadow = $derived((data.shadow as boolean) ?? false);
 
-	const strokeColor = $derived(selected ? SELECTED_STROKE : userBorderColor);
-	const strokeWidth = $derived(selected ? SELECTED_STROKE_WIDTH : userBorderWidth);
+	// Border always reflects the user's colour/width — even while selected — so
+	// StylePanel edits show live (like the entity node). Selection is indicated
+	// by a soft red glow (see .shape-node.selected .shape-fill) + the handles,
+	// not by recolouring the border.
+	const strokeColor = $derived(userBorderColor);
+	const strokeWidth = $derived(userBorderWidth);
 
 	const textColor = $derived((data.textColor as string) ?? '#2c2c2a');
 	const fontFamily = $derived((data.fontFamily as string) ?? 'inherit');
@@ -327,8 +294,14 @@
 					vector-effect="non-scaling-stroke"
 				/>
 			{:else if type === 'TriangleNode'}
+				<!--
+					Base sits at y=99 spanning 1→99 (matching diamond/parallelogram)
+					so it lands on the bbox bottom edge — the same line the selection
+					ring + the two bottom resize anchors sit on. Drawing it at y=97
+					earlier left a ~3% gap that read as a doubled line under the base.
+				-->
 				<polygon
-					points="50,3 97,97 3,97"
+					points="50,1 99,99 1,99"
 					fill={fillColor}
 					stroke={strokeColor}
 					stroke-width={strokeWidth}
@@ -407,9 +380,17 @@
 					only changes the stroke (handled centrally via strokeColor)
 					— the 3-face depth still reads through the red stroke
 					because each face keeps its own outline.
+
+					The hexagon silhouette fills the bbox (extremes at 1/99), so
+					its top / bottom vertices and left / right vertical edges land
+					on the bbox edge midpoints — exactly where the 4 default
+					cardinal handles sit. That makes the selection ring hug the
+					cube and connections touch it, like the diamond. Shared
+					vertices: top(50,1) upper-left(1,27) upper-right(99,27)
+					centre(50,54) lower-left(1,80) lower-right(99,80) bottom(50,99).
 				-->
 				<polygon
-					points="2,30 50,5 98,30 50,55"
+					points="1,27 50,1 99,27 50,54"
 					fill={fillColor}
 					stroke={strokeColor}
 					stroke-width={strokeWidth}
@@ -417,7 +398,7 @@
 					vector-effect="non-scaling-stroke"
 				/>
 				<polygon
-					points="2,30 2,80 50,98 50,55"
+					points="1,27 1,80 50,99 50,54"
 					fill={fillColor}
 					stroke={strokeColor}
 					stroke-width={strokeWidth}
@@ -425,7 +406,7 @@
 					vector-effect="non-scaling-stroke"
 				/>
 				<polygon
-					points="98,30 98,80 50,98 50,55"
+					points="99,27 99,80 50,99 50,54"
 					fill={fillColor}
 					stroke={strokeColor}
 					stroke-width={strokeWidth}
@@ -509,7 +490,6 @@
 			onpointerdown={(e) => editing && e.stopPropagation()}
 			class="nodrag"
 			class:editing
-			placeholder={variant.kind === 'text-only' ? 'Text' : 'Type here...'}
 			style={labelStyle}
 		/>
 	</div>
@@ -529,13 +509,26 @@
 
 	/* The shape fill (boxed div or svg) sits behind the text. inset:0 +
 	   pointer-events:none means it stretches with the bounding box and never
-	   intercepts the label's input. */
+	   intercepts the label's input. `overflow: visible` stops the SVG viewport
+	   from clipping a thick, path-centred stroke (the ellipse/diamond/… outline
+	   sits at the viewBox edge, so half of a wide border would otherwise be cut
+	   flat at the top/right/bottom/left). */
 	.shape-fill {
 		position: absolute;
 		inset: 0;
 		width: 100%;
 		height: 100%;
 		pointer-events: none;
+		overflow: visible;
+	}
+
+	/* Selection cue: a rectangular red ring around the node's bounding box, like a
+	   default NodeResizer outline. box-shadow (unlike a CSS filter) isn't clipped
+	   by the SVG viewport, so it works for boxed AND svg shapes with no wrapper —
+	   and it sits outside the node's own border, so the user's border colour/width
+	   stays visible and live-editable while selected. */
+	.shape-node.selected .shape-fill {
+		box-shadow: 0 0 0 2px #a6192e;
 	}
 
 	.node-text {
@@ -582,8 +575,8 @@
 	/* Must out-specify xyflow's `.svelte-flow__handle` (width/height: 6px) or the
 	   size below is ignored — two classes (0,2,0) beats the library's (0,1,0). */
 	:global(.svelte-flow__handle.shape-conn) {
-		width: 15px;
-		height: 15px;
+		width: 10px;
+		height: 10px;
 		background: #ffffff;
 		border: 1.5px solid #a6192e;
 		border-radius: 50%;
@@ -618,8 +611,21 @@
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
 	}
 
-	:global(.shape-resize-line) {
+	/* Edge resize strips. Kept visually invisible, but widened to an 8px hit
+	   area straddling each side, so hovering near an edge flips to the ↔ / ↕
+	   resize cursor and lets you drag that side — not just the corners. The
+	   extra library classes out-specify xyflow's `.line` / `.line.left` rules
+	   (which pin the colour and a 1px width). */
+	:global(.svelte-flow__resize-control.line.shape-resize-line) {
 		border-color: transparent;
 		background: transparent;
+	}
+	:global(.svelte-flow__resize-control.line.left.shape-resize-line),
+	:global(.svelte-flow__resize-control.line.right.shape-resize-line) {
+		width: 8px;
+	}
+	:global(.svelte-flow__resize-control.line.top.shape-resize-line),
+	:global(.svelte-flow__resize-control.line.bottom.shape-resize-line) {
+		height: 8px;
 	}
 </style>

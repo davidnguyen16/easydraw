@@ -1,4 +1,4 @@
-<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="size-[26px]">
 	<text
 		x="12"
 		y="16"
@@ -9,10 +9,3 @@
 		fill="currentColor">Text</text
 	>
 </svg>
-
-<style>
-	svg {
-		width: 26px;
-		height: 26px;
-	}
-</style>

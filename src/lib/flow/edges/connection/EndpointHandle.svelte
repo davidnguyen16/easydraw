@@ -29,7 +29,14 @@
 	const HIT = 10; // transparent grab radius
 </script>
 
-<g class="endpoint" onpointerdown={(e) => onpointerdown?.(e)} role="presentation">
+<!-- `cursor-move` + `pointer-events:all` forced on the group AND every child so the
+     4-way "drag to reconnect" cursor never reverts over the visible dot, and the
+     transparent hit circle stays reliably grabbable. -->
+<g
+	class="cursor-move [pointer-events:all] [&_*]:cursor-move [&_*]:[pointer-events:all]"
+	onpointerdown={(e) => onpointerdown?.(e)}
+	role="presentation"
+>
 	<circle cx={x} cy={y} r={HIT} fill="transparent" />
 	<circle
 		cx={x}
@@ -42,14 +49,3 @@
 	/>
 </g>
 
-<style>
-	/* `move` = the 4-way arrow, signalling "drag this end to reconnect". Forced on
-	   the whole group (incl. the visible dot) so the icon never reverts to the
-	   arrow while the pointer is anywhere on the handle. `pointer-events: all` so
-	   the transparent hit circle is reliably grabbable. */
-	.endpoint,
-	.endpoint * {
-		cursor: move;
-		pointer-events: all;
-	}
-</style>

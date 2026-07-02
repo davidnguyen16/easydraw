@@ -186,6 +186,19 @@
 	const PASTE_OFFSET_STEP = 32;
 	let pasteCount = 0;
 
+	// Default text style applied to newly-dropped nodes. Editable from the
+	// toolbar font / size / B / I / U / colour controls WHEN NOTHING IS SELECTED
+	// (the toolbar targets this instead of no-op-ing), so a font/size can be
+	// chosen up front and every new node inherits it. Session-scoped.
+	const defaultTextStyle = $state({
+		fontFamily: 'Inter',
+		fontSize: 14,
+		bold: false,
+		italic: false,
+		underline: false,
+		textColor: '#2c2c2a'
+	});
+
 	// Keep the full hook return so method lookups happen at call time. xyflow
 	// returns `zoomIn`/`zoomOut` as direct property captures (not lazy wrappers
 	// like `fitView` is) — destructuring them at init time was firing a stale
@@ -247,6 +260,14 @@
 			type: type.current,
 			position,
 			data: {
+				// Seed the current default text style so new nodes inherit the
+				// font / size / etc. chosen in the toolbar with nothing selected.
+				fontFamily: defaultTextStyle.fontFamily,
+				fontSize: defaultTextStyle.fontSize,
+				bold: defaultTextStyle.bold,
+				italic: defaultTextStyle.italic,
+				underline: defaultTextStyle.underline,
+				textColor: defaultTextStyle.textColor,
 				...nodeData,
 				onEdit: (newData: any) => updateNodeData(newNodeId, newData)
 			},
@@ -798,7 +819,16 @@
 					textColor: (d.textColor as string) ?? '#1f1d1a'
 				};
 			}
-			return null;
+			// Nothing selected → expose the editable default so the toolbar font /
+			// size / etc. controls stay live and set the default for new nodes.
+			return {
+				fontFamily: defaultTextStyle.fontFamily,
+				fontSize: defaultTextStyle.fontSize,
+				bold: defaultTextStyle.bold,
+				italic: defaultTextStyle.italic,
+				underline: defaultTextStyle.underline,
+				textColor: defaultTextStyle.textColor
+			};
 		},
 		applyStyle: handleStyleChange
 	});
@@ -1025,7 +1055,16 @@
 		}
 		if (selectedEdge) {
 			updateEdgeData(selectedEdge.id, patch);
+			return;
 		}
+		// Nothing selected → update the default text style for future nodes. Only
+		// the text fields are relevant here (the toolbar is the only source).
+		if (patch.fontFamily !== undefined) defaultTextStyle.fontFamily = patch.fontFamily;
+		if (patch.fontSize !== undefined) defaultTextStyle.fontSize = patch.fontSize;
+		if (patch.bold !== undefined) defaultTextStyle.bold = patch.bold;
+		if (patch.italic !== undefined) defaultTextStyle.italic = patch.italic;
+		if (patch.underline !== undefined) defaultTextStyle.underline = patch.underline;
+		if (patch.textColor !== undefined) defaultTextStyle.textColor = patch.textColor;
 	}
 
 	// Flip a boolean text-style field (bold / italic / underline) on the current

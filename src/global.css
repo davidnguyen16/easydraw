@@ -1,3 +1,34 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Design tokens (Tailwind v4 CSS-first config). These become utilities, e.g.
+   `bg-mq-maroon`, `text-mq-red`, `border-line`, `text-ink-muted`, so the MQ
+   palette lives in one place. Add a token here → a utility appears everywhere.
+--------------------------------------------------------------------------- */
+@theme {
+	/* Brand reds */
+	--color-mq-maroon: #76232f;
+	--color-mq-red: #a6192e;
+	--color-mq-red-hover: #c01933;
+	--color-mq-pink: #fbeef0;
+
+	/* Ink / text */
+	--color-ink: #2c2c2a;
+	--color-ink-soft: #373a36;
+	--color-ink-muted: #8a8b83;
+	--color-toolbar-text: #4a4c48;
+
+	/* Surfaces + lines */
+	--color-panel: #f5f3ef;
+	--color-surface-hover: #efece6;
+	--color-line: #d6d2c4;
+	--color-line-soft: #e3e0d6;
+	--color-line-dropdown: #ebe5d8;
+
+	/* Default UI font */
+	--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
 /*@import url('./xy-theme.css');*/
 
 /* ---------------------------------------------------------------------------

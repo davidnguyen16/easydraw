@@ -11,12 +11,55 @@
 	 * xyflow renders a custom connectionLineComponent with no props — the live
 	 * connection state comes from the `useConnection()` hook instead.
 	 */
-	import { useConnection } from '@xyflow/svelte';
+	import { Position, useConnection } from '@xyflow/svelte';
 	import { buildSvgPath, routeOrthogonal, type Rect } from './routing';
 
 	const CORNER_RADIUS = 8;
+	// Keep in sync with ConnectionEdge.OUTLINE_INSET: some shapes' dots sit on the
+	// bbox edge, but the visible outline is inset from there on a side, so push the
+	// wire end in to touch it (the dot stays put). +4px so the tip crosses the
+	// edge. Triangle side ≈ 25.5% in; parallelogram side ≈ 10.5% in; document
+	// bottom ≈ 18% up.
+	const ENDPOINT_INSET = 4;
+	type OutlineInset = Partial<Record<Position, number>>;
+	const OUTLINE_INSET: Record<string, OutlineInset> = {
+		TriangleNode: { [Position.Left]: 0.255, [Position.Right]: 0.255 },
+		ParallelogramNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
+		DocumentNode: { [Position.Bottom]: 0.18 }
+	};
 
 	const connection = useConnection();
+
+	// Inset fraction for a node's connection end at `position`, or 0 when this end
+	// doesn't inset. Also serves as the "is an inset outline end" test (ratio > 0),
+	// used to skip self-avoidance for that node below.
+	function outlineInsetRatio(node: unknown, position: Position | null | undefined): number {
+		if (position == null) return 0;
+		const type = (node as { type?: string } | null | undefined)?.type;
+		return (type && OUTLINE_INSET[type]?.[position]) || 0;
+	}
+
+	// Mirrors ConnectionEdge.insetForEnd for inset outline ends, so the live drag
+	// preview reaches the outline exactly like the released edge will.
+	function insetSideEnd(
+		node: unknown,
+		p: { x: number; y: number },
+		position: Position | null | undefined
+	): { x: number; y: number } {
+		const ratio = outlineInsetRatio(node, position);
+		if (ratio > 0) {
+			const rect = rectOf(node);
+			if (rect) {
+				const dx = rect.width * ratio + ENDPOINT_INSET;
+				const dy = rect.height * ratio + ENDPOINT_INSET;
+				if (position === Position.Left) return { x: p.x + dx, y: p.y };
+				if (position === Position.Right) return { x: p.x - dx, y: p.y };
+				if (position === Position.Top) return { x: p.x, y: p.y + dy };
+				if (position === Position.Bottom) return { x: p.x, y: p.y - dy };
+			}
+		}
+		return p;
+	}
 
 	// Current rendered box of an internal node (origin/measured aware).
 	function rectOf(node: unknown): Rect | null {
@@ -45,13 +88,20 @@
 		// preview resolves to the exact same path the released edge will draw
 		// once an anchor is dropped at this spot.
 		const targetFloating = !c.toNode;
+		// An inset-outline end (triangle/parallelogram sides, document bottom) is
+		// inset into its own bbox in an empty region, so skip avoiding that node's
+		// own rect — otherwise the leaving stub gets bent around the shape even
+		// though it only crosses that empty region, not the body.
 		const points = routeOrthogonal({
-			source: c.from,
+			source: insetSideEnd(c.fromNode, c.from, c.fromPosition),
 			sourcePosition: c.fromPosition,
-			sourceRect: rectOf(c.fromNode),
-			target: c.to,
+			sourceRect: outlineInsetRatio(c.fromNode, c.fromPosition) > 0 ? null : rectOf(c.fromNode),
+			target: targetFloating ? c.to : insetSideEnd(c.toNode, c.to, c.toPosition),
 			targetPosition: c.toPosition,
-			targetRect: targetFloating ? null : rectOf(c.toNode),
+			targetRect:
+				targetFloating || outlineInsetRatio(c.toNode, c.toPosition) > 0
+					? null
+					: rectOf(c.toNode),
 			targetFloating
 		});
 		return buildSvgPath(

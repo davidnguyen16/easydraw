@@ -60,8 +60,9 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-	class="resize-handle"
-	class:dragging={isDragging}
+	class="absolute top-0 -right-[3px] z-10 h-full w-1.5 cursor-col-resize bg-transparent transition-colors duration-150 hover:bg-[rgba(166,25,46,0.35)] focus-visible:bg-[rgba(166,25,46,0.5)] focus-visible:shadow-[0_0_0_2px_rgba(166,25,46,0.4)] focus-visible:outline-none {isDragging
+		? 'bg-[rgba(166,25,46,0.35)]'
+		: ''}"
 	role="separator"
 	tabindex="0"
 	aria-orientation="vertical"
@@ -71,28 +72,3 @@
 	onkeydown={handleKeyDown}
 ></div>
 
-<style>
-	.resize-handle {
-		position: absolute;
-		top: 0;
-		right: -3px;
-		width: 6px;
-		height: 100%;
-		cursor: col-resize;
-		background: transparent;
-		z-index: 10;
-		transition: background 0.15s ease;
-	}
-
-	.resize-handle:hover,
-	.resize-handle.dragging {
-		background-color: rgba(166, 25, 46, 0.35);
-	}
-
-	/* Visible focus ring for keyboard users */
-	.resize-handle:focus-visible {
-		outline: none;
-		background: rgba(166, 25, 46, 0.5);
-		box-shadow: 0 0 0 2px rgba(166, 25, 46, 0.4);
-	}
-</style>

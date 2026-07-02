@@ -14,6 +14,6 @@ export const diamondShape: NodeShape = {
 	defaultWidth: 120,
 	defaultHeight: 120,
 	defaultData: () => ({
-		label: 'Decision'
+		label: 'Diamond'
 	})
 };

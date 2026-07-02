@@ -14,48 +14,12 @@
 
 <button
 	type="button"
-	class="collapse-button"
-	class:collapsed={sidebarState.isCollapsed}
+	class="absolute top-3 z-20 flex size-6 cursor-pointer items-center justify-center rounded-full border border-line bg-white text-base leading-none text-ink-soft shadow-[0_1px_3px_rgba(0,0,0,0.12)] transition-colors duration-150 hover:bg-[#edebe5] {sidebarState.isCollapsed
+		? '-right-8'
+		: 'right-2'}"
 	aria-label={sidebarState.isCollapsed ? 'Open sidebar' : 'Close sidebar'}
 	aria-expanded={!sidebarState.isCollapsed}
 	onclick={handleClick}
 >
 	{sidebarState.isCollapsed ? '»' : '«'}
 </button>
-
-<style>
-	.collapse-button {
-		position: absolute;
-		top: 12px;
-		right: 8px;
-		width: 24px;
-		height: 24px;
-		border-radius: 50%;
-		border: 1px solid #d6d2c4;
-		background: white;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-
-		font-size: 1rem;
-		line-height: 1;
-		color: #373a36;
-		cursor: pointer;
-
-		display: flex;
-		align-items: center;
-		justify-content: center;
-
-		z-index: 20;
-		transition:
-			transform 0.15s ease,
-			background 0.15 ease;
-	}
-
-	.collapse-button:hover {
-		background: #edebe5;
-		transform: scale(1);
-	}
-
-	.collapse-button.collapsed {
-		right: -32px;
-	}
-</style>

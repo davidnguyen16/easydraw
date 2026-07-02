@@ -125,7 +125,6 @@
 				class:editing={editingKey === 'title'}
 				type="text"
 				value={entity.label ?? ''}
-				placeholder="Entity"
 				spellcheck="false"
 				readonly={editingKey !== 'title'}
 				use:editable={editingKey === 'title'}
@@ -159,7 +158,6 @@
 						class:editing={editingKey === editKey}
 						type="text"
 						value={field.name}
-						placeholder="field"
 						spellcheck="false"
 						readonly={editingKey !== editKey}
 						use:editable={editingKey === editKey}
@@ -355,15 +353,19 @@
 		text-align: right;
 	}
 
-	/* Cardinal connection handles — invisible until hover/select. */
-	:global(.entity-handle) {
-		width: 12px;
-		height: 12px;
+	/* Cardinal connection handles — invisible until hover/select. Matches the
+	   basic shapes' `.shape-conn` (10px white dot, red ring). The two-class
+	   selector out-specifies xyflow's `.svelte-flow__handle` (6px) so the size
+	   actually applies. */
+	:global(.svelte-flow__handle.entity-handle) {
+		width: 10px;
+		height: 10px;
 		background: #ffffff;
 		border: 1.5px solid #a6192e;
 		border-radius: 50%;
 		opacity: 0;
 		transition: opacity 0.12s ease;
+		pointer-events: none;
 	}
 
 	.entity-root:hover :global(.entity-handle),
@@ -372,13 +374,16 @@
 		pointer-events: all;
 	}
 
-	/* NodeResizer corner anchors. */
-	:global(.entity-resize-anchor) {
-		width: 8px;
-		height: 8px;
+	/* NodeResizer corner anchors — matches the basic shapes' `.shape-resize-anchor`
+	   (15px white square, red ring, soft shadow). The three-class selector
+	   out-specifies xyflow's `.svelte-flow__resize-control.handle` (5px). */
+	:global(.svelte-flow__resize-control.handle.entity-resize-anchor) {
+		width: 15px;
+		height: 15px;
 		background: #ffffff;
-		border: 1.5px solid #a6192e;
-		border-radius: 1px;
+		border: 2px solid #a6192e;
+		border-radius: 4px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
 	}
 
 	/* Hide the edge-line resize handles; spec calls for corner anchors only. */

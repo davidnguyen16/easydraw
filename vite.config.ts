@@ -1,4 +1,5 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, type Rollup } from 'vite';
 
 // @xyflow/svelte's dist re-exports `handleConnectionChange` from @xyflow/system
@@ -17,7 +18,7 @@ function onwarn(warning: Rollup.RollupLog, defaultHandler: Rollup.LoggingFunctio
 }
 
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [tailwindcss(), sveltekit()],
 	build: {
 		// Our entry pulls in @xyflow/svelte + jspdf up front, so the main chunk
 		// sits a little above Rollup's default 500 kB notice. Raise the threshold

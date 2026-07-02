@@ -21,6 +21,7 @@
 	import type { Node } from '@xyflow/svelte';
 	import { getShape } from '$lib/flow/nodes/registry';
 	import { FONT_FAMILIES, DEFAULT_FONT_FAMILY } from '$lib/fonts';
+	import ColorField from '$lib/components/ColorField.svelte';
 
 	type StyleTab = 'style' | 'text' | 'panel' | 'arrange';
 
@@ -118,9 +119,37 @@
 		hInput = nodeH;
 	});
 
+	const BORDER_WIDTH_MAX = 10;
+
 	function adjustBorderWidth(delta: number) {
-		const next = Math.max(0, Math.min(10, borderWidth + delta));
+		const next = Math.max(0, Math.min(BORDER_WIDTH_MAX, borderWidth + delta));
 		onStyleChange({ borderWidth: next });
+	}
+
+	// Editable border-width field (same draft pattern as font size below).
+	let borderWidthDraft = $state<string | null>(null);
+
+	function commitBorderWidth() {
+		if (borderWidthDraft !== null) {
+			const n = parseFloat(borderWidthDraft);
+			if (!Number.isNaN(n)) {
+				onStyleChange({ borderWidth: Math.max(0, Math.min(BORDER_WIDTH_MAX, n)) });
+			}
+		}
+		borderWidthDraft = null;
+	}
+
+	function onBorderWidthKeydown(event: KeyboardEvent) {
+		const input = event.currentTarget as HTMLInputElement;
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			commitBorderWidth();
+			input.blur();
+		} else if (event.key === 'Escape') {
+			event.preventDefault();
+			borderWidthDraft = null;
+			input.blur();
+		}
 	}
 
 	const FONT_SIZE_MIN = 8;
@@ -229,17 +258,11 @@
 				</div>
 				<div class="row">
 					<span class="row-label">Custom</span>
-					<label class="color-pill">
-						<span class="color-dot" style="background-color: {fillColor}"></span>
-						<input
-							type="color"
-							value={fillColor}
-							oninput={(e) =>
-								onStyleChange({ fillColor: e.currentTarget.value.toUpperCase() })}
-							aria-label="Custom fill color"
-						/>
-						<span class="color-hex">{fillColor.toUpperCase()}</span>
-					</label>
+					<ColorField
+						value={fillColor}
+						label="Fill"
+						onChange={(hex) => onStyleChange({ fillColor: hex })}
+					/>
 				</div>
 			</section>
 
@@ -247,17 +270,11 @@
 				<h3 class="group-label">BORDER</h3>
 				<div class="row">
 					<span class="row-label">Color</span>
-					<label class="color-pill">
-						<span class="color-dot" style="background-color: {borderColor}"></span>
-						<input
-							type="color"
-							value={borderColor}
-							oninput={(e) =>
-								onStyleChange({ borderColor: e.currentTarget.value.toUpperCase() })}
-							aria-label="Border color"
-						/>
-						<span class="color-hex">{borderColor.toUpperCase()}</span>
-					</label>
+					<ColorField
+						value={borderColor}
+						label="Border"
+						onChange={(hex) => onStyleChange({ borderColor: hex })}
+					/>
 				</div>
 				<div class="row">
 					<span class="row-label">Width</span>
@@ -267,7 +284,20 @@
 							aria-label="Decrease width"
 							onclick={() => adjustBorderWidth(-1)}>−</button
 						>
-						<span class="stepper-value">{borderWidth}</span>
+						<input
+							class="size-input tabular"
+							type="text"
+							inputmode="decimal"
+							aria-label="Border width"
+							value={borderWidthDraft ?? `${borderWidth}`}
+							oninput={(e) => (borderWidthDraft = e.currentTarget.value)}
+							onfocus={(e) => {
+								borderWidthDraft = `${borderWidth}`;
+								e.currentTarget.select();
+							}}
+							onblur={commitBorderWidth}
+							onkeydown={onBorderWidthKeydown}
+						/>
 						<button
 							type="button"
 							aria-label="Increase width"
@@ -320,17 +350,11 @@
 				</div>
 				<div class="row">
 					<span class="row-label">Custom</span>
-					<label class="color-pill">
-						<span class="color-dot" style="background-color: {textColor}"></span>
-						<input
-							type="color"
-							value={textColor}
-							oninput={(e) =>
-								onStyleChange({ textColor: e.currentTarget.value.toUpperCase() })}
-							aria-label="Custom text color"
-						/>
-						<span class="color-hex">{textColor.toUpperCase()}</span>
-					</label>
+					<ColorField
+						value={textColor}
+						label="Text"
+						onChange={(hex) => onStyleChange({ textColor: hex })}
+					/>
 				</div>
 			</section>
 
@@ -670,40 +694,6 @@
 		color: #373a36;
 	}
 
-	.color-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		background: #ffffff;
-		padding: 4px 10px;
-		border-radius: 6px;
-		border: 1px solid #d6d2c4;
-		cursor: pointer;
-		position: relative;
-	}
-
-	.color-pill input[type='color'] {
-		position: absolute;
-		inset: 0;
-		opacity: 0;
-		cursor: pointer;
-		border: none;
-		padding: 0;
-	}
-
-	.color-dot {
-		width: 14px;
-		height: 14px;
-		border-radius: 3px;
-		border: 1px solid #d6d2c4;
-	}
-
-	.color-hex {
-		font-size: 0.78rem;
-		color: #373a36;
-		font-variant-numeric: tabular-nums;
-	}
-
 	.stepper {
 		display: inline-flex;
 		align-items: center;
@@ -776,12 +766,6 @@
 		margin: 0;
 	}
 
-	.stepper-value {
-		font-size: 0.85rem;
-		min-width: 28px;
-		text-align: center;
-		font-variant-numeric: tabular-nums;
-	}
 
 	.stepper button {
 		background: transparent;

@@ -22,7 +22,7 @@
 	let { selected }: NodeProps = $props();
 </script>
 
-<div class="anchor" class:selected>
+<div class="relative h-full w-full" class:selected>
 	<Handle
 		type="source"
 		position={Position.Top}
@@ -33,12 +33,6 @@
 </div>
 
 <style>
-	.anchor {
-		position: relative;
-		width: 100%;
-		height: 100%;
-	}
-
 	/* The anchor node is purely a position host — never an interaction target.
 	   Endpoint grabbing happens on the edge's EndpointHandle (one z-layer below),
 	   so NOTHING in the anchor subtree may intercept the pointer — otherwise the

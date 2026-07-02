@@ -5,6 +5,7 @@
 	stroke="currentColor"
 	stroke-width="1.5"
 	stroke-linecap="round"
+	class="size-[26px]"
 >
 	<circle cx="12" cy="6" r="2.2" />
 	<line x1="12" y1="8.2" x2="12" y2="15" />
@@ -12,10 +13,3 @@
 	<line x1="12" y1="15" x2="9" y2="20" />
 	<line x1="12" y1="15" x2="15" y2="20" />
 </svg>
-
-<style>
-	svg {
-		width: 26px;
-		height: 26px;
-	}
-</style>

@@ -20,6 +20,7 @@
 	import { useDnD } from '$lib/flow/DnDProvider.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
+	import ConnectionStylePanel from '$lib/components/ConnectionStylePanel.svelte';
 	import StylePanel, { type NodeStyleData } from '$lib/components/StylePanel.svelte';
 	import { EXPORTERS, getExporter } from '$lib/exporters';
 	import ConnectionEdge from '$lib/flow/edges/connection/ConnectionEdge.svelte';
@@ -1276,6 +1277,13 @@
 				onBringToFront={handleBringToFront}
 				onSendToBack={handleSendToBack}
 				onDuplicate={handleDuplicate}
+				onDelete={handleDeleteSelected}
+			/>
+		{:else if selectedEdge}
+			{@const activeEdge = selectedEdge}
+			<ConnectionStylePanel
+				edge={activeEdge}
+				onDataChange={(patch) => updateEdgeData(activeEdge.id, patch)}
 				onDelete={handleDeleteSelected}
 			/>
 		{/if}

@@ -532,6 +532,63 @@ export function routeOrthogonal(opts: RouteOptions): Point[] {
 	return simplifyPoints(routed);
 }
 
+export interface BezierOptions {
+	source: Point;
+	sourcePosition: Position;
+	target: Point;
+	targetPosition: Position;
+	/** Floating ends have no handle direction — synthesise one facing the
+	 *  other end, exactly like routeOrthogonal does. */
+	sourceFloating?: boolean;
+	targetFloating?: boolean;
+}
+
+/**
+ * Cubic bezier for the 'curved' edge routing. Control points extend from each
+ * endpoint along its handle direction so the curve leaves the node
+ * perpendicular to the border (like xyflow's bezier edge). Returns the SVG
+ * path plus a polyline SAMPLING of the curve — the samples feed the existing
+ * segment math (labels, hit metrics) without any bezier-aware arc-length code.
+ */
+export function buildBezier(opts: BezierOptions): { d: string; samples: Point[] } {
+	let { sourcePosition, targetPosition } = opts;
+	const { source, target } = opts;
+	if (opts.sourceFloating) sourcePosition = facingPosition(target, source);
+	if (opts.targetFloating) targetPosition = facingPosition(source, target);
+
+	const dist = Math.hypot(target.x - source.x, target.y - source.y);
+	// Control-arm length: half the endpoint distance, floored so short edges
+	// still leave the handle cleanly, capped so long edges don't balloon.
+	const ext = Math.min(Math.max(dist / 2, 40), 160);
+	const sDir = HANDLE_DIR[sourcePosition];
+	const tDir = HANDLE_DIR[targetPosition];
+	const c1: Point = { x: source.x + sDir.x * ext, y: source.y + sDir.y * ext };
+	const c2: Point = { x: target.x + tDir.x * ext, y: target.y + tDir.y * ext };
+
+	const d = `M ${source.x} ${source.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${target.x} ${target.y}`;
+
+	const SAMPLES = 16;
+	const samples: Point[] = [];
+	for (let i = 0; i <= SAMPLES; i++) {
+		const t = i / SAMPLES;
+		const mt = 1 - t;
+		samples.push({
+			x:
+				mt * mt * mt * source.x +
+				3 * mt * mt * t * c1.x +
+				3 * mt * t * t * c2.x +
+				t * t * t * target.x,
+			y:
+				mt * mt * mt * source.y +
+				3 * mt * mt * t * c1.y +
+				3 * mt * t * t * c2.y +
+				t * t * t * target.y
+		});
+	}
+
+	return { d, samples };
+}
+
 /** Midpoint of the longest segment of a polyline — used to place the "add bend" handle. */
 export function longestSegmentMidpoint(points: Point[]): Point {
 	let best = { x: points[0]?.x ?? 0, y: points[0]?.y ?? 0 };

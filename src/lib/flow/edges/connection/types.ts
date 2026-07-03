@@ -13,6 +13,44 @@ export type Point = { x: number; y: number };
 /** Segment orientation. */
 export type Axis = 'h' | 'v';
 
+/** Endpoint marker drawn at the start / end of a connection. */
+export type MarkerKind =
+	| 'none'
+	// Arrows
+	| 'arrow'
+	| 'triangle'
+	| 'triangle-open'
+	| 'half-arrow-up'
+	| 'half-arrow-down'
+	// Basic shapes
+	| 'circle'
+	| 'circle-open'
+	| 'circle-cross'
+	| 'square'
+	| 'square-open'
+	| 'diamond'
+	| 'diamond-open'
+	// Ticks
+	| 'bar'
+	| 'bar-double'
+	| 'slash'
+	// ERD cardinality
+	| 'crowfoot'
+	| 'circle-crowfoot'
+	| 'bar-crowfoot'
+	| 'circle-bar';
+
+/** Stroke pattern of the line. */
+export type EdgeLineStyle = 'solid' | 'dashed' | 'dotted';
+
+/**
+ * Path algorithm.
+ *   'orthogonal' — the default node-aware right-angle router (+ user bends).
+ *   'straight'   — a direct line between the endpoints (no bends).
+ *   'curved'     — a cubic bezier leaving each handle along its direction.
+ */
+export type EdgeRouting = 'straight' | 'orthogonal' | 'curved';
+
 /** One text label pinned to a point along the edge. */
 export interface ConnectionLabel {
 	/** Stable id (used as the Svelte key and for edit/remove targeting). */
@@ -44,6 +82,17 @@ export interface ConnectionEdgeData {
 	italic?: boolean;
 	underline?: boolean;
 	textColor?: string;
+	/**
+	 * Line appearance, driven by ConnectionStylePanel while the edge is
+	 * selected. Every field is optional — omitted fields render the default
+	 * connection look, so pre-existing edges are unchanged.
+	 */
+	markerStart?: MarkerKind;
+	markerEnd?: MarkerKind;
+	lineStyle?: EdgeLineStyle;
+	routing?: EdgeRouting;
+	strokeWidth?: number;
+	strokeColor?: string;
 	[key: string]: unknown;
 }
 

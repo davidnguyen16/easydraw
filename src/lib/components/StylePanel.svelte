@@ -188,6 +188,72 @@
 		}
 	}
 
+	// ─── Font family dropdown (custom menu with live typeface preview) ──
+	// Not a native <select>: Chromium on Windows paints the option popup with
+	// the OS control, IGNORING per-option font-family — the typeface preview
+	// only renders in a DOM menu we own. The menu escapes .style-panel's
+	// overflow:hidden via position:fixed, with coordinates computed from the
+	// trigger button when it opens.
+	let fontMenuOpen = $state(false);
+	let fontTriggerEl = $state<HTMLButtonElement>();
+	let fontMenuEl = $state<HTMLDivElement>();
+	let fontMenuStyle = $state('');
+
+	const FONT_MENU_MAX_H = 280;
+
+	function toggleFontMenu() {
+		if (fontMenuOpen) {
+			fontMenuOpen = false;
+			return;
+		}
+		const rect = fontTriggerEl?.getBoundingClientRect();
+		if (!rect) return;
+		// Drop below the trigger; flip above when the space below is too tight.
+		const openUp = window.innerHeight - rect.bottom < FONT_MENU_MAX_H + 12;
+		fontMenuStyle = [
+			`left: ${rect.left}px`,
+			`width: ${rect.width}px`,
+			openUp ? `bottom: ${window.innerHeight - rect.top + 4}px` : `top: ${rect.bottom + 4}px`,
+			`max-height: ${FONT_MENU_MAX_H}px`
+		].join('; ');
+		fontMenuOpen = true;
+	}
+
+	function pickFont(family: string) {
+		onStyleChange({ fontFamily: family });
+		fontMenuOpen = false;
+	}
+
+	// While open: close on outside click, Escape, or any scroll outside the
+	// menu (a fixed-position menu would otherwise detach from its trigger
+	// when .content scrolls under it).
+	$effect(() => {
+		if (!fontMenuOpen) return;
+		const onPointerDown = (e: PointerEvent) => {
+			// instanceof narrows to the DOM Node type (the bare `Node` TYPE name
+			// is shadowed by xyflow's Node import in this file).
+			if (e.target instanceof Node) {
+				if (fontTriggerEl?.contains(e.target) || fontMenuEl?.contains(e.target)) return;
+			}
+			fontMenuOpen = false;
+		};
+		const onKeydown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') fontMenuOpen = false;
+		};
+		const onScroll = (e: Event) => {
+			if (fontMenuEl && e.target instanceof Node && fontMenuEl.contains(e.target)) return;
+			fontMenuOpen = false;
+		};
+		window.addEventListener('pointerdown', onPointerDown, true);
+		window.addEventListener('keydown', onKeydown, true);
+		window.addEventListener('scroll', onScroll, true);
+		return () => {
+			window.removeEventListener('pointerdown', onPointerDown, true);
+			window.removeEventListener('keydown', onKeydown, true);
+			window.removeEventListener('scroll', onScroll, true);
+		};
+	});
+
 	function commitPosition() {
 		onPositionChange(xInput, yInput);
 	}
@@ -361,17 +427,18 @@
 			<section class="group">
 				<h3 class="group-label">FONT</h3>
 				<div class="font-field">
-					<select
+					<button
+						type="button"
 						class="font-select"
+						bind:this={fontTriggerEl}
 						style="font-family: {fontFamily};"
-						value={fontFamily}
-						onchange={(e) => onStyleChange({ fontFamily: e.currentTarget.value })}
+						aria-haspopup="listbox"
+						aria-expanded={fontMenuOpen}
 						aria-label="Font family"
+						onclick={toggleFontMenu}
 					>
-						{#each FONT_FAMILIES as family}
-							<option value={family} style="font-family: {family};">{family}</option>
-						{/each}
-					</select>
+						{fontFamily}
+					</button>
 					<span class="font-chev" aria-hidden="true">
 						<svg
 							viewBox="0 0 24 24"
@@ -386,6 +453,43 @@
 							<polyline points="6 9 12 15 18 9" />
 						</svg>
 					</span>
+					{#if fontMenuOpen}
+						<div
+							class="font-menu"
+							role="listbox"
+							aria-label="Font families"
+							bind:this={fontMenuEl}
+							style={fontMenuStyle}
+						>
+							{#each FONT_FAMILIES as family (family)}
+								<button
+									type="button"
+									role="option"
+									aria-selected={family === fontFamily}
+									class="font-option"
+									onclick={() => pickFont(family)}
+								>
+									<span class="font-option-check">
+										{#if family === fontFamily}
+											<svg
+												viewBox="0 0 24 24"
+												width="12"
+												height="12"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2.5"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+											>
+												<polyline points="20 6 9 17 4 12" />
+											</svg>
+										{/if}
+									</span>
+									<span style="font-family: {family};">{family}</span>
+								</button>
+							{/each}
+						</div>
+					{/if}
 				</div>
 				<div class="row">
 					<span class="row-label">Size</span>
@@ -704,9 +808,12 @@
 		padding: 2px 4px;
 	}
 
-	/* Font family dropdown: a styled native <select> (its option popup escapes
-	   the panel's overflow, unlike a custom menu). The closed control and each
-	   option render in their own typeface for a live preview. */
+	/* Font family dropdown: a custom menu, NOT a native <select> — Chromium on
+	   Windows paints the native option popup with the OS control and ignores
+	   per-option font-family, killing the live typeface preview. The menu
+	   escapes the panel's overflow:hidden via position:fixed (coords computed
+	   in toggleFontMenu). Closed control + every option render in their own
+	   typeface. */
 	.font-field {
 		position: relative;
 	}
@@ -723,6 +830,10 @@
 		color: #373a36;
 		cursor: pointer;
 		line-height: 1.2;
+		text-align: left;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.font-select:hover {
@@ -742,6 +853,47 @@
 		display: inline-flex;
 		color: #8a8b83;
 		pointer-events: none;
+	}
+
+	.font-menu {
+		position: fixed;
+		z-index: 120;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding: 6px;
+		background: #ffffff;
+		border: 1px solid #d6d2c4;
+		border-radius: 8px;
+		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+		overflow-y: auto;
+	}
+
+	.font-option {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		background: transparent;
+		border: none;
+		border-radius: 6px;
+		padding: 7px 10px;
+		font-size: 0.9rem;
+		color: #373a36;
+		text-align: left;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	.font-option:hover {
+		background: #f3f1ea;
+	}
+
+	/* Fixed-width slot so option text lines up whether or not it's checked. */
+	.font-option-check {
+		width: 14px;
+		display: inline-flex;
+		flex-shrink: 0;
+		color: #a6192e;
 	}
 
 	.size-input {

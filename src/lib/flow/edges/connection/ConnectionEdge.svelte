@@ -4,6 +4,7 @@
 	import EndpointHandle from './EndpointHandle.svelte';
 	import Pill from './Pill.svelte';
 	import {
+		buildBezier,
 		buildSegments,
 		buildSvgPath,
 		buildVertices,
@@ -14,7 +15,16 @@
 	} from './routing';
 	import { ANCHOR_HANDLE_ID, ANCHOR_NODE_TYPE } from '../../nodes/anchor/anchor';
 	import { nanoid } from 'nanoid';
-	import type { Axis, ConnectionEdgeData, ConnectionLabel, Point, Segment } from './types';
+	import MarkerGlyph from './MarkerGlyph.svelte';
+	import { MARKER_GLYPHS } from './marker-glyphs';
+	import type {
+		Axis,
+		ConnectionEdgeData,
+		ConnectionLabel,
+		MarkerKind,
+		Point,
+		Segment
+	} from './types';
 
 	let {
 		id,
@@ -47,7 +57,6 @@
 	const COLOR_DEFAULT = '#B4B2A9';
 	const COLOR_ACTIVE = '#5F5E5A';
 	const WIDTH_DEFAULT = 1.5;
-	const WIDTH_ACTIVE = 2;
 	const CORNER_RADIUS = 8;
 	const HIT_WIDTH = 20;
 
@@ -93,6 +102,32 @@
 	const connectionData = $derived((data ?? {}) as ConnectionEdgeData);
 	const bendPoints = $derived(connectionData.bendPoints ?? []);
 
+	// ─── Line appearance (driven by ConnectionStylePanel) ───────────────
+	// Every field is optional on data; the fallbacks reproduce the original
+	// connection look so pre-existing edges render unchanged.
+	const routing = $derived(connectionData.routing ?? 'orthogonal');
+	const isOrthogonal = $derived(routing === 'orthogonal');
+	const lineStyle = $derived(connectionData.lineStyle ?? 'solid');
+	const markerStart = $derived<MarkerKind>(connectionData.markerStart ?? 'none');
+	const markerEnd = $derived<MarkerKind>(connectionData.markerEnd ?? 'none');
+	const userStrokeWidth = $derived(connectionData.strokeWidth ?? WIDTH_DEFAULT);
+	const userStrokeColor = $derived(connectionData.strokeColor);
+
+	// Dash pattern scales with width so dashes/dots stay legible on thick lines.
+	const dashArray = $derived(
+		lineStyle === 'dashed'
+			? `${userStrokeWidth * 5} ${userStrokeWidth * 3.5}`
+			: lineStyle === 'dotted'
+				? `0.1 ${userStrokeWidth * 4}`
+				: undefined
+	);
+
+	// Geometry (viewBox, anchor point, flush behaviour) of the two end glyphs
+	// comes from the shared MARKER_GLYPHS catalog — the same definitions the
+	// panel previews render, so what you pick is exactly what the edge draws.
+	const startGlyph = $derived(markerStart === 'none' ? null : MARKER_GLYPHS[markerStart]);
+	const endGlyph = $derived(markerEnd === 'none' ? null : MARKER_GLYPHS[markerEnd]);
+
 	// ─── Label text style ───────────────────────────────────────────────
 	// Applied to every label on this edge. Set via the toolbar font / size /
 	// B / I / U / colour controls while the edge is selected (stored on
@@ -124,16 +159,16 @@
 	 * source / target only — the endpoint markers stay at the original
 	 * point so they mark the actual border.
 	 */
-	function insetIntoNode(p: Point, position: Position): Point {
+	function insetIntoNode(p: Point, position: Position, amount = ENDPOINT_INSET): Point {
 		switch (position) {
 			case Position.Top:
-				return { x: p.x, y: p.y + ENDPOINT_INSET };
+				return { x: p.x, y: p.y + amount };
 			case Position.Right:
-				return { x: p.x - ENDPOINT_INSET, y: p.y };
+				return { x: p.x - amount, y: p.y };
 			case Position.Bottom:
-				return { x: p.x, y: p.y - ENDPOINT_INSET };
+				return { x: p.x, y: p.y - amount };
 			case Position.Left:
-				return { x: p.x + ENDPOINT_INSET, y: p.y };
+				return { x: p.x + amount, y: p.y };
 			default:
 				return p;
 		}
@@ -176,18 +211,61 @@
 		return (type && OUTLINE_INSET[type]?.[position]) || 0;
 	}
 
-	function insetForEnd(nodeId: string, p: Point, position: Position): Point {
+	// Shapes whose visible outline never reaches the bbox edge at the handle
+	// points (stick figure / bare text). Forcing endpoint contact would just
+	// strand the tip in empty space, so their ends stay at the bbox edge.
+	const NO_TOUCH_TYPES = new Set(['ActorNode', 'TextNode']);
+
+	// How far past the SLANTED outline (triangle side, document wave, …) a
+	// marker tip buries itself. The node body renders above edges, so the
+	// overshoot is hidden — the head reads as planted ON the outline.
+	const MARKER_TOUCH = 2.5;
+
+	// Bury amount for a marker tip at a bbox-edge end. SVG shapes draw their
+	// outline ~1% INSIDE their bbox, so the air gap between a tip stopped at
+	// the bbox edge and the visible outline GROWS with node size — scale the
+	// bury with the crossed dimension (+2px for the border stroke itself).
+	function markerBury(rect: Rect | null, position: Position): number {
+		const dim = rect
+			? position === Position.Left || position === Position.Right
+				? rect.width
+				: rect.height
+			: 0;
+		return dim * 0.01 + 2;
+	}
+
+	// Resolves where the LINE tip lands for an end attached to `nodeId`.
+	//   plain end  → crosses the outline by ENDPOINT_INSET (as always).
+	//   marker end → tip buries slightly past the visible outline so the head
+	//                sits firmly ON the shape edge instead of hovering short
+	//                of it. Exceptions: NO_TOUCH_TYPES stay at the bbox edge,
+	//                and FLUSH glyphs (bar-style ticks lying across the line)
+	//                sit ON the edge — burying them would hide them under
+	//                the node body.
+	function insetForEnd(
+		nodeId: string,
+		p: Point,
+		position: Position,
+		marker: MarkerKind = 'none'
+	): Point {
+		const glyph = marker === 'none' ? null : MARKER_GLYPHS[marker];
 		const ratio = outlineInsetRatio(nodeId, position);
 		if (ratio > 0) {
 			const rect = rectOf(nodeId);
 			if (rect) {
-				const dx = rect.width * ratio + ENDPOINT_INSET;
-				const dy = rect.height * ratio + ENDPOINT_INSET;
+				const cross = glyph ? (glyph.flush ? 0 : MARKER_TOUCH) : ENDPOINT_INSET;
+				const dx = rect.width * ratio + cross;
+				const dy = rect.height * ratio + cross;
 				if (position === Position.Left) return { x: p.x + dx, y: p.y };
 				if (position === Position.Right) return { x: p.x - dx, y: p.y };
 				if (position === Position.Top) return { x: p.x, y: p.y + dy };
 				if (position === Position.Bottom) return { x: p.x, y: p.y - dy };
 			}
+		}
+		if (glyph) {
+			const type = flow.getInternalNode(nodeId)?.type;
+			if ((type && NO_TOUCH_TYPES.has(type)) || glyph.flush) return p;
+			return insetIntoNode(p, position, markerBury(rectOf(nodeId), position));
 		}
 		return insetIntoNode(p, position);
 	}
@@ -210,12 +288,12 @@
 	const sourcePoint = $derived(
 		sourceFloating
 			? { x: sourceX, y: sourceY }
-			: insetForEnd(source, { x: sourceX, y: sourceY }, sourcePosition)
+			: insetForEnd(source, { x: sourceX, y: sourceY }, sourcePosition, markerStart)
 	);
 	const targetPoint = $derived(
 		targetFloating
 			? { x: targetX, y: targetY }
-			: insetForEnd(target, { x: targetX, y: targetY }, targetPosition)
+			: insetForEnd(target, { x: targetX, y: targetY }, targetPosition, markerEnd)
 	);
 	const sourceAxis = $derived(positionToAxis(sourcePosition));
 
@@ -245,13 +323,41 @@
 		})
 	);
 
-	const vertices = $derived(
-		isFreeForm
-			? routedPoints.map((point) => ({ point, bendIndex: null as number | null }))
-			: buildVertices(sourcePoint, targetPoint, sourceAxis, bendPoints)
+	// 'curved' routing: bezier path + a polyline sampling of it. The samples
+	// feed the segment math below so labels (position, dodging) keep working
+	// without bezier-aware arc-length code.
+	const curve = $derived(
+		routing === 'curved'
+			? buildBezier({
+					source: sourcePoint,
+					sourcePosition,
+					target: targetPoint,
+					targetPosition,
+					sourceFloating,
+					targetFloating
+				})
+			: null
 	);
+
+	const vertices = $derived.by(() => {
+		if (routing === 'straight') {
+			// Direct line — bends don't apply.
+			return [sourcePoint, targetPoint].map((point) => ({
+				point,
+				bendIndex: null as number | null
+			}));
+		}
+		if (curve) {
+			return curve.samples.map((point) => ({ point, bendIndex: null as number | null }));
+		}
+		return isFreeForm
+			? routedPoints.map((point) => ({ point, bendIndex: null as number | null }))
+			: buildVertices(sourcePoint, targetPoint, sourceAxis, bendPoints);
+	});
 	const segments = $derived(buildSegments(vertices));
-	const pathD = $derived(buildSvgPath(vertices, CORNER_RADIUS));
+	// The curved path renders the true bezier; its sampled polyline is only for
+	// segment math. Straight/orthogonal paths render from their vertices.
+	const pathD = $derived(curve ? curve.d : buildSvgPath(vertices, CORNER_RADIUS));
 
 	const labels = $derived((connectionData.labels ?? []) as ConnectionLabel[]);
 
@@ -361,9 +467,34 @@
 		return { x: natural.x, y: natural.y, axis: freeFormAxis };
 	});
 
+	// ─── Cursor-following ghost pill (Lucidchart-style restraint) ───────
+	// A multi-segment edge used to render one ghost pill on EVERY long-enough
+	// segment, which reads as clutter. Instead we track the pointer while it's
+	// over the edge and show a SINGLE ghost pill, on the segment nearest the
+	// cursor — the affordance appears right where the user is about to grab,
+	// and the line stays clean everywhere else.
+	let hoverFlowPos = $state<Point | null>(null);
+
+	const hoverGhostSegment = $derived.by<Segment | null>(() => {
+		if (!hoverFlowPos) return null;
+		let best: Segment | null = null;
+		let bestDist = Infinity;
+		for (const s of segments) {
+			if (!s.pillVisible || nearLabel(s.mid)) continue;
+			const proj = projectOnSeg(hoverFlowPos, s.p1, s.p2);
+			if (proj.dist < bestDist) {
+				bestDist = proj.dist;
+				best = s;
+			}
+		}
+		return best;
+	});
+
 	const active = $derived(hovered || !!selected || draggingEnd !== null);
-	const strokeColor = $derived(active ? COLOR_ACTIVE : COLOR_DEFAULT);
-	const strokeWidth = $derived(active ? WIDTH_ACTIVE : WIDTH_DEFAULT);
+	// A custom colour always shows as-is (active state is already obvious from
+	// the endpoint handles / pills); the default grey still darkens on active.
+	const strokeColor = $derived(userStrokeColor ?? (active ? COLOR_ACTIVE : COLOR_DEFAULT));
+	const strokeWidth = $derived(active ? userStrokeWidth + 0.5 : userStrokeWidth);
 
 	// Solid pill orientation: prefer the segment LEAVING the bend; fall back
 	// to the segment entering it. Keeps the pill aligned with its segment
@@ -811,8 +942,46 @@
 	class="connection-edge"
 	use:dblclickNewLabel
 	onpointerenter={() => (hovered = true)}
-	onpointerleave={() => (hovered = false)}
+	onpointerleave={() => {
+		hovered = false;
+		hoverFlowPos = null;
+	}}
+	onpointermove={(e) =>
+		(hoverFlowPos = flow.screenToFlowPosition({ x: e.clientX, y: e.clientY }))}
 >
+	<!-- Endpoint markers (arrow heads, …). Ids embed the edge id so multiple
+         edges' defs never collide; orient auto/auto-start-reverse lets one
+         glyph serve both ends. markerUnits defaults to strokeWidth so heads
+         scale with the line width, like draw.io. -->
+	<defs>
+		{#if markerStart !== 'none' && startGlyph}
+			<marker
+				id={`cm-s-${id}`}
+				viewBox="0 0 {startGlyph.w} 10"
+				markerWidth={startGlyph.w}
+				markerHeight="10"
+				refX={startGlyph.refX}
+				refY="5"
+				orient="auto-start-reverse"
+			>
+				<MarkerGlyph kind={markerStart} color={strokeColor} />
+			</marker>
+		{/if}
+		{#if markerEnd !== 'none' && endGlyph}
+			<marker
+				id={`cm-e-${id}`}
+				viewBox="0 0 {endGlyph.w} 10"
+				markerWidth={endGlyph.w}
+				markerHeight="10"
+				refX={endGlyph.refX}
+				refY="5"
+				orient="auto"
+			>
+				<MarkerGlyph kind={markerEnd} color={strokeColor} />
+			</marker>
+		{/if}
+	</defs>
+
 	<!-- Wide invisible interaction strip so the thin line is easy to hit.
          Double-click anywhere on the line drops a text label at that point. -->
 	<path
@@ -834,10 +1003,15 @@
 		stroke-linejoin="round"
 		pointer-events="none"
 		class="connection-path"
+		marker-start={markerStart !== 'none' ? `url(#cm-s-${id})` : undefined}
+		marker-end={markerEnd !== 'none' ? `url(#cm-e-${id})` : undefined}
+		stroke-dasharray={dashArray}
 		style={`stroke: ${strokeColor}; stroke-width: ${strokeWidth}px;`}
 	/>
 
-	{#if active && !isEditing}
+	<!-- Bend pills only exist for orthogonal routing — straight and curved
+         paths have no draggable segments. -->
+	{#if active && !isEditing && isOrthogonal}
 		{#if isFreeForm}
 			<!-- Pristine edge: one handle to add the first bend. It slides along
                  the line to dodge any label, so it's never hidden entirely. -->
@@ -848,22 +1022,22 @@
 				axis={freeFormPill.axis}
 				onpointerdown={(e) => startAddBendDrag(e)}
 			/>
-		{:else}
-			{#each segments as segment (segment.index)}
-				{#if segment.pillVisible && !nearLabel(segment.mid)}
-					<Pill
-						kind="ghost"
-						x={segment.mid.x}
-						y={segment.mid.y}
-						axis={segment.axis}
-						onpointerdown={(e) => startGhostDrag(segment, e)}
-					/>
-				{/if}
-			{/each}
+		{:else if hoverGhostSegment}
+			<!-- Bent edge: a single ghost pill on the segment nearest the cursor
+                 (see hoverGhostSegment) instead of one per segment — the grab
+                 affordance shows up where it's needed, nothing else. -->
+			{@const seg = hoverGhostSegment}
+			<Pill
+				kind="ghost"
+				x={seg.mid.x}
+				y={seg.mid.y}
+				axis={seg.axis}
+				onpointerdown={(e) => startGhostDrag(seg, e)}
+			/>
 		{/if}
 	{/if}
 
-	{#if selected && !isEditing}
+	{#if selected && !isEditing && isOrthogonal}
 		{#each bendPoints as bend, bendIndex (bendIndex)}
 			{#if !nearLabel(bend)}
 				<Pill

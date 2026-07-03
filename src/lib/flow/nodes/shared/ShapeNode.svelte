@@ -234,7 +234,41 @@
 
 	function onLabelBlur() {
 		editing = false;
+		// Chromium keeps PAINTING the last selection highlight even after blur
+		// here: the canvas click that took us out of editing was
+		// preventDefault()ed by xyflow, so the browser never replaces the
+		// selection on its own. Clear BOTH selections explicitly — the input's
+		// internal range and any document selection the double-click created.
+		inputEl?.setSelectionRange(0, 0);
+		window.getSelection()?.removeAllRanges();
 	}
+
+	// Clicking outside the node (pane / another node) DESELECTS it, but
+	// xyflow's pane handler preventDefault()s the pointerdown, so the browser
+	// never moves focus off the input — the edit (and its select() highlight)
+	// would stay stuck on screen. Deselection-while-editing means the user
+	// clicked away, so end the edit through the normal blur path.
+	$effect(() => {
+		if (editing && !selected) {
+			inputEl?.blur();
+		}
+	});
+
+	// Belt and braces for every other "click away" (canvas pan-start, the
+	// node's own body, toolbar buttons that swallow focus…): while editing,
+	// ANY pointerdown outside the input ends the edit. Capture phase, so it
+	// runs before xyflow's handlers and can't be stopped by their
+	// preventDefault/stopPropagation.
+	$effect(() => {
+		if (!editing) return;
+		const onPointerDown = (e: PointerEvent) => {
+			if (e.target instanceof Node && inputEl && !inputEl.contains(e.target)) {
+				inputEl.blur();
+			}
+		};
+		window.addEventListener('pointerdown', onPointerDown, true);
+		return () => window.removeEventListener('pointerdown', onPointerDown, true);
+	});
 </script>
 
 <!--
@@ -537,6 +571,14 @@
 		padding: 8px 12px;
 		box-sizing: border-box;
 		pointer-events: auto;
+		/* The double-click that opens the editor would otherwise ALSO run the
+		   browser's word-select default, creating a DOCUMENT selection over
+		   the input element — independent of the input's own selection, and
+		   painted as a stuck blue highlight because xyflow preventDefault()s
+		   canvas clicks (so the browser never clears it). Block document
+		   selection here; the editing input re-enables it for real editing. */
+		-webkit-user-select: none;
+		user-select: none;
 	}
 
 	input {
@@ -559,6 +601,8 @@
 	input.editing {
 		pointer-events: auto;
 		cursor: text;
+		-webkit-user-select: text;
+		user-select: text;
 	}
 
 	/*

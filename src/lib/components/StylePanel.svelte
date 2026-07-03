@@ -68,14 +68,18 @@
 		}
 	});
 
-	const FILL_COLORS = ['#76232F', '#A6192E', '#6B4DBA', '#0E7E63', '#9C6B1A', '#FFFFFF'];
+	// White leads: it's the default fill of every shape (and now the entity
+	// header), so the row starts on the swatch that's actually active.
+	const FILL_COLORS = ['#FFFFFF', '#76232F', '#A6192E', '#6B4DBA', '#0E7E63', '#9C6B1A'];
 	const TEXT_COLORS = ['#2C2C2A', '#FFFFFF', '#A6192E', '#6B4DBA', '#0E7E63', '#9C6B1A'];
 	const TEXT_ALIGNMENTS: TextAlign[] = ['left', 'center', 'right'];
 
 	// The style fields live on node.data so they survive page snapshots.
 	let style = $derived((node.data ?? {}) as NodeStyleData);
 
-	let fillColor = $derived(style.fillColor ?? '#76232F');
+	// Matches the real rendered default: ShapeNode falls back to white, and
+	// the entity header is white too — so the panel opens showing the truth.
+	let fillColor = $derived(style.fillColor ?? '#FFFFFF');
 	let borderColor = $derived(style.borderColor ?? '#2C2C2A');
 	let borderWidth = $derived(style.borderWidth ?? 1);
 	let rounded = $derived(style.rounded ?? false);

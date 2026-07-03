@@ -96,8 +96,38 @@
 	let draft = $state('');
 	let cancelled = false;
 	let editingWasNew = false;
+	// The live contenteditable element (bound below) — needed to force a blur
+	// when the user clicks away without the browser moving focus.
+	let editorEl = $state<HTMLElement>();
 
 	const isEditing = $derived(editingId !== null);
+
+	// While a label is being edited this edge is the sole selection (see
+	// selectEdgeForStyling). Clicking the pane / a node DESELECTS it, but
+	// xyflow's pane handler preventDefault()s the pointerdown, so the browser
+	// never blurs the contenteditable — the editor would stay stuck open.
+	// Deselection-while-editing means the user clicked away → commit through
+	// the normal blur path.
+	$effect(() => {
+		if (editingId !== null && !selected) {
+			editorEl?.blur();
+		}
+	});
+
+	// Belt and braces for every other "click away" (canvas pan-start, the
+	// edge's own line, …): while editing, ANY pointerdown outside the editor
+	// commits it. Capture phase, so it runs before xyflow's handlers and
+	// can't be stopped by them.
+	$effect(() => {
+		if (editingId === null) return;
+		const onPointerDown = (e: PointerEvent) => {
+			if (e.target instanceof Node && editorEl && !editorEl.contains(e.target)) {
+				editorEl.blur();
+			}
+		};
+		window.addEventListener('pointerdown', onPointerDown, true);
+		return () => window.removeEventListener('pointerdown', onPointerDown, true);
+	});
 
 	const connectionData = $derived((data ?? {}) as ConnectionEdgeData);
 	const bendPoints = $derived(connectionData.bendPoints ?? []);
@@ -923,6 +953,10 @@
 	}
 
 	function onEditorBlur() {
+		// Drop any text selection left inside the contenteditable so no
+		// highlight lingers after a click-away that xyflow preventDefault()ed
+		// (see ShapeNode.onLabelBlur for the same Chromium quirk).
+		window.getSelection()?.removeAllRanges();
 		if (cancelled) {
 			cancelled = false;
 			cancelLabel();
@@ -1113,6 +1147,7 @@
 			aria-label="Edit connection label"
 			contenteditable="true"
 			spellcheck="false"
+			bind:this={editorEl}
 			use:initEditor
 			oninput={(e) => (draft = e.currentTarget.textContent ?? '')}
 			onkeydown={onEditorKeydown}

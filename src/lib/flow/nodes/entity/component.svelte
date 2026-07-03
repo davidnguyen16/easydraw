@@ -25,7 +25,7 @@
 	}
 
 	// Style overrides from StylePanel. Anything left undefined keeps the
-	// entity's built-in defaults (white card, dark red header, etc.).
+	// entity's built-in defaults (white card, white header, dark title).
 	// fillColor is intentionally scoped to the header only.
 	const cardStyle = $derived(
 		[
@@ -74,8 +74,15 @@
 		editingKey = key;
 	}
 
-	function endEdit() {
+	function endEdit(evt?: FocusEvent) {
 		editingKey = null;
+		// Chromium keeps painting the last selection highlight after a blur
+		// triggered while xyflow preventDefault()ed the outside click — clear
+		// both the input's range and any document selection explicitly (see
+		// ShapeNode.onLabelBlur).
+		const input = evt?.currentTarget;
+		if (input instanceof HTMLInputElement) input.setSelectionRange(0, 0);
+		window.getSelection()?.removeAllRanges();
 	}
 
 	function onFieldKeydown(evt: KeyboardEvent) {
@@ -94,6 +101,38 @@
 		apply(active);
 		return { update: apply };
 	}
+
+	// Clicking outside the node deselects it, but xyflow's pane handler
+	// preventDefault()s the pointerdown so the browser never moves focus —
+	// the editing input (and its select() highlight) would stay stuck.
+	// The focused element IS the editing input (the `editable` action put
+	// focus there), so blur it; that runs endEdit via the input's onblur.
+	$effect(() => {
+		if (editingKey !== null && !selected) {
+			(document.activeElement as HTMLElement | null)?.blur();
+		}
+	});
+
+	// Belt and braces for every other "click away" (canvas pan-start, another
+	// row of this same entity, toolbar…): while editing, ANY pointerdown
+	// outside the focused input ends the edit. Capture phase, so it runs
+	// before xyflow's handlers and can't be stopped by them.
+	$effect(() => {
+		if (editingKey === null) return;
+		const onPointerDown = (e: PointerEvent) => {
+			const active = document.activeElement;
+			if (
+				active instanceof HTMLElement &&
+				e.target instanceof Node &&
+				active !== e.target &&
+				!active.contains(e.target)
+			) {
+				active.blur();
+			}
+		};
+		window.addEventListener('pointerdown', onPointerDown, true);
+		return () => window.removeEventListener('pointerdown', onPointerDown, true);
+	});
 </script>
 
 <!--
@@ -234,10 +273,14 @@
 	}
 
 	.entity-header {
-		background: #76232f;
+		background: #ffffff;
 		padding: 8px 12px;
 		border-bottom: 1px solid #373a36;
 		text-align: center;
+		/* Block the double-click word-select default from creating a stuck
+		   DOCUMENT selection over the input (see .node-text in ShapeNode). */
+		-webkit-user-select: none;
+		user-select: none;
 	}
 
 	.entity-title {
@@ -245,7 +288,7 @@
 		background: transparent;
 		border: none;
 		outline: none;
-		color: #ffffff;
+		color: #2c2c2a;
 		font-weight: 500;
 		font-size: 13px;
 		text-align: center;
@@ -261,10 +304,12 @@
 	.field-name.editing {
 		pointer-events: auto;
 		cursor: text;
+		-webkit-user-select: text;
+		user-select: text;
 	}
 
 	.entity-title::placeholder {
-		color: rgba(255, 255, 255, 0.65);
+		color: rgba(44, 44, 42, 0.45);
 	}
 
 	.entity-fields {
@@ -273,6 +318,9 @@
 		padding: 0;
 		display: flex;
 		flex-direction: column;
+		/* Same double-click document-selection guard as .entity-header. */
+		-webkit-user-select: none;
+		user-select: none;
 	}
 
 	.entity-field {

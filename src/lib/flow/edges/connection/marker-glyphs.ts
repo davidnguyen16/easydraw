@@ -53,6 +53,11 @@ export const MARKER_GLYPHS: Record<Exclude<MarkerKind, 'none'>, MarkerGlyphDef> 
 		refX: 8,
 		shapes: [{ el: 'path', d: 'M1,1 L8,5 L1,9', fill: 'none', stroke: true, strokeWidth: 1.4 }]
 	},
+	'triangle-sharp': {
+		w: 10,
+		refX: 9,
+		shapes: [{ el: 'path', d: 'M1,1 L9,5 L1,9 L3.4,5 Z', fill: 'color' }]
+	},
 	'half-arrow-up': {
 		w: 10,
 		refX: 9,
@@ -62,6 +67,49 @@ export const MARKER_GLYPHS: Record<Exclude<MarkerKind, 'none'>, MarkerGlyphDef> 
 		w: 10,
 		refX: 9,
 		shapes: [{ el: 'path', d: 'M9,5 L2,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 }]
+	},
+	'triangle-double': {
+		w: 14,
+		refX: 13.4,
+		shapes: [
+			{ el: 'path', d: 'M1,1.6 L6.8,5 L1,8.4 Z', fill: 'color' },
+			{ el: 'path', d: 'M7.6,1.6 L13.4,5 L7.6,8.4 Z', fill: 'color' }
+		]
+	},
+	'triangle-open-double': {
+		w: 14,
+		refX: 13.4,
+		shapes: [
+			{ el: 'path', d: 'M1,1.6 L6.8,5 L1,8.4 Z', fill: 'white', stroke: true },
+			{ el: 'path', d: 'M7.6,1.6 L13.4,5 L7.6,8.4 Z', fill: 'white', stroke: true }
+		]
+	},
+	'arrow-double': {
+		w: 14,
+		refX: 13.4,
+		shapes: [
+			{ el: 'path', d: 'M2,1.5 L7.4,5 L2,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 },
+			{ el: 'path', d: 'M8,1.5 L13.4,5 L8,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 }
+		]
+	},
+	// A tick crossing the line just before the head (the line itself forms the
+	// horizontal stroke of the "+").
+	'arrow-cross': {
+		w: 14,
+		refX: 13.4,
+		shapes: [
+			{ el: 'path', d: 'M7,2.5 L7,7.5', fill: 'none', stroke: true, strokeWidth: 1.4 },
+			{ el: 'path', d: 'M9,1.5 L13.4,5 L9,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 }
+		]
+	},
+	'arrow-cross-double': {
+		w: 17,
+		refX: 16.4,
+		shapes: [
+			{ el: 'path', d: 'M4,2.5 L4,7.5', fill: 'none', stroke: true, strokeWidth: 1.4 },
+			{ el: 'path', d: 'M6,1.5 L11.4,5 L6,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 },
+			{ el: 'path', d: 'M11,1.5 L16.4,5 L11,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 }
+		]
 	},
 	// ─── Basic shapes ────────────────────────────────────────────────────
 	circle: {
@@ -82,6 +130,94 @@ export const MARKER_GLYPHS: Record<Exclude<MarkerKind, 'none'>, MarkerGlyphDef> 
 			{ el: 'path', d: 'M5,1.7 L5,8.3 M1.7,5 L8.3,5', fill: 'none', stroke: true }
 		]
 	},
+	'circle-small': {
+		w: 10,
+		refX: 9.4,
+		shapes: [{ el: 'circle', cx: 7.2, cy: 5, r: 2.2, fill: 'color' }]
+	},
+	'circle-open-small': {
+		w: 10,
+		refX: 9.6,
+		shapes: [{ el: 'circle', cx: 7, cy: 5, r: 2, fill: 'white', stroke: true }]
+	},
+	// ─── Tick + circle combos (genogram-style cardinality) ──────────────
+	// The circle sits at the node end; the ticks ride the line before it.
+	'bar-circle': {
+		w: 14,
+		refX: 13.4,
+		shapes: [
+			{ el: 'path', d: 'M6,1.5 L6,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 },
+			{ el: 'circle', cx: 10.6, cy: 5, r: 2.8, fill: 'color' }
+		]
+	},
+	'bar-circle-open': {
+		w: 14,
+		refX: 13.6,
+		shapes: [
+			{ el: 'path', d: 'M6,1.5 L6,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 },
+			{ el: 'circle', cx: 10.4, cy: 5, r: 2.6, fill: 'white', stroke: true }
+		]
+	},
+	'bar-double-circle': {
+		w: 16,
+		refX: 15.4,
+		shapes: [
+			{ el: 'path', d: 'M4.5,1.5 L4.5,8.5 M7.5,1.5 L7.5,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 },
+			{ el: 'circle', cx: 12.6, cy: 5, r: 2.8, fill: 'color' }
+		]
+	},
+	'bar-double-circle-open': {
+		w: 16,
+		refX: 15.6,
+		shapes: [
+			{ el: 'path', d: 'M4.5,1.5 L4.5,8.5 M7.5,1.5 L7.5,8.5', fill: 'none', stroke: true, strokeWidth: 1.4 },
+			{ el: 'circle', cx: 12.4, cy: 5, r: 2.6, fill: 'white', stroke: true }
+		]
+	},
+	'bar-triple-circle': {
+		w: 18,
+		refX: 17,
+		shapes: [
+			{
+				el: 'path',
+				d: 'M4,1.5 L4,8.5 M6.6,1.5 L6.6,8.5 M9.2,1.5 L9.2,8.5',
+				fill: 'none',
+				stroke: true,
+				strokeWidth: 1.4
+			},
+			{ el: 'circle', cx: 14.2, cy: 5, r: 2.8, fill: 'color' }
+		]
+	},
+	'bar-triple-circle-open': {
+		w: 18,
+		refX: 17.2,
+		shapes: [
+			{
+				el: 'path',
+				d: 'M4,1.5 L4,8.5 M6.6,1.5 L6.6,8.5 M9.2,1.5 L9.2,8.5',
+				fill: 'none',
+				stroke: true,
+				strokeWidth: 1.4
+			},
+			{ el: 'circle', cx: 14, cy: 5, r: 2.6, fill: 'white', stroke: true }
+		]
+	},
+	'diamond-circle': {
+		w: 17,
+		refX: 16.4,
+		shapes: [
+			{ el: 'path', d: 'M1.6,5 L5.6,1.6 L9.6,5 L5.6,8.4 Z', fill: 'white', stroke: true },
+			{ el: 'circle', cx: 13.6, cy: 5, r: 2.8, fill: 'color' }
+		]
+	},
+	'diamond-circle-open': {
+		w: 17,
+		refX: 16.6,
+		shapes: [
+			{ el: 'path', d: 'M1.6,5 L5.6,1.6 L9.6,5 L5.6,8.4 Z', fill: 'white', stroke: true },
+			{ el: 'circle', cx: 13.4, cy: 5, r: 2.6, fill: 'white', stroke: true }
+		]
+	},
 	square: {
 		w: 10,
 		refX: 8.5,
@@ -92,6 +228,16 @@ export const MARKER_GLYPHS: Record<Exclude<MarkerKind, 'none'>, MarkerGlyphDef> 
 		refX: 8.6,
 		shapes: [{ el: 'rect', x: 3, y: 2.5, width: 5, height: 5, fill: 'white', stroke: true }]
 	},
+	'square-small': {
+		w: 10,
+		refX: 9,
+		shapes: [{ el: 'rect', x: 5, y: 3, width: 4, height: 4, fill: 'color' }]
+	},
+	'square-open-small': {
+		w: 10,
+		refX: 8.1,
+		shapes: [{ el: 'rect', x: 4.5, y: 3.5, width: 3, height: 3, fill: 'white', stroke: true }]
+	},
 	diamond: {
 		w: 10,
 		refX: 9,
@@ -101,6 +247,17 @@ export const MARKER_GLYPHS: Record<Exclude<MarkerKind, 'none'>, MarkerGlyphDef> 
 		w: 10,
 		refX: 9,
 		shapes: [{ el: 'path', d: 'M1.6,5 L5,1.6 L8.4,5 L5,8.4 Z', fill: 'white', stroke: true }]
+	},
+	'diamond-open-small': {
+		w: 10,
+		refX: 9,
+		shapes: [{ el: 'path', d: 'M5,5 L7,3 L9,5 L7,7 Z', fill: 'white', stroke: true }]
+	},
+	// Elongated, flatter outline — reads as a "long" diamond lying on the line.
+	'diamond-open-wide': {
+		w: 14,
+		refX: 12.4,
+		shapes: [{ el: 'path', d: 'M1,5 L6.7,2 L12.4,5 L6.7,8 Z', fill: 'white', stroke: true }]
 	},
 	// ─── Ticks ───────────────────────────────────────────────────────────
 	bar: {

@@ -38,15 +38,35 @@ export const MARKER_DEFS: MarkerDef[] = [
 	{ id: 'triangle', label: 'Arrow' },
 	{ id: 'triangle-open', label: 'Open arrow' },
 	{ id: 'arrow', label: 'Thin arrow' },
+	{ id: 'triangle-sharp', label: 'Sharp arrow' },
 	{ id: 'half-arrow-up', label: 'Half arrow up' },
 	{ id: 'half-arrow-down', label: 'Half arrow down' },
+	{ id: 'arrow-cross', label: 'Crossed arrow' },
+	{ id: 'triangle-open-double', label: 'Double open arrow' },
+	{ id: 'triangle-double', label: 'Double arrow' },
+	{ id: 'arrow-double', label: 'Double thin arrow' },
+	{ id: 'arrow-cross-double', label: 'Crossed double arrow' },
 	{ id: 'diamond-open', label: 'Open diamond' },
 	{ id: 'diamond', label: 'Diamond' },
+	{ id: 'diamond-open-small', label: 'Small open diamond' },
+	{ id: 'diamond-open-wide', label: 'Wide open diamond' },
 	{ id: 'square-open', label: 'Open square' },
 	{ id: 'square', label: 'Square' },
+	{ id: 'square-open-small', label: 'Small open square' },
+	{ id: 'square-small', label: 'Small square' },
 	{ id: 'circle-open', label: 'Open circle' },
 	{ id: 'circle', label: 'Circle' },
 	{ id: 'circle-cross', label: 'Crossed circle' },
+	{ id: 'circle-open-small', label: 'Small open circle' },
+	{ id: 'circle-small', label: 'Small circle' },
+	{ id: 'bar-circle-open', label: 'Bar open circle' },
+	{ id: 'bar-circle', label: 'Bar circle' },
+	{ id: 'bar-double-circle-open', label: 'Double bar open circle' },
+	{ id: 'bar-double-circle', label: 'Double bar circle' },
+	{ id: 'bar-triple-circle-open', label: 'Triple bar open circle' },
+	{ id: 'bar-triple-circle', label: 'Triple bar circle' },
+	{ id: 'diamond-circle-open', label: 'Diamond open circle' },
+	{ id: 'diamond-circle', label: 'Diamond circle' },
 	{ id: 'slash', label: 'Slash' },
 	{ id: 'bar', label: 'Bar' },
 	{ id: 'bar-double', label: 'Double bar' },
@@ -86,10 +106,51 @@ export const MARKER_CATEGORY_IDS: Record<MarkerCategory, MarkerId[]> = {
 	],
 	bpmn: ['diamond-open', 'slash'],
 	erd: ['circle-crowfoot', 'bar-crowfoot', 'crowfoot', 'bar-double', 'circle-bar', 'bar'],
-	arrow: ['triangle', 'triangle-open', 'arrow', 'half-arrow-up', 'half-arrow-down'],
-	circle: ['circle', 'circle-open', 'circle-cross', 'circle-crowfoot', 'circle-bar'],
-	square: ['square', 'square-open'],
-	diamond: ['diamond', 'diamond-open']
+	// Ordered per the reference design: single heads first (image 1), then the
+	// crossed / double variants (image 2).
+	arrow: [
+		'triangle',
+		'triangle-open',
+		'arrow',
+		'half-arrow-up',
+		'half-arrow-down',
+		'triangle-sharp',
+		'arrow-cross',
+		'triangle-open-double',
+		'triangle-double',
+		'arrow-double',
+		'arrow-cross-double'
+	],
+	// Ordered per the reference design: the plain circles first, then the
+	// tick + circle and diamond + circle combos.
+	circle: [
+		'circle-open',
+		'circle',
+		'circle-cross',
+		'circle-crowfoot',
+		'circle-bar',
+		'circle-open-small',
+		'circle-small',
+		'bar-circle-open',
+		'bar-circle',
+		'bar-double-circle-open',
+		'bar-double-circle',
+		'bar-triple-circle-open',
+		'bar-triple-circle',
+		'diamond-circle-open',
+		'diamond-circle'
+	],
+	// Both ordered per the reference design: open first, then filled, then the
+	// small / wide / combo variants.
+	square: ['square-open', 'square', 'square-open-small', 'square-small'],
+	diamond: [
+		'diamond-open',
+		'diamond',
+		'diamond-open-small',
+		'diamond-open-wide',
+		'diamond-circle-open',
+		'diamond-circle'
+	]
 };
 
 const DEF_BY_ID = new Map(MARKER_DEFS.map((d) => [d.id, d]));

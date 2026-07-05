@@ -1,15 +1,9 @@
 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="size-[26px]">
-	<!-- Nắp: ellipse đầy đủ (đường cong trên + đường cong dưới của nắp) -->
+	<!-- Nắp: ellipse thật (mượt, không nhọn 2 đầu như Q-curve) -->
+	<ellipse cx="12" cy="8.5" rx="8" ry="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+	<!-- Thân: 2 cạnh đứng + đáy là cung ellipse cong xuống (vành trước) -->
 	<path
-		d="M4,8 Q12,4 20,8 Q12,11 4,8 Z"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="1.5"
-		stroke-linejoin="round"
-	/>
-	<!-- Thân + đáy -->
-	<path
-		d="M4,8 L4,16 Q4,20 12,20 Q20,20 20,16 L20,8"
+		d="M4,8.5 L4,15.5 A8,2.5 0 0 0 20,15.5 L20,8.5"
 		fill="none"
 		stroke="currentColor"
 		stroke-width="1.5"

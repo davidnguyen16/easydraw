@@ -719,6 +719,7 @@ svg.svelte-flow__connectionline {
 .svelte-flow__node-DecisionNode,
 .svelte-flow__node-TerminatorNode,
 .svelte-flow__node-DataNode,
+.svelte-flow__node-DatabaseNode,
 .svelte-flow__node-connection-anchor {
 	padding: 0;
 	background: transparent;

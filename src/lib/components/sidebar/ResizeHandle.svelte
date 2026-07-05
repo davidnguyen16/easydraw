@@ -14,6 +14,7 @@
 	function handleMouseUp() {
 		if (!isDragging) return;
 		isDragging = false;
+		sidebarState.isResizing = false; // re-enable the width transition
 		window.removeEventListener('mousemove', handleMouseMove);
 		window.removeEventListener('mouseup', handleMouseUp);
 		document.body.style.cursor = '';
@@ -25,6 +26,9 @@
 	function handleMouseDown(event: MouseEvent) {
 		event.preventDefault();
 		isDragging = true;
+		// Suppress the sidebar's width transition for the whole gesture so the
+		// panel edge follows the cursor 1:1 instead of easing after it.
+		sidebarState.isResizing = true;
 		window.addEventListener('mousemove', handleMouseMove);
 		window.addEventListener('mouseup', handleMouseUp);
 		// Lock cursor and prevent text selection during drag.
@@ -48,6 +52,7 @@
 	// Safety net: if component unmounts while dragging, clean up event listeners.
 	onDestroy(() => {
 		if (isDragging) {
+			sidebarState.isResizing = false;
 			window.removeEventListener('mousemove', handleMouseMove);
 			window.removeEventListener('mouseup', handleMouseUp);
 			document.body.style.cursor = '';

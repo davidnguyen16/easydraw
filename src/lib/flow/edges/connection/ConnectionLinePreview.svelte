@@ -25,7 +25,16 @@
 	const OUTLINE_INSET: Record<string, OutlineInset> = {
 		TriangleNode: { [Position.Left]: 0.255, [Position.Right]: 0.255 },
 		ParallelogramNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
-		DocumentNode: { [Position.Bottom]: 0.18 }
+		// Flowchart Data = the same parallelogram slant under a different id.
+		DataNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
+		DocumentNode: { [Position.Bottom]: 0.18 },
+		OrthogonalTriangleNode: { [Position.Top]: 0.49, [Position.Right]: 0.49 },
+		StarNode: { [Position.Left]: 0.17, [Position.Right]: 0.17, [Position.Bottom]: 0.25 },
+		HalfCircleNode: { [Position.Left]: 0.076, [Position.Right]: 0.076 },
+		ArrowRightNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
+		PentagonNode: { [Position.Top]: 0.25, [Position.Left]: 0.25, [Position.Right]: 0.25 },
+		ArrowLeftNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
+		ArrowUpNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 }
 	};
 
 	const connection = useConnection();

@@ -40,7 +40,8 @@ import { browser } from '$app/environment';
 
 export const MIN_WIDTH = 80;
 export const MAX_WIDTH = 600;
-export const DEFAULT_WIDTH = 300;
+// 220px opens the palette on 3 comfortable ~55px columns (Lucidchart-like).
+export const DEFAULT_WIDTH = 220;
 export const COLLAPSE_THRESHOLD = 80;
 
 const STORAGE_KEY = 'easydraw.sidebar.v1';
@@ -50,10 +51,20 @@ interface SidebarSnapshot {
 	isCollapsed: boolean;
 }
 
+// Full runtime state = persisted snapshot + transient flags.
+// `isResizing` is true only while the user is dragging the resize handle:
+// Sidebar suppresses its width transition then, so the panel edge tracks
+// the cursor 1:1 (no rubber-band lag) — the animation only plays for
+// collapse/expand toggles. Never persisted.
+interface SidebarState extends SidebarSnapshot {
+	isResizing: boolean;
+}
+
 // Reactive panel state shared by Sidebar.svelte and its children.
-export const sidebarState = $state<SidebarSnapshot>({
+export const sidebarState = $state<SidebarState>({
 	width: DEFAULT_WIDTH,
-	isCollapsed: false
+	isCollapsed: false,
+	isResizing: false
 });
 
 // Validates a parsed localStorage payload before applying it.

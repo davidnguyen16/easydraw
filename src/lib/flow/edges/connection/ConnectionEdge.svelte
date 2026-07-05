@@ -230,7 +230,22 @@
 	const OUTLINE_INSET: Record<string, OutlineInset> = {
 		TriangleNode: { [Position.Left]: 0.255, [Position.Right]: 0.255 },
 		ParallelogramNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
-		DocumentNode: { [Position.Bottom]: 0.18 }
+		// Flowchart Data = the same parallelogram slant under a different id.
+		DataNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
+		DocumentNode: { [Position.Bottom]: 0.18 },
+		// Right triangle (◣): hypotenuse crosses mid-height/width at 50%.
+		OrthogonalTriangleNode: { [Position.Top]: 0.49, [Position.Right]: 0.49 },
+		// Star: side points are at y=38%, so the mid-height outline is ~17% in;
+		// the bottom centre is the concave notch between the feet (y≈74%).
+		StarNode: { [Position.Left]: 0.17, [Position.Right]: 0.17, [Position.Bottom]: 0.25 },
+		// Dome: the arc at mid-height sits ~7.6% inside the bbox sides.
+		HalfCircleNode: { [Position.Left]: 0.076, [Position.Right]: 0.076 },
+		// Arrow Right: the arrowhead is inset from the bbox edge.
+		ArrowRightNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
+		// Arrow Left: the arrowhead is inset from the bbox edge.
+		ArrowLeftNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
+		// Arrow Up: the arrowhead is inset from the bbox edge.
+		ArrowUpNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 }
 	};
 
 	// Inset fraction for a node's end at `position`, or 0 when it doesn't inset.

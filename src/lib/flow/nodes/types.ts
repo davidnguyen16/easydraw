@@ -5,7 +5,8 @@
  * sidebar palette icon, its default data, and (optionally) a right-panel
  * surface for shape-specific editing. New shapes are added by:
  *
- *   1. Creating a folder under src/lib/flow/nodes/<name>/
+ *   1. Creating a folder under src/lib/flow/nodes/<section>/<name>/
+ *      (sections mirror the sidebar categories: basic/, arrows/, …)
  *   2. Exporting one or more NodeShape entries from a shape.ts in that folder
  *   3. Adding the shape(s) to the SHAPES array in registry.ts
  *
@@ -17,7 +18,7 @@ import type { Component } from 'svelte';
 import type { Node, NodeProps } from '@xyflow/svelte';
 
 /** Sidebar palette grouping. Add new values here as new categories appear. */
-export type NodeCategory = 'basic' | 'arrows' | 'containers' | 'database' | 'uml';
+export type NodeCategory = 'basic' | 'arrows' | 'flowchart' | 'database' | 'uml';
 
 /**
  * Optional StylePanel surface that's only relevant to specific shapes.
@@ -60,4 +61,10 @@ export interface NodeShape {
 	defaultHeight?: number;
 	/** Shape-specific editor surface added as a tab in StylePanel. Optional. */
 	panel?: NodePanel;
+	/**
+	 * Hide the shape from the sidebar palette while KEEPING it registered in
+	 * the xyflow nodeTypes map. Use when retiring a shape from the catalog:
+	 * saved diagrams that already contain it must still render.
+	 */
+	hidden?: boolean;
 }

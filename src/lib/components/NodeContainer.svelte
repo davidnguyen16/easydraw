@@ -50,7 +50,10 @@
 		{#if shapes.length === 0}
 			<p class="m-0 pl-[1.4rem] text-[0.75rem] text-ink-muted italic">No shapes yet.</p>
 		{:else}
-			<div class="grid grid-cols-3 gap-2">
+			<!-- Lucidchart-style reflow: auto-fill adds/drops a column whenever
+			     another 40px track fits, and 1fr flexes the tiles to fill the row
+			     in between. Bump the 40px to get bigger tiles / fewer columns. -->
+			<div class="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2">
 				{#each shapes as shape (shape.id)}
 					{@const Icon = shape.icon}
 					<button

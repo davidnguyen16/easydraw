@@ -1,36 +1,61 @@
 /**
  * Node shape registry — single source of truth for the editor's node catalog.
  *
+ * Shape folders are grouped BY SECTION (sidebar category):
+ * nodes/<section>/<shape>/. A geometry can be reused across sections by
+ * adding a second shape.ts entry with its own id/label/category (e.g. a
+ * future flowchart/process could reuse the rectangle look under a
+ * different name).
+ *
  * Order in the SHAPES array drives the order shapes appear within each
  * sidebar category. To add a new shape:
  *
- *   1. Create a folder src/lib/flow/nodes/<name>/
- *   2. Add component.svelte, icon.svelte, and shape.ts (and optionally
- *      types.ts and a panel component).
+ *   1. Create a folder src/lib/flow/nodes/<section>/<name>/
+ *   2. Add shape.ts + icon.svelte (and component.svelte / types.ts / a
+ *      panel component when the shape needs its own renderer).
  *   3. Import the shape here and append to SHAPES.
  *
  * Everything else (xyflow nodeTypes map, sidebar palette grouping, drop
  * defaults, StylePanel custom tabs) is derived from this array.
  */
-import { actorShape } from './actor/shape';
-import { circleShape } from './circle/shape';
-import { cubeShape } from './cube/shape';
-import { diamondShape } from './diamond/shape';
-import { documentShape } from './document/shape';
-import { ellipseShape } from './ellipse/shape';
-import { entityShape } from './entity/shape';
-import { parallelogramShape } from './parallelogram/shape';
-import { pillShape } from './pill/shape';
-import { rectangleShape } from './rectangle/shape';
-import { roundedRectangleShape } from './rounded-rectangle/shape';
-import { textShape } from './text/shape';
-import { triangleShape } from './triangle/shape';
+// ── basic ────────────────────────────────────────────────────────────
+import { circleShape } from './basic/circle/shape';
+import { cubeShape } from './basic/cube/shape';
+import { diamondShape } from './basic/diamond/shape';
+import { ellipseShape } from './basic/ellipse/shape';
+import { halfCircleShape } from './basic/half-circle/shape';
+import { octagonShape } from './basic/octagon/shape';
+import { orthogonalTriangleShape } from './basic/orthogonal-triangle/shape';
+import { parallelogramShape } from './basic/parallelogram/shape';
+import { pentagonShape } from './basic/pentagon/shape';
+import { pillShape } from './basic/pill/shape';
+import { polygonShape } from './basic/polygon/shape';
+import { rectangleShape } from './basic/rectangle/shape';
+import { roundedRectangleShape } from './basic/rounded-rectangle/shape';
+import { starShape } from './basic/star/shape';
+import { textShape } from './basic/text/shape';
+import { triangleShape } from './basic/triangle/shape';
+// ── arrows ───────────────────────────────────────────────────────────
+import { arrowLeftShape } from './arrows/arrow-left/shape';
+import { arrowRightShape } from './arrows/arrow-right/shape';
+import { arrowUpShape } from './arrows/arrow-up/shape';
+// ── flowchart ────────────────────────────────────────────────────────
+import { dataShape } from './flowchart/data/shape';
+import { decisionShape } from './flowchart/decision/shape';
+import { processShape } from './flowchart/process/shape';
+import { terminatorShape } from './flowchart/terminator/shape';
+import { databaseShape } from './flowchart/database/shape';
+// ── database ─────────────────────────────────────────────────────────
+import { entityShape } from './database/entity/shape';
+// ── uml ──────────────────────────────────────────────────────────────
+import { actorShape } from './uml/actor/shape';
+import { documentShape } from './uml/document/shape';
 import type { NodeCategory, NodeShape } from './types';
 
 // Order drives left-to-right, top-to-bottom layout within each sidebar
-// category tile grid. The basic palette matches the row layout shown in the
-// design reference: rectangle / rounded / ellipse / circle, then
-// diamond / parallelogram / triangle / pill, then document / actor / cube / text.
+// category tile grid: rectangle / rounded / ellipse / circle, then
+// diamond / parallelogram / triangle / pill, then document / cube / text.
+// (Actor lives in the UML category; Entity in DATABASE.)
 export const SHAPES: readonly NodeShape[] = [
 	rectangleShape,
 	roundedRectangleShape,
@@ -39,12 +64,26 @@ export const SHAPES: readonly NodeShape[] = [
 	diamondShape,
 	parallelogramShape,
 	triangleShape,
+	polygonShape,
+	octagonShape,
+	orthogonalTriangleShape,
+	pentagonShape,
+	halfCircleShape,
+	starShape,
 	pillShape,
 	documentShape,
 	actorShape,
 	cubeShape,
 	textShape,
-	entityShape
+	entityShape,
+	arrowRightShape,
+	arrowLeftShape,
+	arrowUpShape,
+	terminatorShape,
+	processShape,
+	decisionShape,
+	dataShape,
+	databaseShape
 ] as const;
 
 export function getShape(id: string): NodeShape | undefined {
@@ -52,7 +91,9 @@ export function getShape(id: string): NodeShape | undefined {
 }
 
 export function getShapesByCategory(category: NodeCategory): NodeShape[] {
-	return SHAPES.filter((s) => s.category === category);
+	// `hidden` shapes stay registered (nodeTypes still renders them in old
+	// diagrams) but no longer appear in the palette.
+	return SHAPES.filter((s) => s.category === category && !s.hidden);
 }
 
 /**

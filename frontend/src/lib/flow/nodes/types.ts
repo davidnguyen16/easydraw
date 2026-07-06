@@ -18,7 +18,7 @@ import type { Component } from 'svelte';
 import type { Node, NodeProps } from '@xyflow/svelte';
 
 /** Sidebar palette grouping. Add new values here as new categories appear. */
-export type NodeCategory = 'basic' | 'arrows' | 'flowchart' | 'database' | 'uml';
+export type NodeCategory = 'basic' | 'arrows' | 'flowchart' | 'entity-relation' | 'uml';
 
 /**
  * Optional StylePanel surface that's only relevant to specific shapes.
@@ -38,7 +38,12 @@ export interface NodePanel {
 }
 
 export interface NodeShape {
-	/** xyflow node `type` string. Must be unique across the registry. */
+	/**
+	 * xyflow node `type` string. Must be unique across the registry AND end
+	 * in "Node" — xy-theme.css strips xyflow's default card styling from all
+	 * `svelte-flow__node-*Node` classes via a [class*='Node'] selector, so a
+	 * shape id without the suffix keeps the white wrapper by (their) design.
+	 */
 	id: string;
 	/** Display name in the sidebar palette tile and tooltip. */
 	label: string;

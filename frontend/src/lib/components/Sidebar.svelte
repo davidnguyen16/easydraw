@@ -13,9 +13,9 @@
 	let searchBar = $state('');
 
 	// Fixed display order — every palette category is always visible so the
-	// user can see the full taxonomy (BASIC / ARROWS / DATABASE / UML) even
-	// before shapes have been authored for each one.
-	const CATEGORY_ORDER: NodeCategory[] = ['basic', 'arrows', 'flowchart', 'database', 'uml'];
+	// user can see the full taxonomy (BASIC / ARROWS / ENTITY RELATION / UML)
+	// even before shapes have been authored for each one.
+	const CATEGORY_ORDER: NodeCategory[] = ['basic', 'arrows', 'flowchart', 'entity-relation', 'uml'];
 
 	// Stable display titles per category. Add new entries here when a new
 	// NodeCategory is introduced — kept beside the iteration so additions are
@@ -24,7 +24,7 @@
 		basic: 'BASIC',
 		arrows: 'ARROWS',
 		flowchart: 'FLOWCHART',
-		database: 'DATABASE',
+		'entity-relation': 'ENTITY RELATION',
 		uml: 'UML'
 	};
 
@@ -34,7 +34,7 @@
 		basic: false,
 		arrows: false,
 		flowchart: false,
-		database: false,
+		'entity-relation': false,
 		uml: false
 	});
 

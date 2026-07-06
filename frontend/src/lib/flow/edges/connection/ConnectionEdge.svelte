@@ -240,12 +240,40 @@
 		StarNode: { [Position.Left]: 0.17, [Position.Right]: 0.17, [Position.Bottom]: 0.25 },
 		// Dome: the arc at mid-height sits ~7.6% inside the bbox sides.
 		HalfCircleNode: { [Position.Left]: 0.076, [Position.Right]: 0.076 },
+		// Pentagon: side edges at mid-height are ~4.7% in (apex + base touch).
+		PentagonNode: { [Position.Left]: 0.047, [Position.Right]: 0.047 },
+		// Trapezoid L/R: slant at mid-height is ~12% in (25,1 75,1 99,99 1,99).
+		TrapezoidNode: { [Position.Left]: 0.12, [Position.Right]: 0.12 },
+		// Chevron: left notch vertex sits at x=24%; the right tip touches.
+		ChevronNode: { [Position.Left]: 0.24 },
+		// Drop: the flank curves at mid-height sit ~3.5% inside the bbox sides.
+		DropNode: { [Position.Left]: 0.035, [Position.Right]: 0.035 },
 		// Arrow Right: the arrowhead is inset from the bbox edge.
 		ArrowRightNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
 		// Arrow Left: the arrowhead is inset from the bbox edge.
 		ArrowLeftNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
 		// Arrow Up: the arrowhead is inset from the bbox edge.
-		ArrowUpNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 }
+		ArrowUpNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 },
+		// Arrow Down: shaft sides sit at x=30/70, like ArrowUp.
+		ArrowDownNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 },
+		// Notched Arrow: ArrowRight shaft (y=30/70) + tail notch vertex at x=15.
+		NotchedArrowNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29, [Position.Left]: 0.14 },
+		// Two Way Arrow: shaft top/bottom at y=30/70; both tips touch.
+		TwoWayArrowNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
+		// U-Turn: right leg outer edge at x=75; bottom-centre ray hits the head
+		// slant at y≈80 (legs/tip leave the centre open). Quad Arrow needs no
+		// entry — all four tips land exactly on the handles.
+		UTurnArrowNode: { [Position.Right]: 0.24, [Position.Bottom]: 0.2 },
+		// Bend: at mid-height only the vertical arm remains (x=49..75); the
+		// bottom-centre ray hits the head slant at y≈85.
+		BendArrowNode: { [Position.Left]: 0.48, [Position.Right]: 0.24, [Position.Bottom]: 0.14 },
+		// Bend Double: like Bend, plus the arm band top at y=14 under the top handle.
+		BendDoubleArrowNode: {
+			[Position.Top]: 0.13,
+			[Position.Left]: 0.48,
+			[Position.Right]: 0.24,
+			[Position.Bottom]: 0.14
+		}
 	};
 
 	// Inset fraction for a node's end at `position`, or 0 when it doesn't inset.

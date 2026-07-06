@@ -32,9 +32,27 @@
 		StarNode: { [Position.Left]: 0.17, [Position.Right]: 0.17, [Position.Bottom]: 0.25 },
 		HalfCircleNode: { [Position.Left]: 0.076, [Position.Right]: 0.076 },
 		ArrowRightNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
-		PentagonNode: { [Position.Top]: 0.25, [Position.Left]: 0.25, [Position.Right]: 0.25 },
+		// Pentagon: side edges at mid-height are ~4.7% in (apex + base touch).
+		PentagonNode: { [Position.Left]: 0.047, [Position.Right]: 0.047 },
 		ArrowLeftNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
-		ArrowUpNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 }
+		ArrowUpNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 },
+		ArrowDownNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 },
+		NotchedArrowNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29, [Position.Left]: 0.14 },
+		TwoWayArrowNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
+		UTurnArrowNode: { [Position.Right]: 0.24, [Position.Bottom]: 0.2 },
+		BendArrowNode: { [Position.Left]: 0.48, [Position.Right]: 0.24, [Position.Bottom]: 0.14 },
+		BendDoubleArrowNode: {
+			[Position.Top]: 0.13,
+			[Position.Left]: 0.48,
+			[Position.Right]: 0.24,
+			[Position.Bottom]: 0.14
+		},
+		// Trapezoid L/R: slant at mid-height is ~12% in (25,1 75,1 99,99 1,99).
+		TrapezoidNode: { [Position.Left]: 0.12, [Position.Right]: 0.12 },
+		// Chevron: left notch vertex sits at x=24%; the right tip touches.
+		ChevronNode: { [Position.Left]: 0.24 },
+		// Drop: the flank curves at mid-height sit ~3.5% inside the bbox sides.
+		DropNode: { [Position.Left]: 0.035, [Position.Right]: 0.035 }
 	};
 
 	const connection = useConnection();

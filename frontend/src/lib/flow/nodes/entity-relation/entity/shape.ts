@@ -6,7 +6,7 @@ import Icon from './icon.svelte';
 export const entityShape: NodeShape = {
 	id: 'EntityNode',
 	label: 'Entity',
-	category: 'database',
+	category: 'entity-relation',
 	component: Component,
 	icon: Icon,
 	defaultData: () => ({

@@ -992,7 +992,11 @@
 
 	.grid-2 {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		/* minmax(0, 1fr) — not the default minmax(auto, 1fr) — so the two
+		   columns can shrink below their content's intrinsic width. Without
+		   this the number inputs' default width forces the row past the 280px
+		   panel and the content area shows a horizontal scrollbar. */
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		gap: 8px;
 	}
 
@@ -1030,8 +1034,11 @@
 		background: #ffffff;
 		border: 1px solid #d6d2c4;
 		border-radius: 6px;
-		padding: 0 10px;
+		padding: 0 8px;
 		gap: 6px;
+		/* Grid item must be allowed to shrink below its content's min-content,
+		   otherwise the number input inside keeps the whole cell too wide. */
+		min-width: 0;
 	}
 
 	.labeled-input:focus-within {

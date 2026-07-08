@@ -1,34 +1,31 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-// TODO(auth): Replace with this id during authentication process
-const DEV_USER_ID = 'c5f066f7-0c57-4445-a2f8-ecfced6b9e67';
-
 @Injectable()
 export class DiagramsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
+  findAll(userId: string) {
     return this.prisma.diagram.findMany({
-      where: { ownerId: DEV_USER_ID },
+      where: { ownerId: userId },
       select: { id: true, title: true, createdAt: true, updatedAt: true },
       orderBy: { updatedAt: 'desc' },
     });
   }
 
-  create(title: string, data: any) {
+  create(userId: string, title: string, data: any) {
     return this.prisma.diagram.create({
       data: {
         title,
         data: data ?? {}, 
-        ownerId: DEV_USER_ID,
+        ownerId: userId
       },
     });
   }
 
-  async findOne(id: string) {
+  async findOne(userId: string, id: string) {
     const diagram = await this.prisma.diagram.findFirst({
-      where: { id, ownerId: DEV_USER_ID },
+      where: { id, ownerId: userId },
     });
     if (!diagram) {
       throw new NotFoundException(`Diagram with id ${id} not found`);
@@ -36,16 +33,16 @@ export class DiagramsService {
     return diagram;
   }
 
-  async update(id: string, patch: { title?: string; data?: any }) {
-    await this.findOne(id);
+  async update(userId: string, id: string, patch: { title?: string; data?: any }) {
+    await this.findOne(userId, id);
     return this.prisma.diagram.update({
       where: { id },
       data: patch,
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(userId: string, id: string) {
+    await this.findOne(userId, id);
     await this.prisma.diagram.delete({ where: { id } });
     return { message: `Diagram with id ${id} deleted successfully` };
   }

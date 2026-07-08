@@ -457,6 +457,15 @@
 		window.addEventListener('pointerdown', onPointerDown, true);
 		return () => window.removeEventListener('pointerdown', onPointerDown, true);
 	});
+
+	// Connection-handle classes. `shape-conn` is a DOM hook kept for the xyflow
+	// size/paint :global rule below AND ConnectionEdge's snap-target reveal. The
+	// hover/selected reveal itself is Tailwind, driven by the wrapper's `group` +
+	// `selected` class (was `.shape-node:hover/.selected :global(.shape-conn)`).
+	const CONN_CLASS =
+		'shape-conn pointer-events-none opacity-0 transition-opacity duration-[120ms] ' +
+		'group-hover:pointer-events-auto group-hover:opacity-100 ' +
+		'group-[.selected]:pointer-events-auto group-[.selected]:opacity-100';
 </script>
 
 <!--
@@ -467,7 +476,7 @@
 -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="shape-node"
+	class="group relative flex h-full min-h-[30px] w-full items-center justify-center"
 	class:selected
 	style="filter: {containerFilter};"
 	ondblclick={(e) => {
@@ -483,9 +492,19 @@
 		"only half visible" symptom.
 	-->
 	{#if variant.kind === 'boxed'}
-		<div class="shape-fill" style={boxedStyle}></div>
+		<div
+			class="pointer-events-none absolute inset-0 h-full w-full overflow-visible
+				group-[.selected]:shadow-[0_0_0_2px_#a6192e]"
+			style={boxedStyle}
+		></div>
 	{:else if variant.kind === 'svg'}
-		<svg class="shape-fill" preserveAspectRatio="none" viewBox="0 0 100 100" aria-hidden="true">
+		<svg
+			class="pointer-events-none absolute inset-0 h-full w-full overflow-visible
+				group-[.selected]:shadow-[0_0_0_2px_#a6192e]"
+			preserveAspectRatio="none"
+			viewBox="0 0 100 100"
+			aria-hidden="true"
+		>
 			{#if geometry?.kind === 'ellipse'}
 				<ellipse
 					cx="50"
@@ -621,36 +640,36 @@
 				position={HANDLE_POSITION[h.position]}
 				{isConnectable}
 				id={h.id}
-				class="shape-conn"
+				class={CONN_CLASS}
 				style={h.style}
 			/>
 		{/each}
 	{:else}
-		<Handle type="source" position={Position.Top} {isConnectable} id="top" class="shape-conn" />
+		<Handle type="source" position={Position.Top} {isConnectable} id="top" class={CONN_CLASS} />
 		<Handle
 			type="source"
 			position={Position.Right}
 			{isConnectable}
 			id="right"
-			class="shape-conn"
+			class={CONN_CLASS}
 		/>
 		<Handle
 			type="source"
 			position={Position.Bottom}
 			{isConnectable}
 			id="bottom"
-			class="shape-conn"
+			class={CONN_CLASS}
 		/>
 		<Handle
 			type="source"
 			position={Position.Left}
 			{isConnectable}
 			id="left"
-			class="shape-conn"
+			class={CONN_CLASS}
 		/>
 	{/if}
 
-	<div class="node-text" class:editing>
+	<div class="pointer-events-auto relative w-full px-3 py-2 select-none">
 		<input
 			bind:this={inputEl}
 			type="text"
@@ -660,117 +679,34 @@
 			onkeydown={onLabelKeydown}
 			onblur={onLabelBlur}
 			onpointerdown={(e) => editing && e.stopPropagation()}
-			class="nodrag"
-			class:editing
+			class="nodrag m-0 w-full appearance-none border-none bg-transparent p-0 outline-none
+				{editing
+				? 'pointer-events-auto cursor-text select-text'
+				: 'pointer-events-none cursor-[inherit]'}"
 			style={labelStyle}
 		/>
 	</div>
 </div>
 
 <style>
-	.shape-node {
-		position: relative;
-		width: 100%;
-		height: 100%;
-		min-height: 30px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		box-sizing: border-box;
-	}
-
-	/* The shape fill (boxed div or svg) sits behind the text. inset:0 +
-	   pointer-events:none means it stretches with the bounding box and never
-	   intercepts the label's input. `overflow: visible` stops the SVG viewport
-	   from clipping a thick, path-centred stroke (the ellipse/diamond/… outline
-	   sits at the viewBox edge, so half of a wide border would otherwise be cut
-	   flat at the top/right/bottom/left). */
-	.shape-fill {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-		overflow: visible;
-	}
-
-	/* Selection cue: a rectangular red ring around the node's bounding box, like a
-	   default NodeResizer outline. box-shadow (unlike a CSS filter) isn't clipped
-	   by the SVG viewport, so it works for boxed AND svg shapes with no wrapper —
-	   and it sits outside the node's own border, so the user's border colour/width
-	   stays visible and live-editable while selected. */
-	.shape-node.selected .shape-fill {
-		box-shadow: 0 0 0 2px #a6192e;
-	}
-
-	.node-text {
-		position: relative;
-		width: 100%;
-		padding: 8px 12px;
-		box-sizing: border-box;
-		pointer-events: auto;
-		/* The double-click that opens the editor would otherwise ALSO run the
-		   browser's word-select default, creating a DOCUMENT selection over
-		   the input element — independent of the input's own selection, and
-		   painted as a stuck blue highlight because xyflow preventDefault()s
-		   canvas clicks (so the browser never clears it). Block document
-		   selection here; the editing input re-enables it for real editing. */
-		-webkit-user-select: none;
-		user-select: none;
-	}
-
-	input {
-		appearance: none;
-		-webkit-appearance: none;
-		border: none;
-		padding: 0;
-		margin: 0;
-		outline: none;
-		width: 100%;
-		background: transparent;
-		font-family: inherit;
-		/* Read-only by default: ignore the pointer so a single click falls through
-		   to the node (selects it) instead of focusing the field. Double-click on
-		   .node-text flips `editing`, which re-enables typing below. */
-		pointer-events: none;
-		cursor: inherit;
-	}
-
-	input.editing {
-		pointer-events: auto;
-		cursor: text;
-		-webkit-user-select: text;
-		user-select: text;
-	}
-
 	/*
-	 * Connection handles — 4 cardinal circles on the bounding-box edges.
-	 *
-	 * Hidden until the node is selected so the canvas stays uncluttered.
-	 * The xyflow handle CSS already centres them on the edge with
-	 * translate(-50%, -50%); because the wrapper has zero padding (set in
-	 * xy-theme.css) and .shape-node fills it edge-to-edge, "on the edge" is
-	 * also "on the shape" for box/ellipse/circle/diamond — for triangle and
-	 * parallelogram the cardinal points still mark the bounding box, which
-	 * is the conventional connection target.
+	 * Only xyflow-DOM overrides remain here — they target the library's own
+	 * `.svelte-flow__handle` / `.svelte-flow__resize-control` via :global and
+	 * must out-specify its built-in sizes, so they can't be utilities. The
+	 * shape wrapper / fill / label / handle-reveal are now Tailwind in the
+	 * template (wrapper = group; `group-[.selected]` drives the selection ring
+	 * and handle reveal, `group-hover` the hover reveal).
 	 */
-	/* Must out-specify xyflow's `.svelte-flow__handle` (width/height: 6px) or the
-	   size below is ignored — two classes (0,2,0) beats the library's (0,1,0). */
+
+	/* Connection handle dot — 10px white circle, red ring. Size/paint only; the
+	   reveal opacity/pointer-events live on the element as utilities (CONN_CLASS).
+	   Two classes (0,2,0) out-specify xyflow's `.svelte-flow__handle` (0,1,0). */
 	:global(.svelte-flow__handle.shape-conn) {
 		width: 10px;
 		height: 10px;
 		background: #ffffff;
 		border: 1.5px solid #a6192e;
 		border-radius: 50%;
-		opacity: 0;
-		transition: opacity 0.12s ease;
-		pointer-events: none;
-	}
-
-	.shape-node:hover :global(.shape-conn),
-	.shape-node.selected :global(.shape-conn) {
-		opacity: 1;
-		pointer-events: all;
 	}
 
 	/*

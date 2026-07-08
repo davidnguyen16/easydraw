@@ -265,59 +265,87 @@
 	function commitSize() {
 		onSizeChange(Math.max(1, wInput), Math.max(1, hInput));
 	}
+
+	// Repeated building blocks factored out so the markup stays readable. State
+	// classes (active / is-white / danger) are still applied via class:… on the
+	// element; the [&.…] rules here only bite when that class is present.
+	const GROUP = 'flex flex-col gap-2.5';
+	const GROUP_LABEL = 'm-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon';
+	const ROW = 'flex items-center justify-between gap-2';
+	const ROW_LABEL = 'text-[0.85rem] text-ink-soft';
+	const STEPPER = 'inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-1 py-0.5';
+	const STEPPER_BTN =
+		'h-[22px] w-[22px] cursor-pointer rounded border-none bg-transparent text-base leading-none text-ink-soft hover:bg-[#edebe5]';
+	const SIZE_INPUT = [
+		'w-8 min-w-0 border-none bg-transparent p-0 text-center text-[0.85rem] text-ink-soft outline-none',
+		'[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+	].join(' ');
+	const SQUARE_BTN = [
+		'flex cursor-pointer items-center justify-center rounded-md border border-line bg-white py-3.5',
+		'text-[0.95rem] text-ink-soft transition-colors duration-[120ms] hover:border-[#c4c1b8]',
+		'[&.active]:border-mq-red [&.active]:bg-mq-pink [&.active]:text-mq-maroon'
+	].join(' ');
+	const TOGGLE = 'relative inline-block h-5 w-9 flex-shrink-0';
+	const TOGGLE_SLIDER = [
+		'absolute inset-0 cursor-pointer rounded-full bg-[#c4c1b8] transition-colors duration-150',
+		"before:absolute before:top-0.5 before:left-0.5 before:h-4 before:w-4 before:rounded-full",
+		"before:bg-white before:shadow-[0_1px_2px_rgba(0,0,0,0.15)] before:transition-transform",
+		"before:duration-150 before:content-[''] peer-checked:bg-mq-red peer-checked:before:translate-x-4"
+	].join(' ');
+	const SWATCH = [
+		'aspect-square cursor-pointer rounded border border-transparent p-0',
+		'transition-[transform,box-shadow] duration-100 hover:-translate-y-px',
+		'[&.is-white]:border-line [&.active]:shadow-[0_0_0_2px_#76232f]'
+	].join(' ');
+	const ACTION_BTN = [
+		'cursor-pointer rounded-md border border-line bg-white p-2.5 text-[0.85rem] text-ink-soft',
+		'transition-colors duration-[120ms] hover:border-mq-maroon hover:text-mq-maroon'
+	].join(' ');
+	const ACTION_BTN_DANGER = [
+		'cursor-pointer rounded-md border border-mq-red bg-white p-2.5 text-[0.85rem] text-mq-red',
+		'transition-colors duration-[120ms] hover:bg-[#fdf2f1]'
+	].join(' ');
 </script>
 
-<aside class="style-panel">
-	<div class="tabs" role="tablist" aria-label="Node styling tabs">
-		<button
-			type="button"
-			role="tab"
-			aria-selected={activeTab === 'style'}
-			class:active={activeTab === 'style'}
-			onclick={() => (activeTab = 'style')}
-		>
-			Style
-		</button>
-		<button
-			type="button"
-			role="tab"
-			aria-selected={activeTab === 'text'}
-			class:active={activeTab === 'text'}
-			onclick={() => (activeTab = 'text')}
-		>
-			Text
-		</button>
-		{#if customPanel}
+<aside
+	class="absolute top-4 right-4 z-50 flex max-h-[calc(100%-32px)] w-[280px] flex-col overflow-hidden
+		rounded-xl border border-line bg-panel font-sans shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
+>
+	<div class="flex flex-shrink-0 border-b border-line" role="tablist" aria-label="Node styling tabs">
+		{#snippet tab(id: StyleTab, label: string)}
 			<button
 				type="button"
 				role="tab"
-				aria-selected={activeTab === 'panel'}
-				class:active={activeTab === 'panel'}
-				onclick={() => (activeTab = 'panel')}
+				aria-selected={activeTab === id}
+				class="relative flex-1 cursor-pointer border-none bg-transparent py-3.5 text-[0.88rem]
+					text-ink-soft transition-colors duration-[120ms] hover:text-mq-maroon
+					[&.active]:font-semibold [&.active]:text-mq-maroon [&.active]:after:absolute
+					[&.active]:after:right-3 [&.active]:after:bottom-[-1px] [&.active]:after:left-3
+					[&.active]:after:h-0.5 [&.active]:after:rounded-[1px] [&.active]:after:bg-mq-maroon
+					[&.active]:after:content-['']"
+				class:active={activeTab === id}
+				onclick={() => (activeTab = id)}
 			>
-				{customPanel.label}
+				{label}
 			</button>
+		{/snippet}
+		{@render tab('style', 'Style')}
+		{@render tab('text', 'Text')}
+		{#if customPanel}
+			{@render tab('panel', customPanel.label)}
 		{/if}
-		<button
-			type="button"
-			role="tab"
-			aria-selected={activeTab === 'arrange'}
-			class:active={activeTab === 'arrange'}
-			onclick={() => (activeTab = 'arrange')}
-		>
-			Arrange
-		</button>
+		{@render tab('arrange', 'Arrange')}
 	</div>
 
-	<div class="content">
+	<div class="flex flex-col gap-5 overflow-y-auto p-[18px]">
 		{#if activeTab === 'style'}
-			<section class="group">
-				<h3 class="group-label">FILL</h3>
-				<div class="swatch-row">
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>FILL</h3>
+				<div class="grid grid-cols-6 gap-1.5">
 					{#each FILL_COLORS as color}
 						<button
 							type="button"
-							class="swatch"
+							class={SWATCH}
 							class:active={fillColor.toUpperCase() === color}
 							class:is-white={color === '#FFFFFF'}
 							style="background-color: {color}"
@@ -326,8 +354,8 @@
 						></button>
 					{/each}
 				</div>
-				<div class="row">
-					<span class="row-label">Custom</span>
+				<div class={ROW}>
+					<span class={ROW_LABEL}>Custom</span>
 					<ColorField
 						value={fillColor}
 						label="Fill"
@@ -336,26 +364,27 @@
 				</div>
 			</section>
 
-			<section class="group">
-				<h3 class="group-label">BORDER</h3>
-				<div class="row">
-					<span class="row-label">Color</span>
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>BORDER</h3>
+				<div class={ROW}>
+					<span class={ROW_LABEL}>Color</span>
 					<ColorField
 						value={borderColor}
 						label="Border"
 						onChange={(hex) => onStyleChange({ borderColor: hex })}
 					/>
 				</div>
-				<div class="row">
-					<span class="row-label">Width</span>
-					<div class="stepper">
+				<div class={ROW}>
+					<span class={ROW_LABEL}>Width</span>
+					<div class={STEPPER}>
 						<button
 							type="button"
+							class={STEPPER_BTN}
 							aria-label="Decrease width"
 							onclick={() => adjustBorderWidth(-1)}>−</button
 						>
 						<input
-							class="size-input tabular"
+							class={SIZE_INPUT}
 							type="text"
 							inputmode="decimal"
 							aria-label="Border width"
@@ -370,6 +399,7 @@
 						/>
 						<button
 							type="button"
+							class={STEPPER_BTN}
 							aria-label="Increase width"
 							onclick={() => adjustBorderWidth(1)}>+</button
 						>
@@ -377,39 +407,41 @@
 				</div>
 			</section>
 
-			<section class="group">
-				<h3 class="group-label">EFFECTS</h3>
-				<div class="row">
-					<span class="row-label">Rounded corners</span>
-					<label class="toggle">
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>EFFECTS</h3>
+				<div class={ROW}>
+					<span class={ROW_LABEL}>Rounded corners</span>
+					<label class={TOGGLE}>
 						<input
+							class="peer h-0 w-0 opacity-0"
 							type="checkbox"
 							checked={rounded}
 							onchange={(e) => onStyleChange({ rounded: e.currentTarget.checked })}
 						/>
-						<span class="toggle-slider"></span>
+						<span class={TOGGLE_SLIDER}></span>
 					</label>
 				</div>
-				<div class="row">
-					<span class="row-label">Shadow</span>
-					<label class="toggle">
+				<div class={ROW}>
+					<span class={ROW_LABEL}>Shadow</span>
+					<label class={TOGGLE}>
 						<input
+							class="peer h-0 w-0 opacity-0"
 							type="checkbox"
 							checked={shadow}
 							onchange={(e) => onStyleChange({ shadow: e.currentTarget.checked })}
 						/>
-						<span class="toggle-slider"></span>
+						<span class={TOGGLE_SLIDER}></span>
 					</label>
 				</div>
 			</section>
 		{:else if activeTab === 'text'}
-			<section class="group">
-				<h3 class="group-label">COLOR</h3>
-				<div class="swatch-row">
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>COLOR</h3>
+				<div class="grid grid-cols-6 gap-1.5">
 					{#each TEXT_COLORS as color}
 						<button
 							type="button"
-							class="swatch"
+							class={SWATCH}
 							class:active={textColor.toUpperCase() === color}
 							class:is-white={color === '#FFFFFF'}
 							style="background-color: {color}"
@@ -418,8 +450,8 @@
 						></button>
 					{/each}
 				</div>
-				<div class="row">
-					<span class="row-label">Custom</span>
+				<div class={ROW}>
+					<span class={ROW_LABEL}>Custom</span>
 					<ColorField
 						value={textColor}
 						label="Text"
@@ -428,12 +460,15 @@
 				</div>
 			</section>
 
-			<section class="group">
-				<h3 class="group-label">FONT</h3>
-				<div class="font-field">
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>FONT</h3>
+				<div class="relative">
 					<button
 						type="button"
-						class="font-select"
+						class="w-full cursor-pointer appearance-none overflow-hidden rounded-md border
+							border-line bg-white py-[9px] pr-[30px] pl-2.5 text-left text-[0.9rem] leading-[1.2]
+							text-ellipsis whitespace-nowrap text-ink-soft hover:border-[#c4c1b8]
+							focus:border-mq-red focus:outline-none"
 						bind:this={fontTriggerEl}
 						style="font-family: {fontFamily};"
 						aria-haspopup="listbox"
@@ -443,7 +478,11 @@
 					>
 						{fontFamily}
 					</button>
-					<span class="font-chev" aria-hidden="true">
+					<span
+						class="pointer-events-none absolute top-1/2 right-2.5 inline-flex -translate-y-1/2
+							text-ink-muted"
+						aria-hidden="true"
+					>
 						<svg
 							viewBox="0 0 24 24"
 							width="12"
@@ -459,7 +498,8 @@
 					</span>
 					{#if fontMenuOpen}
 						<div
-							class="font-menu"
+							class="fixed z-[120] flex flex-col gap-0.5 overflow-y-auto rounded-lg border border-line
+								bg-white p-1.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
 							role="listbox"
 							aria-label="Font families"
 							bind:this={fontMenuEl}
@@ -470,10 +510,12 @@
 									type="button"
 									role="option"
 									aria-selected={family === fontFamily}
-									class="font-option"
+									class="flex cursor-pointer items-center gap-1.5 rounded-md border-none bg-transparent
+										px-2.5 py-[7px] text-left text-[0.9rem] whitespace-nowrap text-ink-soft
+										hover:bg-[#f3f1ea]"
 									onclick={() => pickFont(family)}
 								>
-									<span class="font-option-check">
+									<span class="inline-flex w-3.5 flex-shrink-0 text-mq-red">
 										{#if family === fontFamily}
 											<svg
 												viewBox="0 0 24 24"
@@ -495,16 +537,17 @@
 						</div>
 					{/if}
 				</div>
-				<div class="row">
-					<span class="row-label">Size</span>
-					<div class="stepper">
+				<div class={ROW}>
+					<span class={ROW_LABEL}>Size</span>
+					<div class={STEPPER}>
 						<button
 							type="button"
+							class={STEPPER_BTN}
 							aria-label="Decrease font size"
 							onclick={() => adjustFontSize(-1)}>−</button
 						>
 						<input
-							class="size-input tabular"
+							class={SIZE_INPUT}
 							type="text"
 							inputmode="numeric"
 							aria-label="Font size"
@@ -519,6 +562,7 @@
 						/>
 						<button
 							type="button"
+							class={STEPPER_BTN}
 							aria-label="Increase font size"
 							onclick={() => adjustFontSize(1)}>+</button
 						>
@@ -526,12 +570,12 @@
 				</div>
 			</section>
 
-			<section class="group">
-				<h3 class="group-label">STYLE</h3>
-				<div class="grid-3">
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>STYLE</h3>
+				<div class="grid grid-cols-3 gap-1.5">
 					<button
 						type="button"
-						class="square-btn"
+						class={SQUARE_BTN}
 						class:active={bold}
 						aria-label="Bold"
 						aria-pressed={bold}
@@ -541,7 +585,7 @@
 					</button>
 					<button
 						type="button"
-						class="square-btn"
+						class={SQUARE_BTN}
 						class:active={italic}
 						aria-label="Italic"
 						aria-pressed={italic}
@@ -551,7 +595,7 @@
 					</button>
 					<button
 						type="button"
-						class="square-btn"
+						class={SQUARE_BTN}
 						class:active={underline}
 						aria-label="Underline"
 						aria-pressed={underline}
@@ -562,13 +606,13 @@
 				</div>
 			</section>
 
-			<section class="group">
-				<h3 class="group-label">ALIGNMENT</h3>
-				<div class="grid-3">
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>ALIGNMENT</h3>
+				<div class="grid grid-cols-3 gap-1.5">
 					{#each TEXT_ALIGNMENTS as align}
 						<button
 							type="button"
-							class="square-btn"
+							class={SQUARE_BTN}
 							class:active={textAlign === align}
 							aria-label="Align {align}"
 							aria-pressed={textAlign === align}
@@ -605,21 +649,35 @@
 			{@const PanelComponent = customPanel.component}
 			<PanelComponent {node} onDataChange={onStyleChange} />
 		{:else}
-			<section class="group">
-				<h3 class="group-label">POSITION</h3>
-				<div class="grid-2">
-					<label class="labeled-input">
-						<span class="prefix">X</span>
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>POSITION</h3>
+				<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+					<label
+						class="flex min-w-0 items-center gap-1.5 rounded-md border border-line bg-white px-2
+							focus-within:border-mq-red"
+					>
+						<span class="flex-shrink-0 text-[0.78rem] font-semibold text-mq-maroon">X</span>
 						<input
+							class="min-w-0 flex-1 border-none bg-transparent py-2 text-[0.85rem] tabular-nums
+								outline-none [appearance:textfield]
+								[&::-webkit-inner-spin-button]:appearance-none
+								[&::-webkit-outer-spin-button]:appearance-none"
 							type="number"
 							bind:value={xInput}
 							onchange={commitPosition}
 							onblur={commitPosition}
 						/>
 					</label>
-					<label class="labeled-input">
-						<span class="prefix">Y</span>
+					<label
+						class="flex min-w-0 items-center gap-1.5 rounded-md border border-line bg-white px-2
+							focus-within:border-mq-red"
+					>
+						<span class="flex-shrink-0 text-[0.78rem] font-semibold text-mq-maroon">Y</span>
 						<input
+							class="min-w-0 flex-1 border-none bg-transparent py-2 text-[0.85rem] tabular-nums
+								outline-none [appearance:textfield]
+								[&::-webkit-inner-spin-button]:appearance-none
+								[&::-webkit-outer-spin-button]:appearance-none"
 							type="number"
 							bind:value={yInput}
 							onchange={commitPosition}
@@ -629,21 +687,35 @@
 				</div>
 			</section>
 
-			<section class="group">
-				<h3 class="group-label">SIZE</h3>
-				<div class="grid-2">
-					<label class="labeled-input">
-						<span class="prefix">W</span>
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>SIZE</h3>
+				<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+					<label
+						class="flex min-w-0 items-center gap-1.5 rounded-md border border-line bg-white px-2
+							focus-within:border-mq-red"
+					>
+						<span class="flex-shrink-0 text-[0.78rem] font-semibold text-mq-maroon">W</span>
 						<input
+							class="min-w-0 flex-1 border-none bg-transparent py-2 text-[0.85rem] tabular-nums
+								outline-none [appearance:textfield]
+								[&::-webkit-inner-spin-button]:appearance-none
+								[&::-webkit-outer-spin-button]:appearance-none"
 							type="number"
 							bind:value={wInput}
 							onchange={commitSize}
 							onblur={commitSize}
 						/>
 					</label>
-					<label class="labeled-input">
-						<span class="prefix">H</span>
+					<label
+						class="flex min-w-0 items-center gap-1.5 rounded-md border border-line bg-white px-2
+							focus-within:border-mq-red"
+					>
+						<span class="flex-shrink-0 text-[0.78rem] font-semibold text-mq-maroon">H</span>
 						<input
+							class="min-w-0 flex-1 border-none bg-transparent py-2 text-[0.85rem] tabular-nums
+								outline-none [appearance:textfield]
+								[&::-webkit-inner-spin-button]:appearance-none
+								[&::-webkit-outer-spin-button]:appearance-none"
 							type="number"
 							bind:value={hInput}
 							onchange={commitSize}
@@ -653,452 +725,22 @@
 				</div>
 			</section>
 
-			<section class="group">
-				<h3 class="group-label">ORDER</h3>
-				<div class="grid-2">
-					<button type="button" class="action-btn" onclick={onBringToFront}
-						>To front</button
-					>
-					<button type="button" class="action-btn" onclick={onSendToBack}>To back</button>
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>ORDER</h3>
+				<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+					<button type="button" class={ACTION_BTN} onclick={onBringToFront}>To front</button>
+					<button type="button" class={ACTION_BTN} onclick={onSendToBack}>To back</button>
 				</div>
 			</section>
 
-			<section class="group">
-				<h3 class="group-label">ACTIONS</h3>
-				<div class="grid-2">
-					<button type="button" class="action-btn" onclick={onDuplicate}>Duplicate</button
-					>
-					<button type="button" class="action-btn danger" onclick={onDelete}
-						>Delete</button
-					>
+			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>ACTIONS</h3>
+				<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+					<button type="button" class={ACTION_BTN} onclick={onDuplicate}>Duplicate</button>
+					<button type="button" class={ACTION_BTN_DANGER} onclick={onDelete}>Delete</button>
 				</div>
 			</section>
 		{/if}
 	</div>
 </aside>
 
-<style>
-	.style-panel {
-		position: absolute;
-		top: 16px;
-		right: 16px;
-		width: 280px;
-		background: #f5f3ef;
-		border: 1px solid #d6d2c4;
-		border-radius: 12px;
-		padding: 0;
-		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-		z-index: 50;
-		font-family:
-			'Inter',
-			system-ui,
-			-apple-system,
-			sans-serif;
-		max-height: calc(100% - 32px);
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-	}
-
-	.tabs {
-		display: flex;
-		border-bottom: 1px solid #d6d2c4;
-		flex-shrink: 0;
-	}
-
-	.tabs button {
-		flex: 1;
-		background: transparent;
-		border: none;
-		padding: 14px 0;
-		font-family: inherit;
-		font-size: 0.88rem;
-		color: #373a36;
-		cursor: pointer;
-		position: relative;
-		transition: color 0.12s ease;
-	}
-
-	.tabs button:hover {
-		color: #76232f;
-	}
-
-	.tabs button.active {
-		color: #76232f;
-		font-weight: 600;
-	}
-
-	.tabs button.active::after {
-		content: '';
-		position: absolute;
-		bottom: -1px;
-		left: 12px;
-		right: 12px;
-		height: 2px;
-		background: #76232f;
-		border-radius: 1px;
-	}
-
-	.content {
-		display: flex;
-		flex-direction: column;
-		gap: 20px;
-		padding: 18px;
-		overflow-y: auto;
-	}
-
-	.group {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.group-label {
-		font-size: 0.7rem;
-		letter-spacing: 0.08em;
-		font-weight: 700;
-		color: #76232f;
-		margin: 0;
-	}
-
-	.swatch-row {
-		display: grid;
-		grid-template-columns: repeat(6, 1fr);
-		gap: 6px;
-	}
-
-	.swatch {
-		aspect-ratio: 1;
-		border: 1px solid transparent;
-		border-radius: 4px;
-		cursor: pointer;
-		padding: 0;
-		transition:
-			transform 0.1s ease,
-			box-shadow 0.1s ease;
-	}
-
-	.swatch.is-white {
-		border-color: #d6d2c4;
-	}
-
-	.swatch.active {
-		box-shadow: 0 0 0 2px #76232f;
-	}
-
-	.swatch:hover {
-		transform: translateY(-1px);
-	}
-
-	.row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 8px;
-	}
-
-	.row-label {
-		font-size: 0.85rem;
-		color: #373a36;
-	}
-
-	.stepper {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 6px;
-		padding: 2px 4px;
-	}
-
-	/* Font family dropdown: a custom menu, NOT a native <select> — Chromium on
-	   Windows paints the native option popup with the OS control and ignores
-	   per-option font-family, killing the live typeface preview. The menu
-	   escapes the panel's overflow:hidden via position:fixed (coords computed
-	   in toggleFontMenu). Closed control + every option render in their own
-	   typeface. */
-	.font-field {
-		position: relative;
-	}
-
-	.font-select {
-		width: 100%;
-		appearance: none;
-		-webkit-appearance: none;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 6px;
-		padding: 9px 30px 9px 10px;
-		font-size: 0.9rem;
-		color: #373a36;
-		cursor: pointer;
-		line-height: 1.2;
-		text-align: left;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.font-select:hover {
-		border-color: #c4c1b8;
-	}
-
-	.font-select:focus {
-		outline: none;
-		border-color: #a6192e;
-	}
-
-	.font-chev {
-		position: absolute;
-		top: 50%;
-		right: 10px;
-		transform: translateY(-50%);
-		display: inline-flex;
-		color: #8a8b83;
-		pointer-events: none;
-	}
-
-	.font-menu {
-		position: fixed;
-		z-index: 120;
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		padding: 6px;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
-		overflow-y: auto;
-	}
-
-	.font-option {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		background: transparent;
-		border: none;
-		border-radius: 6px;
-		padding: 7px 10px;
-		font-size: 0.9rem;
-		color: #373a36;
-		text-align: left;
-		cursor: pointer;
-		white-space: nowrap;
-	}
-
-	.font-option:hover {
-		background: #f3f1ea;
-	}
-
-	/* Fixed-width slot so option text lines up whether or not it's checked. */
-	.font-option-check {
-		width: 14px;
-		display: inline-flex;
-		flex-shrink: 0;
-		color: #a6192e;
-	}
-
-	.size-input {
-		width: 32px;
-		min-width: 0;
-		border: none;
-		outline: none;
-		background: transparent;
-		text-align: center;
-		font-family: inherit;
-		font-size: 0.85rem;
-		color: #373a36;
-		padding: 0;
-		appearance: textfield;
-		-moz-appearance: textfield;
-	}
-
-	.size-input::-webkit-outer-spin-button,
-	.size-input::-webkit-inner-spin-button {
-		-webkit-appearance: none;
-		appearance: none;
-		margin: 0;
-	}
-
-
-	.stepper button {
-		background: transparent;
-		border: none;
-		width: 22px;
-		height: 22px;
-		border-radius: 4px;
-		cursor: pointer;
-		color: #373a36;
-		font-size: 1rem;
-		line-height: 1;
-		font-family: inherit;
-	}
-
-	.stepper button:hover {
-		background: #edebe5;
-	}
-
-	.toggle {
-		position: relative;
-		width: 36px;
-		height: 20px;
-		display: inline-block;
-		flex-shrink: 0;
-	}
-
-	.toggle input {
-		opacity: 0;
-		width: 0;
-		height: 0;
-	}
-
-	.toggle-slider {
-		position: absolute;
-		inset: 0;
-		background: #c4c1b8;
-		border-radius: 999px;
-		cursor: pointer;
-		transition: background 0.15s ease;
-	}
-
-	.toggle-slider::before {
-		content: '';
-		position: absolute;
-		top: 2px;
-		left: 2px;
-		width: 16px;
-		height: 16px;
-		background: #ffffff;
-		border-radius: 50%;
-		transition: transform 0.15s ease;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-	}
-
-	.toggle input:checked + .toggle-slider {
-		background: #a6192e;
-	}
-
-	.toggle input:checked + .toggle-slider::before {
-		transform: translateX(16px);
-	}
-
-	.grid-3 {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 6px;
-	}
-
-	.grid-2 {
-		display: grid;
-		/* minmax(0, 1fr) — not the default minmax(auto, 1fr) — so the two
-		   columns can shrink below their content's intrinsic width. Without
-		   this the number inputs' default width forces the row past the 280px
-		   panel and the content area shows a horizontal scrollbar. */
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-		gap: 8px;
-	}
-
-	.square-btn {
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 6px;
-		padding: 14px 0;
-		cursor: pointer;
-		font-family: inherit;
-		font-size: 0.95rem;
-		color: #373a36;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition:
-			background 0.12s ease,
-			border-color 0.12s ease,
-			color 0.12s ease;
-	}
-
-	.square-btn:hover {
-		border-color: #c4c1b8;
-	}
-
-	.square-btn.active {
-		border-color: #a6192e;
-		background: #fbeef0;
-		color: #76232f;
-	}
-
-	.labeled-input {
-		display: flex;
-		align-items: center;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 6px;
-		padding: 0 8px;
-		gap: 6px;
-		/* Grid item must be allowed to shrink below its content's min-content,
-		   otherwise the number input inside keeps the whole cell too wide. */
-		min-width: 0;
-	}
-
-	.labeled-input:focus-within {
-		border-color: #a6192e;
-	}
-
-	.labeled-input .prefix {
-		font-size: 0.78rem;
-		color: #76232f;
-		font-weight: 600;
-		flex-shrink: 0;
-	}
-
-	.labeled-input input {
-		flex: 1;
-		min-width: 0;
-		border: none;
-		outline: none;
-		padding: 8px 0;
-		font-size: 0.85rem;
-		background: transparent;
-		font-family: inherit;
-		font-variant-numeric: tabular-nums;
-		-moz-appearance: textfield;
-		appearance: textfield;
-	}
-
-	.labeled-input input::-webkit-outer-spin-button,
-	.labeled-input input::-webkit-inner-spin-button {
-		-webkit-appearance: none;
-		appearance: none;
-		margin: 0;
-	}
-
-	.action-btn {
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 6px;
-		padding: 10px;
-		font-family: inherit;
-		font-size: 0.85rem;
-		cursor: pointer;
-		color: #373a36;
-		transition:
-			background 0.12s ease,
-			border-color 0.12s ease,
-			color 0.12s ease;
-	}
-
-	.action-btn:hover {
-		border-color: #76232f;
-		color: #76232f;
-	}
-
-	.action-btn.danger {
-		border-color: #a6192e;
-		color: #a6192e;
-	}
-
-	.action-btn.danger:hover {
-		background: #fdf2f1;
-	}
-</style>

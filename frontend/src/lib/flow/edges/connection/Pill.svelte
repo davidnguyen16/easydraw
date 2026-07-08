@@ -24,6 +24,30 @@
 	const height = $derived(isHorizontal ? 14 : 26);
 	const rx = $derived(Math.min(width, height) / 2);
 
+	// Tailwind equivalent of the old scoped rules, assembled from the same
+	// state (kind / axis / pressing). Arbitrary values cover the SVG-only bits
+	// with no utility (pointer-events: bounding-box, transform-box: fill-box).
+	const pillClass = $derived(
+		[
+			// Base: 1px stroke, transitions, full-rect hit area, centred transforms.
+			'origin-center transition-[stroke-opacity,fill,filter] duration-[120ms] ease-[ease]',
+			'[stroke-width:1] [pointer-events:bounding-box] [transform-box:fill-box]',
+			// Ghost = midpoint placeholder (white fill hides the line beneath).
+			// Solid = a real user bend point (maroon).
+			kind === 'ghost'
+				? 'fill-white stroke-[#9b9991] [stroke-opacity:0.55] hover:[stroke-opacity:1]'
+				: 'cursor-move fill-mq-maroon stroke-mq-maroon',
+			// Cursor mirrors the drag axis (ghost pills move perpendicular).
+			kind === 'ghost' && (isHorizontal ? 'cursor-ns-resize' : 'cursor-ew-resize'),
+			// Pressed: lift the pill and hold the highlight for the whole drag.
+			pressing && '[filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.22))]',
+			pressing && kind === 'ghost' && '[stroke-opacity:1] [stroke-width:1.5]',
+			pressing && kind === 'solid' && 'fill-[#5a1220] stroke-[#5a1220]'
+		]
+			.filter(Boolean)
+			.join(' ')
+	);
+
 	function handlePointerDown(event: PointerEvent) {
 		// Stop propagation so the pointerdown never reaches the underlying
 		// edge wrapper / canvas. Without this, xyflow sees the same gesture
@@ -53,78 +77,6 @@
 	{width}
 	{height}
 	{rx}
-	class="connection-pill"
-	class:kind-ghost={kind === 'ghost'}
-	class:kind-solid={kind === 'solid'}
-	class:axis-h={isHorizontal}
-	class:axis-v={!isHorizontal}
-	class:pressing
+	class={pillClass}
 	onpointerdown={handlePointerDown}
 />
-
-<style>
-	.connection-pill {
-		stroke-width: 1;
-		transition:
-			stroke-opacity 0.12s ease,
-			fill 0.12s ease,
-			filter 0.12s ease;
-		/*
-         * `bounding-box` extends the click target to the full rect, including
-         * the area outside the rounded corners. Without it, clicks at the
-         * rounded-corner edge fall through to the line behind the pill.
-         */
-		pointer-events: bounding-box;
-		transform-box: fill-box;
-		transform-origin: center;
-	}
-
-	/* Ghost = midpoint placeholder. Solid white fill fully covers the line
-       behind it, so the line never bleeds through the pill's center. */
-	.kind-ghost {
-		fill: #ffffff;
-		stroke: #9b9991;
-		stroke-opacity: 0.55;
-	}
-
-	.kind-ghost:hover {
-		stroke-opacity: 1;
-	}
-
-	/* Solid = real user bend point. */
-	.kind-solid {
-		fill: #76232f;
-		stroke: #76232f;
-	}
-
-	/* Pressed state: bumps the pill forward visually so the user gets
-       feedback the moment they grab it, and keeps showing it for the whole
-       drag (managed by the `pressing` state, not just :active). */
-	.connection-pill.pressing {
-		filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.22));
-	}
-
-	.kind-ghost.pressing {
-		stroke-opacity: 1;
-		stroke-width: 1.5;
-	}
-
-	.kind-solid.pressing {
-		fill: #5a1220;
-		stroke: #5a1220;
-	}
-
-	/* Cursor mirrors the drag axis: ghost pills move perpendicular to the
-       segment they sit on, solid pills move freely. */
-	.kind-ghost.axis-h {
-		cursor: ns-resize;
-	}
-
-	.kind-ghost.axis-v {
-		cursor: ew-resize;
-	}
-
-	.kind-solid {
-		cursor: move;
-	}
-</style>

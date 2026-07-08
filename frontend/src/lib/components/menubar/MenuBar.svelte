@@ -77,7 +77,10 @@
 	onMount(() => {
 		const onPointer = (event: PointerEvent) => {
 			const target = event.target as HTMLElement | null;
-			if (target?.closest('.menu-bar .menus')) return;
+			// `data-menu-root` marks the <nav> that holds the triggers + dropdowns
+			// (a DOM hook that survives the Tailwind migration — don't key this on
+			// a styling class, those get renamed).
+			if (target?.closest('[data-menu-root]')) return;
 			closeMenus();
 		};
 		const onKey = (event: KeyboardEvent) => {
@@ -214,7 +217,7 @@
 {#snippet menuIcon(name: string)}
 	<svg
 		viewBox="0 0 24 24"
-		class="item-icon"
+		class="h-4 w-4"
 		fill="none"
 		stroke="currentColor"
 		stroke-width="1.7"
@@ -314,9 +317,15 @@
 	</svg>
 {/snippet}
 
-<header class="menu-bar">
-	<div class="brand-icon" aria-label="EasyDraw">
-		<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+<header
+	class="flex h-[52px] items-center gap-[0.4rem] bg-mq-maroon px-[0.85rem] text-white
+		[font-family:system-ui,-apple-system,sans-serif]"
+>
+	<div
+		class="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[7px] bg-mq-red"
+		aria-label="EasyDraw"
+	>
+		<svg viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="none" aria-hidden="true">
 			<rect x="3" y="3" width="8" height="8" rx="2" fill="#ffffff" />
 			<rect x="13" y="13" width="8" height="8" rx="2" fill="#ffffff" />
 			<path d="M11 7h4a2 2 0 0 1 2 2v4" stroke="#ffffff" stroke-width="1.8" />
@@ -324,19 +333,29 @@
 	</div>
 
 	<input
-		class="file-name"
+		class="min-w-[6rem] max-w-[18rem] rounded-[6px] border border-transparent bg-transparent px-2
+			py-1 text-[0.95rem] font-bold text-white transition-colors duration-150
+			hover:bg-white/[0.08] focus:border-white/40 focus:bg-white/[0.15] focus:outline-none"
 		bind:value={editorMetaData.fileName}
 		aria-label="Document file name"
 		placeholder="Untitled"
 	/>
 
-	<span class="status-badge"><span class="status-dot"></span>Draft</span>
+	<span
+		class="inline-flex h-6 flex-shrink-0 items-center gap-1.5 rounded-full bg-black/[0.18] px-2.5
+			text-[0.78rem] font-semibold text-white/[0.92]"
+	>
+		<span class="h-[7px] w-[7px] rounded-full bg-[#ff5a5f]"></span>Draft
+	</span>
 
-	<nav class="menus">
+	<nav class="ml-2 flex gap-[0.1rem]" data-menu-root>
 		{#each menuLabels as label}
-			<div class="menu-wrapper">
+			<div class="relative">
 				<button
-					class="menu-trigger"
+					class="cursor-pointer rounded-[4px] border-none bg-transparent px-[0.7rem] py-[0.4rem]
+						text-[0.9rem] text-white transition-colors duration-150 hover:bg-white/[0.18]
+						focus-visible:outline-offset-1 focus-visible:[outline:2px_solid_rgba(255,255,255,0.6)]
+						[&.active]:bg-white/[0.18]"
 					class:active={openMenu === label}
 					type="button"
 					aria-haspopup="menu"
@@ -346,23 +365,41 @@
 					{label}
 				</button>
 				{#if openMenu === label}
-					<div class="dropdown" role="menu">
+					<div
+						class="absolute top-[calc(100%+6px)] left-0 z-50 flex min-w-[240px] flex-col gap-px
+							rounded-[10px] border border-line-dropdown bg-white p-1.5 text-[#2a2a2a]
+							shadow-[0_12px_28px_rgba(0,0,0,0.12)]"
+						role="menu"
+					>
 						{#each menus[label] as item}
 							{#if item.type === 'divider'}
-								<div class="dropdown-divider" role="separator"></div>
+								<div class="mx-1 my-1 h-px bg-[#e8e5de]" role="separator"></div>
 							{:else}
-								<div class="item-wrapper">
+								<div class="relative flex flex-col">
 									<button
 										type="button"
 										role="menuitem"
-										class="dropdown-item"
+										class="group flex w-full cursor-pointer items-center gap-3 rounded-md
+											border-none bg-transparent px-3 py-2 text-left text-[0.875rem]
+											text-[#2a2a2a] transition-colors duration-100
+											enabled:hover:bg-mq-pink enabled:hover:text-mq-maroon
+											disabled:cursor-not-allowed disabled:text-[#b8b8b8]
+											[&.active:not(:disabled)]:bg-mq-pink [&.active:not(:disabled)]:text-mq-maroon
+											[&.danger]:text-[#b42318]
+											[&.danger:not(:disabled)]:hover:bg-[#fdf2f1]
+											[&.danger:not(:disabled)]:hover:text-[#b42318]"
 										class:danger={item.danger}
-										class:has-submenu={!!item.submenu}
 										class:active={item.submenu && openSubmenu === item.label}
 										disabled={item.disabled}
 										onclick={() => runItem(item)}
 									>
-										<span class="item-icon-wrap">
+										<span
+											class="inline-flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center
+												text-[#5a5c58]
+												group-[:hover:not(:disabled)]:text-mq-maroon
+												group-[.active:not(:disabled)]:text-mq-maroon
+												group-[.danger]:text-[#b42318] group-disabled:text-[#c8c8c8]"
+										>
 											{#if item.toggle}
 												{#if item.checked}
 													{@render menuIcon('check')}
@@ -371,29 +408,44 @@
 												{@render menuIcon(item.icon)}
 											{/if}
 										</span>
-										<span class="item-label">{item.label}</span>
+										<span class="flex-1">{item.label}</span>
 										{#if item.shortcut}
-											<span class="item-shortcut">{item.shortcut}</span>
+											<span
+												class="text-[0.78rem] tabular-nums text-ink-muted
+													group-[:hover:not(:disabled)]:text-mq-red
+													group-[.active:not(:disabled)]:text-mq-red">{item.shortcut}</span
+											>
 										{:else if item.submenu}
-											<span class="item-chevron"
+											<span class="inline-flex h-3.5 w-3.5 text-ink-muted [&_svg]:size-3.5"
 												>{@render menuIcon('chevron-right')}</span
 											>
 										{/if}
 									</button>
 									{#if item.submenu && openSubmenu === item.label}
-										<div class="dropdown submenu" role="menu">
+										<div
+											class="absolute top-[-6px] left-[calc(100%+4px)] z-50 flex min-w-[180px]
+												flex-col gap-px rounded-[10px] border border-line-dropdown bg-white
+												p-1.5 text-[#2a2a2a] shadow-[0_12px_28px_rgba(0,0,0,0.12)]"
+											role="menu"
+										>
 											{#each item.submenu as sub}
 												<button
 													type="button"
 													role="menuitem"
-													class="dropdown-item"
+													class="group flex w-full cursor-pointer items-center gap-3 rounded-md
+														border-none bg-transparent px-3 py-2 text-left text-[0.875rem]
+														text-[#2a2a2a] transition-colors duration-100
+														enabled:hover:bg-mq-pink enabled:hover:text-mq-maroon
+														disabled:cursor-not-allowed disabled:text-[#b8b8b8]"
 													disabled={sub.disabled}
 													onclick={() => runItem(sub)}
 												>
-													<span class="item-icon-wrap"></span>
-													<span class="item-label">{sub.label}</span>
+													<span class="inline-flex h-[18px] w-[18px] flex-shrink-0"></span>
+													<span class="flex-1">{sub.label}</span>
 													{#if sub.shortcut}
-														<span class="item-shortcut"
+														<span
+															class="text-[0.78rem] tabular-nums text-ink-muted
+																group-[:hover:not(:disabled)]:text-mq-red"
 															>{sub.shortcut}</span
 														>
 													{/if}
@@ -410,12 +462,19 @@
 		{/each}
 	</nav>
 
-	<div class="spacer"></div>
+	<div class="flex-auto"></div>
 
-	<div class="right-cluster">
-		<button type="button" class="hbtn" aria-label="Collaborators">
+	<div class="flex flex-shrink-0 items-center gap-2">
+		<button
+			type="button"
+			class="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px]
+				border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
+				hover:bg-white/[0.16]"
+			aria-label="Collaborators"
+		>
 			<svg
 				viewBox="0 0 24 24"
+				class="h-[19px] w-[19px]"
 				fill="none"
 				stroke="currentColor"
 				stroke-width="1.7"
@@ -429,11 +488,23 @@
 			</svg>
 		</button>
 
-		<div class="avatar">{USER_INITIALS}</div>
+		<div
+			class="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full
+				bg-mq-red-hover text-[0.75rem] font-bold tracking-[0.02em] text-white"
+		>
+			{USER_INITIALS}
+		</div>
 
-		<button type="button" class="hbtn" aria-label="Present">
+		<button
+			type="button"
+			class="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px]
+				border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
+				hover:bg-white/[0.16]"
+			aria-label="Present"
+		>
 			<svg
 				viewBox="0 0 24 24"
+				class="h-[19px] w-[19px]"
 				fill="none"
 				stroke="currentColor"
 				stroke-width="1.7"
@@ -444,9 +515,16 @@
 			</svg>
 		</button>
 
-		<button type="button" class="share-btn" onclick={editor.share}>
+		<button
+			type="button"
+			class="inline-flex h-[34px] cursor-pointer items-center gap-[7px] rounded-[8px] border-none
+				bg-mq-red px-4 text-[0.88rem] font-semibold text-white transition-colors duration-[120ms]
+				hover:bg-mq-red-hover"
+			onclick={editor.share}
+		>
 			<svg
 				viewBox="0 0 24 24"
+				class="h-4 w-4"
 				fill="none"
 				stroke="currentColor"
 				stroke-width="1.7"
@@ -459,9 +537,17 @@
 			Share
 		</button>
 
-		<button type="button" class="hbtn" aria-label="Copy link" onclick={editor.share}>
+		<button
+			type="button"
+			class="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px]
+				border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
+				hover:bg-white/[0.16]"
+			aria-label="Copy link"
+			onclick={editor.share}
+		>
 			<svg
 				viewBox="0 0 24 24"
+				class="h-[19px] w-[19px]"
 				fill="none"
 				stroke="currentColor"
 				stroke-width="1.7"
@@ -474,320 +560,3 @@
 		</button>
 	</div>
 </header>
-
-<style>
-	.menu-bar {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0 0.85rem;
-		height: 52px;
-		background: #76232f;
-		color: white;
-		font-family:
-			system-ui,
-			-apple-system,
-			sans-serif;
-	}
-
-	.menus {
-		display: flex;
-		gap: 0.1rem;
-		margin-left: 0.5rem;
-	}
-
-	.spacer {
-		flex: 1 1 auto;
-	}
-
-	.brand-icon {
-		width: 30px;
-		height: 30px;
-		flex-shrink: 0;
-		background: #a6192e;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 7px;
-	}
-
-	.brand-icon svg {
-		width: 18px;
-		height: 18px;
-	}
-
-	.file-name {
-		background: transparent;
-		border: 1px solid transparent;
-		color: white;
-		font-weight: 700;
-		font-size: 0.95rem;
-		font-family: inherit;
-		padding: 0.25rem 0.5rem;
-		border-radius: 6px;
-		min-width: 6rem;
-		max-width: 18rem;
-		transition:
-			background 0.15s ease,
-			border-color 0.15s ease;
-	}
-
-	/* "Draft" status pill: faint translucent chip with a red dot. */
-	.status-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		flex-shrink: 0;
-		height: 24px;
-		padding: 0 10px;
-		border-radius: 999px;
-		background: rgba(0, 0, 0, 0.18);
-		color: rgba(255, 255, 255, 0.92);
-		font-size: 0.78rem;
-		font-weight: 600;
-	}
-
-	.status-dot {
-		width: 7px;
-		height: 7px;
-		border-radius: 50%;
-		background: #ff5a5f;
-	}
-
-	/* Right-side cluster (collaborators / avatar / present / share / link). */
-	.right-cluster {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		flex-shrink: 0;
-	}
-
-	.hbtn {
-		width: 32px;
-		height: 32px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		background: transparent;
-		border: none;
-		border-radius: 7px;
-		color: rgba(255, 255, 255, 0.92);
-		cursor: pointer;
-		transition: background 0.12s ease;
-	}
-
-	.hbtn:hover {
-		background: rgba(255, 255, 255, 0.16);
-	}
-
-	.hbtn svg {
-		width: 19px;
-		height: 19px;
-	}
-
-	.share-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 7px;
-		height: 34px;
-		padding: 0 16px;
-		background: #a6192e;
-		color: #ffffff;
-		border: none;
-		border-radius: 8px;
-		font-family: inherit;
-		font-size: 0.88rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: background 0.12s ease;
-	}
-
-	.share-btn:hover {
-		background: #c01933;
-	}
-
-	.share-btn svg {
-		width: 16px;
-		height: 16px;
-	}
-
-	.file-name:hover {
-		background: rgba(255, 255, 255, 0.08);
-	}
-
-	.file-name:focus {
-		outline: none;
-		background: rgba(255, 255, 255, 0.15);
-		border-color: rgba(255, 255, 255, 0.4);
-	}
-
-	.menu-wrapper {
-		position: relative;
-	}
-
-	.menu-trigger {
-		background: transparent;
-		border: none;
-		color: white;
-		padding: 0.4rem 0.7rem;
-		font-size: 0.9rem;
-		cursor: pointer;
-		border-radius: 4px;
-		font-family: inherit;
-		transition: background 0.15s ease;
-	}
-
-	.menu-trigger:hover,
-	.menu-trigger.active {
-		background: rgba(255, 255, 255, 0.18);
-	}
-
-	.menu-trigger:focus-visible {
-		outline: 2px solid rgba(255, 255, 255, 0.6);
-		outline-offset: 1px;
-	}
-
-	.dropdown {
-		position: absolute;
-		top: calc(100% + 6px);
-		left: 0;
-		min-width: 240px;
-		background: #ffffff;
-		color: #2a2a2a;
-		border: 1px solid #ebe5d8;
-		border-radius: 10px;
-		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
-		padding: 6px;
-		z-index: 50;
-		display: flex;
-		flex-direction: column;
-		gap: 1px;
-	}
-
-	.submenu {
-		top: -6px;
-		left: calc(100% + 4px);
-		min-width: 180px;
-	}
-
-	.item-wrapper {
-		position: relative;
-		display: flex;
-		flex-direction: column;
-	}
-
-	.dropdown-item {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		background: transparent;
-		border: none;
-		color: #2a2a2a;
-		font-family: inherit;
-		font-size: 0.875rem;
-		padding: 8px 12px;
-		text-align: left;
-		cursor: pointer;
-		border-radius: 6px;
-		width: 100%;
-		transition:
-			background 0.1s ease,
-			color 0.1s ease;
-	}
-
-	.dropdown-item:hover:not(:disabled),
-	.dropdown-item.active:not(:disabled) {
-		background: #fbeef0;
-		color: #76232f;
-	}
-
-	.dropdown-item:disabled {
-		color: #b8b8b8;
-		cursor: not-allowed;
-	}
-
-	.dropdown-item.danger {
-		color: #b42318;
-	}
-
-	.dropdown-item.danger:hover:not(:disabled) {
-		background: #fdf2f1;
-		color: #b42318;
-	}
-
-	.item-icon-wrap {
-		width: 18px;
-		height: 18px;
-		flex-shrink: 0;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		color: #5a5c58;
-	}
-
-	.dropdown-item:hover:not(:disabled) .item-icon-wrap,
-	.dropdown-item.active:not(:disabled) .item-icon-wrap {
-		color: #76232f;
-	}
-
-	.dropdown-item.danger .item-icon-wrap {
-		color: #b42318;
-	}
-
-	.dropdown-item:disabled .item-icon-wrap {
-		color: #c8c8c8;
-	}
-
-	.item-icon {
-		width: 16px;
-		height: 16px;
-	}
-
-	.item-label {
-		flex: 1;
-	}
-
-	.item-shortcut {
-		font-size: 0.78rem;
-		color: #8a8b83;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.dropdown-item:hover:not(:disabled) .item-shortcut,
-	.dropdown-item.active:not(:disabled) .item-shortcut {
-		color: #a6192e;
-	}
-
-	.item-chevron {
-		display: inline-flex;
-		width: 14px;
-		height: 14px;
-		color: #8a8b83;
-	}
-
-	.item-chevron .item-icon {
-		width: 14px;
-		height: 14px;
-	}
-
-	.dropdown-divider {
-		height: 1px;
-		background: #e8e5de;
-		margin: 4px 4px;
-	}
-
-	.avatar {
-		width: 30px;
-		height: 30px;
-		flex-shrink: 0;
-		border-radius: 50%;
-		background: #c01933;
-		color: white;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-weight: 700;
-		font-size: 0.75rem;
-		letter-spacing: 0.02em;
-	}
-</style>

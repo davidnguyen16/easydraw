@@ -130,14 +130,43 @@
 		// so the panel doesn't have an orphan popup hanging around.
 		if (!value) openTypeIndex = null;
 	}
+
+	// Per-key palettes, keyed lookups replacing the old `[data-key='…']`
+	// attribute selectors. Button = filled pill (bg+text+border); badge = the
+	// same minus border; option-selected = a faint tint of the same hue.
+	const KEY_BUTTON_CLASS: Record<FieldKey, string> = {
+		PK: 'bg-[#fae9c8] text-[#854f0b] border-[#d8a85a]',
+		FK: 'bg-[#dce9fa] text-[#1e4380] border-[#7aa6e6]',
+		PI: 'bg-[#c8eae0] text-[#0b6354] border-[#5fb59f]',
+		WPI: 'bg-[#e3d8fa] text-[#5a3fb0] border-[#a18de0]'
+	};
+	const KEY_BADGE_CLASS: Record<FieldKey, string> = {
+		PK: 'bg-[#fae9c8] text-[#854f0b]',
+		FK: 'bg-[#dce9fa] text-[#1e4380]',
+		PI: 'bg-[#c8eae0] text-[#0b6354]',
+		WPI: 'bg-[#e3d8fa] text-[#5a3fb0]'
+	};
+	const KEY_OPTION_SELECTED_BG: Record<FieldKey, string> = {
+		PK: 'bg-[#fff5e0]',
+		FK: 'bg-[#eaf2fd]',
+		PI: 'bg-[#d9f1e9]',
+		WPI: 'bg-[#ede4fc]'
+	};
 </script>
 
 {#snippet keyBadge(key: FieldKey | undefined)}
 	{#if key}
-		<span class="key-badge" data-key={key}>{FIELD_KEY_INFO[key].short}</span>
+		<span
+			class="{KEY_BADGE_CLASS[key]} inline-flex min-w-[36px] flex-shrink-0 items-center
+				justify-center rounded px-1.5 py-0.5 text-[0.72rem] leading-[1.4] font-bold"
+			>{FIELD_KEY_INFO[key].short}</span
+		>
 	{:else}
 		<!-- "None" state in the dropdown row uses an em-dash placeholder. -->
-		<span class="key-badge key-badge-none">—</span>
+		<span
+			class="inline-flex min-w-[36px] flex-shrink-0 items-center justify-center rounded bg-transparent
+				px-1.5 py-0.5 text-[0.72rem] leading-[1.4] font-normal text-[#b8b8b8]">—</span
+		>
 	{/if}
 {/snippet}
 
@@ -151,39 +180,46 @@
 		stroke-width="2"
 		stroke-linecap="round"
 		stroke-linejoin="round"
-		class="chevron"
-		class:up
+		class="flex-shrink-0 opacity-70 transition-transform duration-150 {up ? 'rotate-180' : ''}"
 	>
 		<polyline points="6 9 12 15 18 9" />
 	</svg>
 {/snippet}
 
-<div class="field-editor" bind:this={rootEl}>
-	<div class="editor-header">
-		<h3 class="group-label">FIELDS</h3>
-		<span class="count">{fields.length}</span>
+<div class="flex flex-col gap-2.5" bind:this={rootEl}>
+	<div class="flex items-center justify-between">
+		<h3 class="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">FIELDS</h3>
+		<span class="text-[0.78rem] tabular-nums text-ink-muted">{fields.length}</span>
 	</div>
 
 	{#each fields as field, i}
 		{@const key = resolveFieldKey(field)}
 		{@const keyOpen = openKeyIndex === i}
 		{@const typeOpen = openTypeIndex === i}
-		<div class="field-card" class:editing={keyOpen || typeOpen}>
-			<div class="card-row">
+		<div
+			class="flex flex-col gap-2 rounded-lg border bg-white p-2.5 transition-[border-color,box-shadow]
+				duration-[120ms] {keyOpen || typeOpen
+				? 'border-mq-red shadow-[0_0_0_1px_rgba(166,25,46,0.25)]'
+				: 'border-line'}"
+		>
+			<div class="flex items-center gap-1.5">
 				<!-- Key button: colored badge for set keys, key icon for None. -->
-				<div class="key-button-wrap">
+				<div class="relative flex-shrink-0">
 					<button
 						type="button"
-						class="key-button"
-						class:open={keyOpen}
-						data-key={key ?? 'NONE'}
+						class="inline-flex h-[30px] min-w-[52px] cursor-pointer items-center gap-1 rounded-md
+							border px-2 text-[0.75rem] font-bold transition-colors duration-[120ms] {key
+							? KEY_BUTTON_CLASS[key]
+							: keyOpen
+								? 'border-mq-red bg-white text-ink-muted'
+								: 'border-line bg-white text-ink-muted hover:border-[#c4c1b8]'}"
 						aria-haspopup="listbox"
 						aria-expanded={keyOpen}
 						aria-label={key ? FIELD_KEY_INFO[key].long : 'Set key'}
 						onclick={() => toggleKey(i)}
 					>
 						{#if key}
-							<span class="key-button-text">{FIELD_KEY_INFO[key].short}</span>
+							<span class="leading-none">{FIELD_KEY_INFO[key].short}</span>
 						{:else}
 							<svg
 								viewBox="0 0 24 24"
@@ -194,7 +230,7 @@
 								stroke-width="1.7"
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								class="key-icon"
+								class="opacity-[0.85]"
 							>
 								<circle cx="9" cy="14" r="4" />
 								<path d="M12 11l9 -9" />
@@ -206,7 +242,11 @@
 					</button>
 
 					{#if keyOpen}
-						<ul class="key-dropdown" role="listbox">
+						<ul
+							class="absolute top-[calc(100%+4px)] left-0 z-[200] m-0 min-w-[200px] list-none
+								rounded-lg border border-line bg-white p-1 shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
+							role="listbox"
+						>
 							{#each FIELD_KEY_ORDER as option (option)}
 								{@const info = FIELD_KEY_INFO[option]}
 								{@const isSelected = key === option}
@@ -215,13 +255,15 @@
 										type="button"
 										role="option"
 										aria-selected={isSelected}
-										class="key-option"
-										class:selected={isSelected}
-										data-key={option}
+										class="flex w-full cursor-pointer items-center gap-2.5 rounded border-none
+											bg-transparent px-2.5 py-2 text-left text-[0.82rem] text-ink-soft
+											transition-colors duration-100 {isSelected
+											? KEY_OPTION_SELECTED_BG[option]
+											: 'hover:bg-panel'}"
 										onclick={() => setFieldKey(i, option)}
 									>
 										{@render keyBadge(option)}
-										<span class="key-option-label">{info.long}</span>
+										<span class="flex-1 font-medium">{info.long}</span>
 										{#if isSelected}
 											<svg
 												viewBox="0 0 24 24"
@@ -232,7 +274,7 @@
 												stroke-width="2.4"
 												stroke-linecap="round"
 												stroke-linejoin="round"
-												class="check"
+												class="flex-shrink-0 text-mq-maroon"
 											>
 												<polyline points="5 12 10 17 19 8" />
 											</svg>
@@ -240,18 +282,19 @@
 									</button>
 								</li>
 							{/each}
-							<li class="dropdown-divider" role="separator"></li>
+							<li class="mx-1 my-1 h-px list-none bg-[#e8e5de]" role="separator"></li>
 							<li>
 								<button
 									type="button"
 									role="option"
 									aria-selected={!key}
-									class="key-option"
-									class:selected={!key}
+									class="flex w-full cursor-pointer items-center gap-2.5 rounded border-none
+										bg-transparent px-2.5 py-2 text-left text-[0.82rem] text-ink-soft
+										transition-colors duration-100 hover:bg-panel"
 									onclick={() => setFieldKey(i, undefined)}
 								>
 									{@render keyBadge(undefined)}
-									<span class="key-option-label muted">None</span>
+									<span class="flex-1 font-normal text-ink-muted">None</span>
 								</button>
 							</li>
 						</ul>
@@ -260,7 +303,8 @@
 
 				<input
 					type="text"
-					class="name-input"
+					class="min-w-0 flex-1 rounded-md border border-line bg-white px-2.5 py-2 text-[0.9rem]
+						text-ink-soft outline-none focus:border-mq-red"
 					value={field.name}
 					placeholder="field"
 					oninput={(e) => patchField(i, { name: e.currentTarget.value })}
@@ -269,7 +313,9 @@
 
 				<button
 					type="button"
-					class="delete-btn"
+					class="flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-md
+						border-none bg-transparent text-ink-muted transition-colors duration-[120ms]
+						hover:bg-[#fdf2f1] hover:text-[#b42318]"
 					aria-label="Remove field"
 					onclick={() => removeField(i)}
 				>
@@ -293,23 +339,29 @@
 			</div>
 
 			{#if showDataTypes}
-				<div class="type-row">
+				<div class="relative">
 					<button
 						type="button"
-						class="type-select"
-						class:open={typeOpen}
+						class="flex h-8 w-full cursor-pointer items-center justify-between gap-1.5 rounded-md
+							border bg-white px-2.5 text-[0.78rem] font-semibold transition-colors duration-[120ms]
+							{typeOpen ? 'border-mq-red text-mq-maroon' : 'border-line text-ink-soft'}"
 						aria-haspopup="listbox"
 						aria-expanded={typeOpen}
 						onclick={() => toggleType(i)}
 					>
-						<span class="type-value">
+						<span class="overflow-hidden text-ellipsis whitespace-nowrap">
 							{field.type ? field.type.toUpperCase() : 'TYPE'}
 						</span>
 						{@render chevron(typeOpen)}
 					</button>
 
 					{#if typeOpen}
-						<ul class="type-dropdown" role="listbox">
+						<ul
+							class="absolute top-[calc(100%+4px)] right-0 left-0 z-[200] m-0 max-h-[220px] list-none
+								overflow-y-auto rounded-lg border border-line bg-white p-1
+								shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
+							role="listbox"
+						>
 							{#each ENTITY_FIELD_TYPES as option (option)}
 								{@const isSelected = field.type === option}
 								<li>
@@ -317,8 +369,10 @@
 										type="button"
 										role="option"
 										aria-selected={isSelected}
-										class="type-option"
-										class:selected={isSelected}
+										class="flex w-full cursor-pointer items-center justify-between gap-1.5 rounded
+											border-none bg-transparent px-2.5 py-2 text-left text-[0.78rem] font-semibold
+											transition-colors duration-100 hover:bg-mq-pink hover:text-mq-maroon
+											{isSelected ? 'text-mq-maroon' : 'text-ink-soft'}"
 										onclick={() => selectType(i, option)}
 									>
 										<span>{option.toUpperCase()}</span>
@@ -346,473 +400,32 @@
 		</div>
 	{/each}
 
-	<button type="button" class="add-field-btn" onclick={addField}>+ Add field</button>
+	<button
+		type="button"
+		class="w-full cursor-pointer rounded-lg border border-dashed border-[#c4c1b8] bg-transparent p-2.5
+			text-[0.85rem] text-ink-muted transition-colors duration-[120ms] hover:border-mq-maroon
+			hover:bg-mq-pink hover:text-mq-maroon"
+		onclick={addField}>+ Add field</button
+	>
 
 	<!-- Master toggle: drives the type dropdowns here AND whether the entity
          node on the canvas shows each field's type. -->
-	<div class="show-types-row">
-		<span class="show-types-label">Show data types</span>
-		<label class="toggle">
+	<div class="flex items-center justify-between pt-1">
+		<span class="text-[0.85rem] text-ink-soft">Show data types</span>
+		<label class="relative inline-block h-5 w-9 flex-shrink-0">
 			<input
+				class="peer h-0 w-0 opacity-0"
 				type="checkbox"
 				checked={showDataTypes}
 				onchange={(e) => setShowDataTypes(e.currentTarget.checked)}
 			/>
-			<span class="toggle-slider"></span>
+			<span
+				class="absolute inset-0 cursor-pointer rounded-full bg-[#d0cabd] transition-colors
+					duration-150 before:absolute before:top-0.5 before:left-0.5 before:h-4 before:w-4
+					before:rounded-full before:bg-white before:shadow-[0_1px_2px_rgba(0,0,0,0.15)]
+					before:transition-transform before:duration-150 before:content-['']
+					peer-checked:bg-mq-red peer-checked:before:translate-x-4"
+			></span>
 		</label>
 	</div>
 </div>
-
-<style>
-	.field-editor {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.editor-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.group-label {
-		font-size: 0.7rem;
-		letter-spacing: 0.08em;
-		font-weight: 700;
-		color: #76232f;
-		margin: 0;
-	}
-
-	.count {
-		font-size: 0.78rem;
-		color: #8a8b83;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.field-card {
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		padding: 10px;
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		transition:
-			border-color 0.12s ease,
-			box-shadow 0.12s ease;
-	}
-
-	/* Mirror the picture: whichever field has an open dropdown gets a red
-       outline so it's obvious which row is being edited. */
-	.field-card.editing {
-		border-color: #a6192e;
-		box-shadow: 0 0 0 1px rgba(166, 25, 46, 0.25);
-	}
-
-	.card-row {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
-
-	/* ─── Key button + dropdown ──────────────────────────────────────── */
-
-	.key-button-wrap {
-		position: relative;
-		flex-shrink: 0;
-	}
-
-	.key-button {
-		height: 30px;
-		min-width: 52px;
-		padding: 0 8px;
-		border: 1px solid #d6d2c4;
-		background: #ffffff;
-		color: #8a8b83;
-		border-radius: 6px;
-		font-family: inherit;
-		font-size: 0.75rem;
-		font-weight: 700;
-		cursor: pointer;
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		transition:
-			background 0.12s ease,
-			border-color 0.12s ease,
-			color 0.12s ease;
-	}
-
-	.key-button:hover {
-		border-color: #c4c1b8;
-	}
-
-	/* Open state — only the chevron flips; border stays as-is so the
-       overall card-border + open state combine cleanly. */
-	.key-button.open {
-		border-color: #a6192e;
-	}
-
-	/* Color the button by its currently selected key. */
-	.key-button[data-key='PK'] {
-		background: #fae9c8;
-		color: #854f0b;
-		border-color: #d8a85a;
-	}
-	.key-button[data-key='FK'] {
-		background: #dce9fa;
-		color: #1e4380;
-		border-color: #7aa6e6;
-	}
-	.key-button[data-key='PI'] {
-		background: #c8eae0;
-		color: #0b6354;
-		border-color: #5fb59f;
-	}
-	.key-button[data-key='WPI'] {
-		background: #e3d8fa;
-		color: #5a3fb0;
-		border-color: #a18de0;
-	}
-
-	.key-button-text {
-		line-height: 1;
-	}
-
-	.key-icon {
-		opacity: 0.85;
-	}
-
-	.chevron {
-		flex-shrink: 0;
-		opacity: 0.7;
-		transition: transform 0.15s ease;
-	}
-
-	.chevron.up {
-		transform: rotate(180deg);
-	}
-
-	.key-dropdown {
-		position: absolute;
-		top: calc(100% + 4px);
-		left: 0;
-		list-style: none;
-		margin: 0;
-		padding: 4px;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-		z-index: 200;
-		min-width: 200px;
-	}
-
-	.key-dropdown li {
-		list-style: none;
-	}
-
-	.key-option {
-		width: 100%;
-		background: transparent;
-		border: none;
-		padding: 8px 10px;
-		font-family: inherit;
-		font-size: 0.82rem;
-		color: #373a36;
-		text-align: left;
-		cursor: pointer;
-		border-radius: 4px;
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		transition: background 0.1s ease;
-	}
-
-	.key-option:hover {
-		background: #f5f3ef;
-	}
-
-	/* Tint the selected row with the key's own color so the dropdown
-       reads like a row of stained pills. */
-	.key-option[data-key='PK'].selected {
-		background: #fff5e0;
-	}
-	.key-option[data-key='FK'].selected {
-		background: #eaf2fd;
-	}
-	.key-option[data-key='PI'].selected {
-		background: #d9f1e9;
-	}
-	.key-option[data-key='WPI'].selected {
-		background: #ede4fc;
-	}
-
-	.key-option-label {
-		flex: 1;
-		font-weight: 500;
-	}
-
-	.key-option-label.muted {
-		color: #8a8b83;
-		font-weight: 400;
-	}
-
-	.check {
-		color: #76232f;
-		flex-shrink: 0;
-	}
-
-	.dropdown-divider {
-		height: 1px;
-		background: #e8e5de;
-		margin: 4px 4px;
-	}
-
-	/* ─── Key badge (used inside dropdown rows) ──────────────────────── */
-
-	.key-badge {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 36px;
-		padding: 2px 6px;
-		border-radius: 4px;
-		font-size: 0.72rem;
-		font-weight: 700;
-		line-height: 1.4;
-		flex-shrink: 0;
-	}
-
-	.key-badge[data-key='PK'] {
-		background: #fae9c8;
-		color: #854f0b;
-	}
-	.key-badge[data-key='FK'] {
-		background: #dce9fa;
-		color: #1e4380;
-	}
-	.key-badge[data-key='PI'] {
-		background: #c8eae0;
-		color: #0b6354;
-	}
-	.key-badge[data-key='WPI'] {
-		background: #e3d8fa;
-		color: #5a3fb0;
-	}
-
-	.key-badge-none {
-		background: transparent;
-		color: #b8b8b8;
-		font-weight: 400;
-	}
-
-	/* ─── Name input + delete ────────────────────────────────────────── */
-
-	.name-input {
-		flex: 1;
-		min-width: 0;
-		border: 1px solid #d6d2c4;
-		border-radius: 6px;
-		padding: 8px 10px;
-		font-family: inherit;
-		font-size: 0.9rem;
-		outline: none;
-		background: #ffffff;
-		color: #373a36;
-	}
-
-	.name-input:focus {
-		border-color: #a6192e;
-	}
-
-	.delete-btn {
-		width: 32px;
-		height: 32px;
-		border: none;
-		background: transparent;
-		color: #8a8b83;
-		cursor: pointer;
-		border-radius: 6px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-		transition:
-			background 0.12s ease,
-			color 0.12s ease;
-	}
-
-	.delete-btn:hover {
-		background: #fdf2f1;
-		color: #b42318;
-	}
-
-	/* ─── Type row (only when showDataTypes is on) ───────────────────── */
-
-	.type-row {
-		position: relative;
-	}
-
-	.type-select {
-		width: 100%;
-		height: 32px;
-		padding: 0 10px;
-		border: 1px solid #d6d2c4;
-		background: #ffffff;
-		color: #373a36;
-		border-radius: 6px;
-		font-family: inherit;
-		font-size: 0.78rem;
-		font-weight: 600;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 6px;
-		transition: border-color 0.12s ease;
-	}
-
-	.type-select.open {
-		border-color: #a6192e;
-		color: #76232f;
-	}
-
-	.type-value {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.type-dropdown {
-		position: absolute;
-		top: calc(100% + 4px);
-		left: 0;
-		right: 0;
-		list-style: none;
-		margin: 0;
-		padding: 4px;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-		z-index: 200;
-		max-height: 220px;
-		overflow-y: auto;
-	}
-
-	.type-dropdown li {
-		list-style: none;
-	}
-
-	.type-option {
-		width: 100%;
-		background: transparent;
-		border: none;
-		padding: 8px 10px;
-		font-family: inherit;
-		font-size: 0.78rem;
-		font-weight: 600;
-		color: #373a36;
-		text-align: left;
-		cursor: pointer;
-		border-radius: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 6px;
-		transition:
-			background 0.1s ease,
-			color 0.1s ease;
-	}
-
-	.type-option:hover {
-		background: #fbeef0;
-		color: #76232f;
-	}
-
-	.type-option.selected {
-		color: #76232f;
-	}
-
-	/* ─── Add-field button + show-types toggle ───────────────────────── */
-
-	.add-field-btn {
-		width: 100%;
-		padding: 10px;
-		border: 1px dashed #c4c1b8;
-		background: transparent;
-		color: #8a8b83;
-		border-radius: 8px;
-		font-family: inherit;
-		font-size: 0.85rem;
-		cursor: pointer;
-		transition:
-			border-color 0.12s ease,
-			color 0.12s ease,
-			background 0.12s ease;
-	}
-
-	.add-field-btn:hover {
-		border-color: #76232f;
-		color: #76232f;
-		background: #fbeef0;
-	}
-
-	.show-types-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding-top: 4px;
-	}
-
-	.show-types-label {
-		font-size: 0.85rem;
-		color: #373a36;
-	}
-
-	.toggle {
-		position: relative;
-		width: 36px;
-		height: 20px;
-		display: inline-block;
-		flex-shrink: 0;
-	}
-
-	.toggle input {
-		opacity: 0;
-		width: 0;
-		height: 0;
-	}
-
-	.toggle-slider {
-		position: absolute;
-		inset: 0;
-		background: #d0cabd;
-		border-radius: 999px;
-		cursor: pointer;
-		transition: background 0.15s ease;
-	}
-
-	.toggle-slider::before {
-		content: '';
-		position: absolute;
-		top: 2px;
-		left: 2px;
-		width: 16px;
-		height: 16px;
-		background: #ffffff;
-		border-radius: 50%;
-		transition: transform 0.15s ease;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-	}
-
-	.toggle input:checked + .toggle-slider {
-		background: #a6192e;
-	}
-
-	.toggle input:checked + .toggle-slider::before {
-		transform: translateX(16px);
-	}
-</style>

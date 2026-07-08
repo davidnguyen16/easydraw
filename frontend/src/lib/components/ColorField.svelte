@@ -63,7 +63,8 @@
 		type="text"
 		maxlength="7"
 		spellcheck="false"
-		class="w-16 border-none bg-transparent p-0 text-[0.78rem] text-ink-soft uppercase tabular-nums outline-none"
+		class="w-16 border-none bg-transparent p-0 text-[0.78rem] text-ink-soft uppercase tabular-nums
+			outline-none"
 		value={display}
 		oninput={(e) => (draft = e.currentTarget.value)}
 		onfocus={(e) => {

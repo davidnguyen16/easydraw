@@ -149,6 +149,24 @@
 		(event.currentTarget as HTMLInputElement).select();
 	}
 
+	// Icon buttons: the `tb-tip` marker drives the hover tooltip (see the small
+	// scoped block below — a pseudo-element with `content: attr(aria-label)` is
+	// the one thing Tailwind can't express: its `--tw-content` var overrides the
+	// arbitrary `attr()` and the tooltip renders empty). `toggled` is applied via
+	// class:toggled where needed; the [&.toggled] rules only bite when present.
+	const ICON_BTN = [
+		'tb-tip relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border',
+		'border-transparent bg-transparent p-0 text-toolbar-text transition-colors duration-[120ms]',
+		'[&_svg]:size-[18px] enabled:hover:bg-surface-hover enabled:hover:text-[#1f201d]',
+		'disabled:cursor-not-allowed disabled:opacity-[0.32] [&.toggled]:bg-mq-pink [&.toggled]:text-mq-red'
+	].join(' ');
+	// Bold / Italic / Underline / Color buttons: `tb-tip-data` tooltip = data-tip.
+	const FMT_BTN = [
+		'tb-tip-data relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border',
+		'border-transparent bg-transparent p-0 text-toolbar-text transition-colors duration-[120ms]',
+		'hover:bg-surface-hover hover:text-[#1f201d] [&.toggled]:bg-mq-pink [&.toggled]:text-mq-red'
+	].join(' ');
+
 	onMount(() => {
 		const onPointer = (event: PointerEvent) => {
 			const target = event.target as HTMLElement | null;
@@ -224,24 +242,27 @@
 	</svg>
 {/snippet}
 
-<div class="toolbar">
+<div
+	class="flex w-full flex-[0_0_46px] items-center gap-1 border-b border-line-soft bg-white px-3
+		[font-family:system-ui,-apple-system,sans-serif]"
+>
 	<!-- File -->
-	<div class="group">
-		<button type="button" class="icon-btn" aria-label="Open file" onclick={editor.open}>
+	<div class="flex items-center gap-0.5">
+		<button type="button" class={ICON_BTN} aria-label="Open file" onclick={editor.open}>
 			<FolderOpen size={18} />
 		</button>
-		<button type="button" class="icon-btn" aria-label="Save" onclick={editor.save}>
+		<button type="button" class={ICON_BTN} aria-label="Save" onclick={editor.save}>
 			<Save size={18} />
 		</button>
 	</div>
 
-	<div class="separator"></div>
+	<div class="mx-1.5 h-[22px] w-px bg-line-soft"></div>
 
 	<!-- History -->
-	<div class="group">
+	<div class="flex items-center gap-0.5">
 		<button
 			type="button"
-			class="icon-btn"
+			class={ICON_BTN}
 			aria-label="Undo"
 			onclick={editor.undo}
 			disabled={!editor.history.canUndo}
@@ -250,7 +271,7 @@
 		</button>
 		<button
 			type="button"
-			class="icon-btn"
+			class={ICON_BTN}
 			aria-label="Redo"
 			onclick={editor.redo}
 			disabled={!editor.history.canRedo}
@@ -259,18 +280,26 @@
 		</button>
 	</div>
 
-	<div class="separator"></div>
+	<div class="mx-1.5 h-[22px] w-px bg-line-soft"></div>
 
 	<!-- Zoom -->
-	<div class="group">
-		<button type="button" class="icon-btn" aria-label="Zoom out" onclick={editor.zoomOut}>
+	<div class="flex items-center gap-0.5">
+		<button type="button" class={ICON_BTN} aria-label="Zoom out" onclick={editor.zoomOut}>
 			{@render icon('zoom-out')}
 		</button>
 
-		<div class="tb-menu">
-			<div class="num-combo" class:active={openDropdown === 'zoom'}>
+		<div class="tb-menu relative">
+			<div
+				class="group inline-flex h-[30px] min-w-[64px] items-center rounded-md border border-line-soft
+					bg-transparent pr-0.5 pl-2 transition-colors duration-[120ms] hover:bg-surface-hover
+					focus-within:border-mq-red focus-within:bg-white [&.active]:border-mq-red [&.active]:bg-white"
+				class:active={openDropdown === 'zoom'}
+			>
 				<input
-					class="num-input tabular"
+					class="w-0 min-w-[26px] flex-1 border-none bg-transparent p-0 text-right text-[0.82rem]
+						tabular-nums text-toolbar-text outline-none [appearance:textfield]
+						group-focus-within:text-[#1f201d]
+						[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 					type="text"
 					inputmode="numeric"
 					aria-label="Zoom level"
@@ -281,10 +310,11 @@
 					onblur={commitZoom}
 					onkeydown={(e) => onNumberKeydown(e, commitZoom, () => (zoomDraft = null))}
 				/>
-				<span class="num-suffix">%</span>
+				<span class="pointer-events-none mr-px ml-0.5 text-[0.82rem] text-ink-muted">%</span>
 				<button
 					type="button"
-					class="num-chev"
+					class="inline-flex h-full w-4 cursor-pointer items-center justify-center border-none
+						bg-transparent p-0 text-ink-muted hover:text-toolbar-text [&_svg]:size-3"
 					aria-label="Zoom presets"
 					aria-haspopup="menu"
 					aria-expanded={openDropdown === 'zoom'}
@@ -295,92 +325,141 @@
 			</div>
 
 			{#if openDropdown === 'zoom'}
-				<div class="dropdown" role="menu">
-					<div class="section-label">ZOOM LEVEL</div>
+				<div
+					class="absolute top-[calc(100%+6px)] left-0 z-[100] flex max-h-[320px] min-w-[180px]
+						flex-col gap-px overflow-y-auto rounded-[10px] border border-line-dropdown bg-white p-1.5
+						shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+					role="menu"
+				>
+					<div class="px-3 pt-1.5 pb-1 text-[0.66rem] font-bold tracking-[0.08em] text-ink-muted">
+						ZOOM LEVEL
+					</div>
 					{#each ZOOM_PRESETS as preset}
 						<button
 							type="button"
 							role="menuitem"
-							class="menu-item"
+							class="flex w-full cursor-pointer items-center gap-1.5 rounded-md border-none
+								bg-transparent px-3 py-[7px] text-left text-[0.86rem] text-ink-soft transition-colors
+								duration-100 hover:bg-mq-pink hover:text-mq-maroon [&.checked]:bg-mq-pink
+								[&.checked]:text-mq-maroon"
 							class:checked={preset === editor.state.zoomPercent}
 							onclick={() => pickZoom(preset)}
 						>
-							<span class="check">
-								{#if preset === editor.state.zoomPercent}{@render icon(
-										'check'
-									)}{/if}
+							<span
+								class="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center text-mq-maroon
+									[&_svg]:size-3.5"
+							>
+								{#if preset === editor.state.zoomPercent}{@render icon('check')}{/if}
 							</span>
-							<span class="grow tabular">{preset}%</span>
+							<span class="flex-1 text-left tabular-nums">{preset}%</span>
 						</button>
 					{/each}
-					<div class="divider"></div>
-					<button type="button" role="menuitem" class="menu-item" onclick={pickFitView}>
-						<span class="leading-icon">{@render icon('fit')}</span>
-						<span class="grow">Fit to screen</span>
+					<div class="mx-1 my-1 h-px bg-[#e8e5de]"></div>
+					<button
+						type="button"
+						role="menuitem"
+						class="flex w-full cursor-pointer items-center gap-1.5 rounded-md border-none
+							bg-transparent px-3 py-[7px] text-left text-[0.86rem] text-ink-soft transition-colors
+							duration-100 hover:bg-mq-pink hover:text-mq-maroon"
+						onclick={pickFitView}
+					>
+						<span
+							class="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center text-[#5a5c58]
+								[&_svg]:size-[15px]">{@render icon('fit')}</span
+						>
+						<span class="flex-1 text-left">Fit to screen</span>
 					</button>
 					<button
 						type="button"
 						role="menuitem"
-						class="menu-item"
+						class="flex w-full cursor-pointer items-center gap-1.5 rounded-md border-none
+							bg-transparent px-3 py-[7px] text-left text-[0.86rem] text-ink-soft transition-colors
+							duration-100 hover:bg-mq-pink hover:text-mq-maroon"
 						onclick={pickFitSelection}
 					>
-						<span class="leading-icon">{@render icon('fit')}</span>
-						<span class="grow">Fit selection</span>
+						<span
+							class="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center text-[#5a5c58]
+								[&_svg]:size-[15px]">{@render icon('fit')}</span
+						>
+						<span class="flex-1 text-left">Fit selection</span>
 					</button>
 				</div>
 			{/if}
 		</div>
 
-		<button type="button" class="icon-btn" aria-label="Zoom in" onclick={editor.zoomIn}>
+		<button type="button" class={ICON_BTN} aria-label="Zoom in" onclick={editor.zoomIn}>
 			{@render icon('zoom-in')}
 		</button>
-		<button type="button" class="icon-btn" aria-label="Fit to screen" onclick={editor.fitView}>
+		<button type="button" class={ICON_BTN} aria-label="Fit to screen" onclick={editor.fitView}>
 			{@render icon('fullscreen')}
 		</button>
 	</div>
 
-	<div class="separator"></div>
+	<div class="mx-1.5 h-[22px] w-px bg-line-soft"></div>
 
 	<!-- Text formatting -->
-	<div class="group">
-		<div class="tb-menu">
+	<div class="flex items-center gap-0.5">
+		<div class="tb-menu relative">
 			<button
 				type="button"
-				class="text-trigger wide"
+				class="inline-flex h-[30px] min-w-[104px] cursor-pointer items-center gap-1.5 rounded-md
+					border border-line-soft bg-transparent px-2 text-[0.82rem] text-toolbar-text
+					transition-colors duration-[120ms] hover:bg-surface-hover hover:text-[#1f201d]
+					[&.active]:border-mq-red [&.active]:bg-white [&.active]:text-mq-maroon"
 				class:active={openDropdown === 'font'}
 				aria-haspopup="menu"
 				aria-expanded={openDropdown === 'font'}
 				onclick={() => toggle('font')}
 			>
-				<span class="grow ellipsis" style="font-family: {style.fontFamily};"
-					>{style.fontFamily}</span
+				<span
+					class="flex-1 overflow-hidden text-left text-ellipsis whitespace-nowrap"
+					style="font-family: {style.fontFamily};">{style.fontFamily}</span
 				>
-				<span class="chev">{@render icon('chevron')}</span>
+				<span class="inline-flex h-3 w-3 text-ink-muted [&_svg]:size-3">{@render icon('chevron')}</span>
 			</button>
 			{#if openDropdown === 'font'}
-				<div class="dropdown" role="menu">
+				<div
+					class="absolute top-[calc(100%+6px)] left-0 z-[100] flex max-h-[320px] min-w-[180px]
+						flex-col gap-px overflow-y-auto rounded-[10px] border border-line-dropdown bg-white p-1.5
+						shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+					role="menu"
+				>
 					{#each FONT_FAMILIES as family}
 						<button
 							type="button"
 							role="menuitem"
-							class="menu-item"
+							class="flex w-full cursor-pointer items-center gap-1.5 rounded-md border-none
+								bg-transparent px-3 py-[7px] text-left text-[0.86rem] text-ink-soft transition-colors
+								duration-100 hover:bg-mq-pink hover:text-mq-maroon [&.checked]:bg-mq-pink
+								[&.checked]:text-mq-maroon"
 							class:checked={family === style.fontFamily}
 							onclick={() => pickFont(family)}
 						>
-							<span class="check">
+							<span
+								class="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center text-mq-maroon
+									[&_svg]:size-3.5"
+							>
 								{#if family === style.fontFamily}{@render icon('check')}{/if}
 							</span>
-							<span class="grow" style="font-family: {family};">{family}</span>
+							<span class="flex-1 text-left" style="font-family: {family};">{family}</span>
 						</button>
 					{/each}
 				</div>
 			{/if}
 		</div>
 
-		<div class="tb-menu">
-			<div class="num-combo size-combo" class:active={openDropdown === 'size'}>
+		<div class="tb-menu relative">
+			<div
+				class="group inline-flex h-[30px] min-w-[56px] items-center rounded-md border border-line-soft
+					bg-transparent pr-0.5 pl-2 transition-colors duration-[120ms] hover:bg-surface-hover
+					focus-within:border-mq-red focus-within:bg-white [&.active]:border-mq-red [&.active]:bg-white"
+				class:active={openDropdown === 'size'}
+			>
 				<input
-					class="num-input tabular"
+					class="w-0 min-w-[26px] flex-1 border-none bg-transparent p-0 text-right text-[0.82rem]
+						tabular-nums text-toolbar-text outline-none [appearance:textfield]
+						group-focus-within:text-[#1f201d]
+						[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 					type="text"
 					inputmode="numeric"
 					aria-label="Font size"
@@ -390,10 +469,11 @@
 					onblur={commitSize}
 					onkeydown={(e) => onNumberKeydown(e, commitSize, () => (sizeDraft = null))}
 				/>
-				<span class="num-suffix">pt</span>
+				<span class="pointer-events-none mr-px ml-0.5 text-[0.82rem] text-ink-muted">pt</span>
 				<button
 					type="button"
-					class="num-chev"
+					class="inline-flex h-full w-4 cursor-pointer items-center justify-center border-none
+						bg-transparent p-0 text-ink-muted hover:text-toolbar-text [&_svg]:size-3"
 					aria-label="Font size presets"
 					aria-haspopup="menu"
 					aria-expanded={openDropdown === 'size'}
@@ -403,19 +483,30 @@
 				</button>
 			</div>
 			{#if openDropdown === 'size'}
-				<div class="dropdown narrow" role="menu">
+				<div
+					class="absolute top-[calc(100%+6px)] left-0 z-[100] flex max-h-[320px] min-w-[120px] flex-col
+						gap-px overflow-y-auto rounded-[10px] border border-line-dropdown bg-white p-1.5
+						shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+					role="menu"
+				>
 					{#each FONT_SIZES as size}
 						<button
 							type="button"
 							role="menuitem"
-							class="menu-item"
+							class="flex w-full cursor-pointer items-center gap-1.5 rounded-md border-none
+								bg-transparent px-3 py-[7px] text-left text-[0.86rem] text-ink-soft transition-colors
+								duration-100 hover:bg-mq-pink hover:text-mq-maroon [&.checked]:bg-mq-pink
+								[&.checked]:text-mq-maroon"
 							class:checked={size === style.fontSize}
 							onclick={() => pickSize(size)}
 						>
-							<span class="check">
+							<span
+								class="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center text-mq-maroon
+									[&_svg]:size-3.5"
+							>
 								{#if size === style.fontSize}{@render icon('check')}{/if}
 							</span>
-							<span class="grow tabular">{size} pt</span>
+							<span class="flex-1 text-left tabular-nums">{size} pt</span>
 						</button>
 					{/each}
 				</div>
@@ -424,42 +515,43 @@
 
 		<button
 			type="button"
-			class="fmt-btn"
+			class={FMT_BTN}
 			class:toggled={style.bold}
 			aria-label="Bold"
 			data-tip="Bold (Ctrl+B)"
 			aria-pressed={style.bold}
 			onclick={() => editor.applyStyle({ bold: !style.bold })}
 		>
-			<span class="fmt b">B</span>
+			<span class="text-[0.95rem] leading-none font-bold">B</span>
 		</button>
 		<button
 			type="button"
-			class="fmt-btn"
+			class={FMT_BTN}
 			class:toggled={style.italic}
 			aria-label="Italic"
 			data-tip="Italic (Ctrl+I)"
 			aria-pressed={style.italic}
 			onclick={() => editor.applyStyle({ italic: !style.italic })}
 		>
-			<span class="fmt i">I</span>
+			<span class="text-[0.95rem] leading-none font-semibold italic [font-family:Georgia,serif]">I</span>
 		</button>
 		<button
 			type="button"
-			class="fmt-btn"
+			class={FMT_BTN}
 			class:toggled={style.underline}
 			aria-label="Underline"
 			data-tip="Underline (Ctrl+U)"
 			aria-pressed={style.underline}
 			onclick={() => editor.applyStyle({ underline: !style.underline })}
 		>
-			<span class="fmt u">U</span>
+			<span class="text-[0.95rem] leading-none font-semibold underline">U</span>
 		</button>
 
-		<label class="fmt-btn color-btn" aria-label="Text color" data-tip="Text color">
-			<span class="fmt">A</span>
-			<span class="color-bar" style="background: {swatchColor};"></span>
+		<label class="{FMT_BTN} flex-col gap-px" aria-label="Text color" data-tip="Text color">
+			<span class="text-[0.9rem] leading-none font-bold">A</span>
+			<span class="h-[3px] w-4 rounded-[1px]" style="background: {swatchColor};"></span>
 			<input
+				class="absolute inset-0 h-full w-full cursor-pointer border-none p-0 opacity-0"
 				type="color"
 				value={swatchColor}
 				oninput={onTextColorInput}
@@ -468,13 +560,13 @@
 		</label>
 	</div>
 
-	<div class="separator"></div>
+	<div class="mx-1.5 h-[22px] w-px bg-line-soft"></div>
 
 	<!-- Object -->
-	<div class="group">
+	<div class="flex items-center gap-0.5">
 		<button
 			type="button"
-			class="icon-btn"
+			class={ICON_BTN}
 			class:toggled={editor.state.locked}
 			aria-label={editor.state.locked ? 'Unlock canvas' : 'Lock canvas'}
 			aria-pressed={editor.state.locked}
@@ -482,96 +574,34 @@
 		>
 			{@render icon(editor.state.locked ? 'lock-closed' : 'lock-open')}
 		</button>
-		<button type="button" class="icon-btn" aria-label="Copy" onclick={editor.copy}>
+		<button type="button" class={ICON_BTN} aria-label="Copy" onclick={editor.copy}>
 			{@render icon('copy')}
 		</button>
-		<button type="button" class="icon-btn" aria-label="Delete" onclick={editor.deleteSelected}>
+		<button type="button" class={ICON_BTN} aria-label="Delete" onclick={editor.deleteSelected}>
 			{@render icon('delete')}
 		</button>
 	</div>
 </div>
 
 <style>
-	.toolbar {
-		flex: 0 0 46px;
-		width: 100%;
-		background: #ffffff;
-		border-bottom: 1px solid #e3e0d6;
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		padding: 0 12px;
-		font-family:
-			system-ui,
-			-apple-system,
-			sans-serif;
-	}
-
-	.group {
-		display: flex;
-		align-items: center;
-		gap: 2px;
-	}
-
-	.separator {
-		width: 1px;
-		height: 22px;
-		background: #e3e0d6;
-		margin: 0 6px;
-	}
-
-	.icon-btn {
-		position: relative;
-		width: 32px;
-		height: 32px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		background: transparent;
-		border: 1px solid transparent;
-		border-radius: 6px;
-		color: #4a4c48;
-		cursor: pointer;
-		padding: 0;
-		transition:
-			background 0.12s ease,
-			color 0.12s ease;
-	}
-
-	.icon-btn:hover:not(:disabled) {
-		background: #efece6;
-		color: #1f201d;
-	}
-
-	.icon-btn:disabled {
-		opacity: 0.32;
-		cursor: not-allowed;
-	}
-
-	.icon-btn.toggled {
-		color: #a6192e;
-		background: #fbeef0;
-	}
-
-	.icon-btn svg {
-		width: 18px;
-		height: 18px;
-	}
-
-	/* Tooltip on hover. Icon buttons read their text from aria-label; the
-	   Bold / Italic / Underline buttons use data-tip so they can show their
-	   keyboard shortcut without polluting the accessible label. */
-	.icon-btn::after,
-	.fmt-btn[data-tip]::after {
+	/*
+	 * Hover tooltip — the ONLY thing kept as scoped CSS in this file. A
+	 * pseudo-element whose text comes from `content: attr(...)` can't be a
+	 * Tailwind utility: Tailwind's `content` support routes through a
+	 * `--tw-content` custom property (initial value ""), which wins over the
+	 * arbitrary `attr()` and leaves the tooltip empty. `.tb-tip` reads
+	 * aria-label (icon buttons); `.tb-tip-data` reads data-tip (B/I/U/color).
+	 * Everything else in the toolbar is Tailwind. The host buttons are already
+	 * `relative` via ICON_BTN / FMT_BTN, so the absolute tip anchors to them.
+	 */
+	.tb-tip::after,
+	.tb-tip-data::after {
 		position: absolute;
 		top: calc(100% + 7px);
 		left: 50%;
 		transform: translateX(-50%);
 		background: #373a36;
 		color: #fff;
-		/* Explicit font so every tooltip matches regardless of host element —
-		   a <button> uses the UA control font while a <label> inherits the
-		   toolbar font, which otherwise makes the text-color tooltip differ. */
 		font-family: system-ui, -apple-system, sans-serif;
 		font-size: 0.72rem;
 		font-weight: 500;
@@ -583,318 +613,15 @@
 		opacity: 0;
 		transition: opacity 0.12s ease;
 	}
-	.icon-btn::after {
+	.tb-tip::after {
 		content: attr(aria-label);
 	}
-	.fmt-btn[data-tip]::after {
+	.tb-tip-data::after {
 		content: attr(data-tip);
 	}
-
-	.icon-btn:hover::after,
-	.fmt-btn[data-tip]:hover::after {
+	.tb-tip:hover::after,
+	.tb-tip-data:hover::after {
 		opacity: 1;
 		transition-delay: 0.45s;
-	}
-
-	/* Dropdown triggers (zoom / font / size). */
-	.tb-menu {
-		position: relative;
-	}
-
-	.text-trigger {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		height: 30px;
-		padding: 0 8px;
-		font-size: 0.82rem;
-		color: #4a4c48;
-		background: transparent;
-		border: 1px solid #e3e0d6;
-		border-radius: 6px;
-		cursor: pointer;
-		font-family: inherit;
-		min-width: 64px;
-		transition:
-			border-color 0.12s ease,
-			background 0.12s ease,
-			color 0.12s ease;
-	}
-
-	.text-trigger.wide {
-		min-width: 104px;
-	}
-
-	.text-trigger:hover {
-		background: #efece6;
-		color: #1f201d;
-	}
-
-	.text-trigger.active {
-		border-color: #a6192e;
-		color: #76232f;
-		background: #fff;
-	}
-
-	.chev {
-		display: inline-flex;
-		width: 12px;
-		height: 12px;
-		color: #8a8b83;
-	}
-	.chev svg {
-		width: 12px;
-		height: 12px;
-	}
-
-	/* Editable number combo (zoom % / font size): a typed input + a chevron
-	   button that opens the preset menu. Styled like .text-trigger so it sits
-	   consistently in the toolbar; the whole box lights up on focus / when its
-	   menu is open. */
-	.num-combo {
-		display: inline-flex;
-		align-items: center;
-		height: 30px;
-		padding: 0 2px 0 8px;
-		background: transparent;
-		border: 1px solid #e3e0d6;
-		border-radius: 6px;
-		min-width: 64px;
-		transition:
-			border-color 0.12s ease,
-			background 0.12s ease;
-	}
-	.num-combo.size-combo {
-		min-width: 56px;
-	}
-	.num-combo:hover {
-		background: #efece6;
-	}
-	.num-combo:focus-within,
-	.num-combo.active {
-		border-color: #a6192e;
-		background: #fff;
-	}
-
-	.num-input {
-		flex: 1;
-		width: 0;
-		min-width: 26px;
-		border: none;
-		background: transparent;
-		font-family: inherit;
-		font-size: 0.82rem;
-		color: #4a4c48;
-		padding: 0;
-		text-align: right;
-		outline: none;
-		/* Hide the number spinners (only matters if type ever becomes number). */
-		appearance: textfield;
-		-moz-appearance: textfield;
-	}
-	.num-input::-webkit-outer-spin-button,
-	.num-input::-webkit-inner-spin-button {
-		appearance: none;
-		margin: 0;
-	}
-	.num-combo:focus-within .num-input {
-		color: #1f201d;
-	}
-
-	.num-suffix {
-		font-size: 0.82rem;
-		color: #8a8b83;
-		margin: 0 1px 0 2px;
-		pointer-events: none;
-	}
-
-	.num-chev {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 16px;
-		height: 100%;
-		padding: 0;
-		background: transparent;
-		border: none;
-		color: #8a8b83;
-		cursor: pointer;
-	}
-	.num-chev:hover {
-		color: #4a4c48;
-	}
-	.num-chev svg {
-		width: 12px;
-		height: 12px;
-	}
-
-	.grow {
-		flex: 1;
-		text-align: left;
-	}
-	.ellipsis {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	.tabular {
-		font-variant-numeric: tabular-nums;
-	}
-
-	/* Bold / Italic / Underline / Color buttons. */
-	.fmt-btn {
-		position: relative;
-		width: 32px;
-		height: 32px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		background: transparent;
-		border: 1px solid transparent;
-		border-radius: 6px;
-		color: #4a4c48;
-		cursor: pointer;
-		padding: 0;
-		transition:
-			background 0.12s ease,
-			color 0.12s ease;
-	}
-
-	.fmt-btn:hover {
-		background: #efece6;
-		color: #1f201d;
-	}
-
-	.fmt-btn.toggled {
-		color: #a6192e;
-		background: #fbeef0;
-	}
-
-	.fmt {
-		font-size: 0.95rem;
-		font-weight: 700;
-		line-height: 1;
-	}
-	.fmt.i {
-		font-style: italic;
-		font-weight: 600;
-		font-family: Georgia, serif;
-	}
-	.fmt.u {
-		text-decoration: underline;
-		font-weight: 600;
-	}
-
-	/* Text-color button: "A" with a colour bar under it + hidden native picker. */
-	.color-btn {
-		flex-direction: column;
-		gap: 1px;
-	}
-	.color-btn .fmt {
-		font-size: 0.9rem;
-	}
-	.color-bar {
-		width: 16px;
-		height: 3px;
-		border-radius: 1px;
-	}
-	.color-btn input[type='color'] {
-		position: absolute;
-		inset: 0;
-		opacity: 0;
-		width: 100%;
-		height: 100%;
-		cursor: pointer;
-		border: none;
-		padding: 0;
-	}
-
-	/* Shared dropdown panel. */
-	.dropdown {
-		position: absolute;
-		top: calc(100% + 6px);
-		left: 0;
-		min-width: 180px;
-		background: #ffffff;
-		border: 1px solid #ebe5d8;
-		border-radius: 10px;
-		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
-		padding: 6px;
-		z-index: 100;
-		display: flex;
-		flex-direction: column;
-		gap: 1px;
-		max-height: 320px;
-		overflow-y: auto;
-	}
-	.dropdown.narrow {
-		min-width: 120px;
-	}
-
-	.section-label {
-		font-size: 0.66rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
-		color: #8a8b83;
-		padding: 6px 12px 4px;
-	}
-
-	.menu-item {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		background: transparent;
-		border: none;
-		color: #373a36;
-		font-family: inherit;
-		font-size: 0.86rem;
-		padding: 7px 12px;
-		text-align: left;
-		cursor: pointer;
-		border-radius: 6px;
-		width: 100%;
-		transition:
-			background 0.1s ease,
-			color 0.1s ease;
-	}
-
-	.menu-item:hover,
-	.menu-item.checked {
-		background: #fbeef0;
-		color: #76232f;
-	}
-
-	.check {
-		width: 16px;
-		height: 16px;
-		flex-shrink: 0;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		color: #76232f;
-	}
-	.check svg {
-		width: 14px;
-		height: 14px;
-	}
-
-	.leading-icon {
-		width: 16px;
-		height: 16px;
-		flex-shrink: 0;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		color: #5a5c58;
-	}
-	.leading-icon svg {
-		width: 15px;
-		height: 15px;
-	}
-
-	.divider {
-		height: 1px;
-		background: #e8e5de;
-		margin: 4px 4px;
 	}
 </style>

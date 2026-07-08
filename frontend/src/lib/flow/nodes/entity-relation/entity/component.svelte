@@ -64,6 +64,16 @@
 			.join('; ')
 	);
 
+	// Per-key badge colours — mirror the FieldsPanel palette 1:1 (was the
+	// `.badge[data-key='…']` attribute selectors). Keyed lookup keeps the
+	// markup to one class binding instead of four data-attribute rules.
+	const BADGE_CLASS: Record<string, string> = {
+		PK: 'bg-[#fae9c8] text-[#854f0b]',
+		FK: 'bg-[#dce9fa] text-[#1e4380]',
+		PI: 'bg-[#c8eae0] text-[#0b6354]',
+		WPI: 'bg-[#e3d8fa] text-[#5a3fb0]'
+	};
+
 	// ─── Double-click to edit (title + each field), like connection labels ──
 	// At rest every input is read-only and ignores the pointer, so a single click
 	// just selects the node. `editingKey` marks which one (`'title'` or
@@ -136,23 +146,25 @@
 </script>
 
 <!--
-    Two-layer structure (matches the basic-shape pattern in
-    ../../ShapeNode.svelte):
-      .entity-root  → unclipped wrapper; absolute-positioned children
-                      (handles, resizer) anchor to its edges and aren't sliced.
-      .entity-card  → the visible card; owns overflow:hidden so the header
-                      bar respects the rounded corners and the field rows
-                      don't escape the border.
-    Handles + NodeResizer are SIBLINGS of .entity-card so they render after
-    it in DOM (= painted on top, fully visible) and aren't clipped by
-    .entity-card's overflow:hidden.
+	Two-layer structure (matches ../../ShapeNode.svelte):
+	  root  → group + relative positioning wrapper; handles/resizer anchor to
+	          its edges and aren't clipped. `group` + `active` class drive the
+	          hover / selected reveal below.
+	  card  → the visible card; owns overflow-hidden so header + rows respect
+	          the rounded corners. The `entity-card` class is a cross-component
+	          DOM hook (ConnectionEdge's snap-target rule shadows it) — keep it.
 -->
-<div class="entity-root" class:active={selected}>
-	<div class="entity-card" style={cardStyle}>
+<div class="group relative h-full w-full min-w-[180px] min-h-[80px]" class:active={selected}>
+	<div
+		class="entity-card flex h-full w-full flex-col overflow-hidden rounded-[4px] border
+			border-[#373a36] bg-white font-sans shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow
+			duration-150 group-hover:shadow-[0_4px_12px_rgba(166,25,46,0.15)]
+			group-[.active]:shadow-[0_4px_12px_rgba(166,25,46,0.15)]"
+		style={cardStyle}
+	>
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<header
-			class="entity-header"
-			class:editing={editingKey === 'title'}
+			class="border-b border-[#373a36] px-3 py-2 text-center select-none"
 			style={headerStyle}
 			ondblclick={(e) => {
 				e.stopPropagation();
@@ -160,8 +172,11 @@
 			}}
 		>
 			<input
-				class="entity-title nodrag"
-				class:editing={editingKey === 'title'}
+				class="nodrag w-full border-none bg-transparent p-0 text-center text-[13px] font-medium
+					text-ink outline-none placeholder:text-[rgba(44,44,42,0.45)]
+					{editingKey === 'title'
+					? 'pointer-events-auto cursor-text select-text'
+					: 'pointer-events-none cursor-[inherit]'}"
 				type="text"
 				value={entity.label ?? ''}
 				spellcheck="false"
@@ -174,27 +189,34 @@
 			/>
 		</header>
 
-		<ul class="entity-fields">
+		<ul class="m-0 flex list-none flex-col p-0 select-none">
 			{#each entity.fields as field, index}
 				{@const key = resolveFieldKey(field)}
 				{@const editKey = `field:${index}`}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<li
-					class="entity-field"
-					class:pk-row={key === 'PK'}
+					class="flex items-center border-t-[0.5px] border-line px-3 py-2
+						first:border-t first:border-[#373a36]"
 					ondblclick={(e) => {
 						e.stopPropagation();
 						startEdit(editKey);
 					}}
 				>
-					<span class="badge-cell">
+					<span class="mr-2 inline-flex min-w-[36px] flex-shrink-0 items-center gap-1">
 						{#if key}
-							<span class="badge" data-key={key}>{key}</span>
+							<span
+								class="{BADGE_CLASS[key] ??
+									''} inline-block rounded-[2px] px-[5px] py-px text-[10px] font-semibold leading-[1.4]"
+								>{key}</span
+							>
 						{/if}
 					</span>
 					<input
-						class="field-name nodrag"
-						class:editing={editingKey === editKey}
+						class="nodrag min-w-0 flex-1 border-none bg-transparent p-0 text-[12px] text-ink-soft
+							outline-none {key === 'PK' ? 'font-medium' : ''}
+							{editingKey === editKey
+							? 'pointer-events-auto cursor-text select-text'
+							: 'pointer-events-none cursor-[inherit]'}"
 						type="text"
 						value={field.name}
 						spellcheck="false"
@@ -209,7 +231,10 @@
                          toggle — "physical" mode shows it, "conceptual" hides
                          it even if a type was previously set. -->
 					{#if entity.showDataTypes && field.type}
-						<span class="field-type">{field.type.toUpperCase()}</span>
+						<span
+							class="ml-2 flex-shrink-0 text-right text-[11px] tracking-[0.02em] text-[#888] uppercase"
+							>{field.type.toUpperCase()}</span
+						>
 					{/if}
 				</li>
 			{/each}
@@ -224,207 +249,44 @@
 		lineClass="entity-resize-line"
 	/>
 
-	<Handle type="source" position={Position.Top} id="top" class="entity-handle" />
-	<Handle type="source" position={Position.Right} id="right" class="entity-handle" />
-	<Handle type="source" position={Position.Bottom} id="bottom" class="entity-handle" />
-	<Handle type="source" position={Position.Left} id="left" class="entity-handle" />
+	<!--
+		The four cardinal handles. Size/paint stays in :global CSS below (it must
+		out-specify xyflow's own `.svelte-flow__handle`), but the hover/selected
+		REVEAL is Tailwind here, driven by the root's `group` + `active` class.
+	-->
+	{#each [Position.Top, Position.Right, Position.Bottom, Position.Left] as pos (pos)}
+		<Handle
+			type="source"
+			position={pos}
+			id={pos}
+			class="entity-handle pointer-events-none opacity-0 transition-opacity duration-[120ms]
+				group-hover:pointer-events-auto group-hover:opacity-100
+				group-[.active]:pointer-events-auto group-[.active]:opacity-100"
+		/>
+	{/each}
 </div>
 
 <style>
-	/* Positioning wrapper. Sits flush with the xyflow bounding box so
-       handles + resizer anchor exactly on the visible card's edge. No
-       overflow rules here — children that extend past the edge (the
-       half-outside handles) stay visible. */
-	.entity-root {
-		position: relative;
-		width: 100%;
-		height: 100%;
-		min-width: 180px;
-		min-height: 80px;
-	}
+	/*
+	 * Only xyflow-DOM overrides remain here — they reach the library's own
+	 * `.svelte-flow__handle` / `.svelte-flow__resize-control` elements via
+	 * :global and must out-specify its built-in sizes, so they can't be
+	 * utility classes. Everything else (card, header, rows, badges, reveal)
+	 * is now Tailwind in the template above.
+	 */
 
-	/* The visible card itself. Kept in NORMAL flow (not position:absolute)
-       so its intrinsic content height — header + however many field rows —
-       drives the wrapper's height when no explicit size is set. This is
-       what makes a freshly-dropped entity show all default fields without
-       having to be manually resized. */
-	.entity-card {
-		width: 100%;
-		height: 100%;
-		box-sizing: border-box;
-		background: #ffffff;
-		border: 1px solid #373a36;
-		border-radius: 4px;
-		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-		display: flex;
-		flex-direction: column;
-		font-family:
-			'Inter',
-			system-ui,
-			-apple-system,
-			sans-serif;
-		overflow: hidden;
-		transition: box-shadow 0.15s ease;
-	}
-
-	.entity-root:hover .entity-card,
-	.entity-root.active .entity-card {
-		box-shadow: 0 4px 12px rgba(166, 25, 46, 0.15);
-	}
-
-	.entity-header {
-		background: #ffffff;
-		padding: 8px 12px;
-		border-bottom: 1px solid #373a36;
-		text-align: center;
-		/* Block the double-click word-select default from creating a stuck
-		   DOCUMENT selection over the input (see .node-text in ShapeNode). */
-		-webkit-user-select: none;
-		user-select: none;
-	}
-
-	.entity-title {
-		width: 100%;
-		background: transparent;
-		border: none;
-		outline: none;
-		color: #2c2c2a;
-		font-weight: 500;
-		font-size: 13px;
-		text-align: center;
-		padding: 0;
-		font-family: inherit;
-		/* Read-only at rest: a single click selects the node instead of focusing
-		   the field. Double-click on the row flips `editing` (below). */
-		pointer-events: none;
-		cursor: inherit;
-	}
-
-	.entity-title.editing,
-	.field-name.editing {
-		pointer-events: auto;
-		cursor: text;
-		-webkit-user-select: text;
-		user-select: text;
-	}
-
-	.entity-title::placeholder {
-		color: rgba(44, 44, 42, 0.45);
-	}
-
-	.entity-fields {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		/* Same double-click document-selection guard as .entity-header. */
-		-webkit-user-select: none;
-		user-select: none;
-	}
-
-	.entity-field {
-		display: flex;
-		align-items: center;
-		padding: 8px 12px;
-		border-top: 0.5px solid #d6d2c4;
-	}
-
-	.entity-field:first-child {
-		border-top: 1px solid #373a36;
-	}
-
-	.badge-cell {
-		min-width: 36px;
-		margin-right: 8px;
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		flex-shrink: 0;
-	}
-
-	.badge {
-		padding: 1px 5px;
-		border-radius: 2px;
-		font-size: 10px;
-		font-weight: 600;
-		line-height: 1.4;
-		font-family: inherit;
-	}
-
-	/* Per-key colours mirror the FieldsPanel palette so the badge on the
-       canvas matches the dropdown selection 1:1. */
-	.badge[data-key='PK'] {
-		background: #fae9c8;
-		color: #854f0b;
-	}
-	.badge[data-key='FK'] {
-		background: #dce9fa;
-		color: #1e4380;
-	}
-	.badge[data-key='PI'] {
-		background: #c8eae0;
-		color: #0b6354;
-	}
-	.badge[data-key='WPI'] {
-		background: #e3d8fa;
-		color: #5a3fb0;
-	}
-
-	.field-name {
-		flex: 1;
-		min-width: 0;
-		background: transparent;
-		border: none;
-		outline: none;
-		color: #373a36;
-		font-size: 12px;
-		font-family: inherit;
-		padding: 0;
-		/* Read-only at rest (see .entity-title). */
-		pointer-events: none;
-		cursor: inherit;
-	}
-
-	.pk-row .field-name {
-		font-weight: 500;
-	}
-
-	.field-type {
-		margin-left: 8px;
-		font-size: 11px;
-		color: #888;
-		font-family: inherit;
-		text-transform: uppercase;
-		letter-spacing: 0.02em;
-		flex-shrink: 0;
-		text-align: right;
-	}
-
-	/* Cardinal connection handles — invisible until hover/select. Matches the
-	   basic shapes' `.shape-conn` (10px white dot, red ring). The two-class
-	   selector out-specifies xyflow's `.svelte-flow__handle` (6px) so the size
-	   actually applies. */
+	/* Cardinal connection handle — 10px white dot, red ring (the reveal
+	   opacity/pointer-events live on the element as utilities). */
 	:global(.svelte-flow__handle.entity-handle) {
 		width: 10px;
 		height: 10px;
 		background: #ffffff;
 		border: 1.5px solid #a6192e;
 		border-radius: 50%;
-		opacity: 0;
-		transition: opacity 0.12s ease;
-		pointer-events: none;
 	}
 
-	.entity-root:hover :global(.entity-handle),
-	.entity-root.active :global(.entity-handle) {
-		opacity: 1;
-		pointer-events: all;
-	}
-
-	/* NodeResizer corner anchors — matches the basic shapes' `.shape-resize-anchor`
-	   (15px white square, red ring, soft shadow). The three-class selector
-	   out-specifies xyflow's `.svelte-flow__resize-control.handle` (5px). */
+	/* NodeResizer corner anchors — 15px white square, red ring, soft shadow.
+	   The three-class selector out-specifies xyflow's `.handle` (5px). */
 	:global(.svelte-flow__resize-control.handle.entity-resize-anchor) {
 		width: 15px;
 		height: 15px;

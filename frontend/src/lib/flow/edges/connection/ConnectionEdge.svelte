@@ -1079,7 +1079,7 @@
 		stroke-linecap="round"
 		stroke-linejoin="round"
 		pointer-events="none"
-		class="connection-path"
+		class="transition-[stroke,stroke-width] duration-[120ms]"
 		marker-start={markerStart !== 'none' ? `url(#cm-s-${id})` : undefined}
 		marker-end={markerEnd !== 'none' ? `url(#cm-e-${id})` : undefined}
 		stroke-dasharray={dashArray}
@@ -1165,8 +1165,9 @@
 		{@const p = pointAtT(lab.t)}
 		<EdgeLabel x={p.x} y={p.y} transparent class="conn-label-host">
 			<div
-				class="conn-label conn-label--committed nodrag nopan"
-				class:conn-label--selected={selected}
+				class="nodrag nopan cursor-text rounded-[2px] px-1.5 py-0.5 text-[13px] font-semibold
+					leading-[1.25] whitespace-nowrap text-[#1f1d1a] select-none
+					{selected ? 'bg-[#b3d4f5]' : 'bg-white'}"
 				role="button"
 				tabindex="-1"
 				aria-label="Connection label, double-click to edit"
@@ -1184,7 +1185,9 @@
 	{@const p = pointAtT(editingT)}
 	<EdgeLabel x={p.x} y={p.y} transparent class="conn-label-host">
 		<div
-			class="conn-label conn-label--editing nodrag nopan nowheel"
+			class="nodrag nopan nowheel min-w-1.5 cursor-text rounded-[2px] bg-[#b3d4f5] px-1.5 py-0.5
+				text-[13px] font-semibold leading-[1.25] whitespace-nowrap text-[#1f1d1a] outline-none
+				select-text [caret-color:#1f1d1a]"
 			role="textbox"
 			tabindex="0"
 			aria-label="Edit connection label"
@@ -1202,11 +1205,12 @@
 {/if}
 
 <style>
-	.connection-path {
-		transition:
-			stroke 0.12s ease,
-			stroke-width 0.12s ease;
-	}
+	/*
+	 * Only :global rules remain — they reach xyflow's DOM (snap-target node
+	 * wrapper), the <body> drag class, and the portaled label host, none of
+	 * which are elements this component renders directly. The line's transition
+	 * and the label chips are now Tailwind utilities in the template above.
+	 */
 
 	/* While an endpoint is being dragged, force the move cursor everywhere so it
 	   never flickers back to the arrow over the pane / a node. Toggled by
@@ -1235,43 +1239,5 @@
 	:global(.conn-label-host) {
 		padding: 0;
 		background: transparent;
-	}
-
-	/* Shared label chip. Always horizontal, single line, centred on the edge. */
-	.conn-label {
-		font-family: inherit;
-		font-size: 13px;
-		font-weight: 600;
-		line-height: 1.25;
-		white-space: nowrap;
-		color: #1f1d1a;
-		padding: 2px 6px;
-		border-radius: 2px;
-	}
-
-	/* Committed: opaque white background masks the line behind it → clean gap. */
-	.conn-label--committed {
-		background: #ffffff;
-		cursor: text;
-		user-select: none;
-	}
-
-	/* While the edge is selected the label is the toolbar's style target, so it
-	   keeps the SAME blue highlight as the editing state. This makes it obvious
-	   which text the font/size/colour controls affect, and means the highlight
-	   doesn't disappear when the editor blurs as you reach for a toolbar control
-	   (the edge stays selected). */
-	.conn-label--committed.conn-label--selected {
-		background: #b3d4f5;
-	}
-
-	/* Editing: light selection-blue highlight, blinking caret, no border. */
-	.conn-label--editing {
-		background: #b3d4f5;
-		cursor: text;
-		outline: none;
-		min-width: 6px;
-		caret-color: #1f1d1a;
-		user-select: text;
 	}
 </style>

@@ -87,7 +87,8 @@
 		aria-hidden={sidebarState.isCollapsed}
 	>
 		<div
-			class="flex h-9 items-center rounded-lg border border-line bg-white px-2.5 focus-within:border-mq-red"
+			class="flex h-9 items-center rounded-lg border border-line bg-white px-2.5
+				focus-within:border-mq-red"
 		>
 			<svg
 				viewBox="0 0 24 24"
@@ -102,7 +103,8 @@
 				<line x1="20" y1="20" x2="16.5" y2="16.5" />
 			</svg>
 			<input
-				class="min-w-0 flex-1 appearance-none border-none bg-transparent px-2 text-[0.9rem] text-ink-soft outline-none placeholder:text-ink-muted"
+				class="min-w-0 flex-1 appearance-none border-none bg-transparent px-2 text-[0.9rem]
+					text-ink-soft outline-none placeholder:text-ink-muted"
 				bind:value={searchBar}
 				placeholder="Search shapes"
 			/>

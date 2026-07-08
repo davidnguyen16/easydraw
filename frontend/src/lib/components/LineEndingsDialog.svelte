@@ -84,7 +84,8 @@
 	}}
 >
 	<div
-		class="flex max-h-[calc(100vh-64px)] w-[640px] max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_60px_rgba(0,0,0,0.25)]"
+		class="flex max-h-[calc(100vh-64px)] w-[640px] max-w-[calc(100vw-48px)] flex-col overflow-hidden
+			rounded-xl bg-white shadow-[0_24px_60px_rgba(0,0,0,0.25)]"
 		role="dialog"
 		aria-modal="true"
 		aria-label="Line endings"
@@ -93,7 +94,8 @@
 			<h2 class="m-0 text-[1.15rem] font-semibold text-ink">Line endings</h2>
 			<button
 				type="button"
-				class="inline-flex cursor-pointer rounded-md p-1 text-ink-soft hover:bg-surface-hover hover:text-ink"
+				class="inline-flex cursor-pointer rounded-md p-1 text-ink-soft hover:bg-surface-hover
+					hover:text-ink"
 				aria-label="Close"
 				onclick={onClose}
 			>
@@ -123,7 +125,8 @@
 			<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 				<button
 					type="button"
-					class="flex shrink-0 cursor-pointer items-center gap-3 border-b border-line-soft px-5 py-3.5 text-[0.92rem] text-ink"
+					class="flex shrink-0 cursor-pointer items-center gap-3 border-b border-line-soft px-5 py-3.5
+						text-[0.92rem] text-ink"
 					onclick={toggleAll}
 				>
 					{@render checkbox(allChecked, someChecked && !allChecked)}
@@ -151,7 +154,8 @@
 		>
 			<button
 				type="button"
-				class="inline-flex size-9 cursor-pointer items-center justify-center rounded-full border border-line bg-white text-ink-soft hover:bg-panel"
+				class="inline-flex size-9 cursor-pointer items-center justify-center rounded-full border
+					border-line bg-white text-ink-soft hover:bg-panel"
 				aria-label="Scroll list down"
 				onclick={scrollDown}
 			>
@@ -160,14 +164,16 @@
 			<div class="absolute right-5 flex gap-2.5">
 				<button
 					type="button"
-					class="cursor-pointer rounded-lg border border-line bg-white px-[18px] py-[9px] text-[0.88rem] text-ink-soft hover:bg-panel"
+					class="cursor-pointer rounded-lg border border-line bg-white px-[18px] py-[9px]
+						text-[0.88rem] text-ink-soft hover:bg-panel"
 					onclick={onClose}
 				>
 					Cancel
 				</button>
 				<button
 					type="button"
-					class="cursor-pointer rounded-lg border border-mq-red bg-mq-red px-5 py-[9px] text-[0.88rem] font-semibold text-white hover:bg-mq-red-hover"
+					class="cursor-pointer rounded-lg border border-mq-red bg-mq-red px-5 py-[9px]
+						text-[0.88rem] font-semibold text-white hover:bg-mq-red-hover"
 					onclick={apply}
 				>
 					Apply

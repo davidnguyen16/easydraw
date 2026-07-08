@@ -133,13 +133,21 @@
 				? structuredClone(serializable)
 				: (JSON.parse(JSON.stringify(serializable)) as Node[]);
 
-		return cloned.map((n) => ({
-			...n,
-			data: {
-				...n.data,
-				onEdit: (newData: any) => updateNodeData(n.id, newData)
-			}
-		})) as Node[];
+		return cloned.map((n) => {
+			// Per-node lock lives in data.locked (so it persists), but the
+			// interactivity flags that enforce it (draggable/connectable/
+			// deletable) are node props, not data — re-derive them on hydrate so
+			// a locked node stays locked after reload / page switch.
+			const locked = !!(n.data as any)?.locked;
+			return {
+				...n,
+				...(locked ? { draggable: false, connectable: false, deletable: false } : {}),
+				data: {
+					...n.data,
+					onEdit: (newData: any) => updateNodeData(n.id, newData)
+				}
+			};
+		}) as Node[];
 	};
 
 	// Creates a stable signature for dirty-checking canvas graph state.
@@ -299,6 +307,15 @@
 	const handleContextMenu: NodeEventWithPointer<MouseEvent> = ({ event, node }) => {
 		// Prevent native context menu from showing
 		event.preventDefault();
+
+		// Right-clicking a node that isn't already part of the selection makes
+		// it the selection, so the menu's (selection-based) actions target it.
+		// A right-click inside an existing multi-selection keeps that selection.
+		const target = nodes.find((n) => n.id === node.id);
+		if (target && !target.selected) {
+			nodes = nodes.map((n) => ({ ...n, selected: n.id === node.id }));
+			edges = edges.map((e) => ({ ...e, selected: false }));
+		}
 
 		// Calculate position of the context menu. We want to make sure it
 		// doesn't get positioned off-screen.
@@ -537,7 +554,9 @@
 		const hasSelectedEdges = edges.some((e) => e.selected);
 		if (!hasSelectedNodes && !hasSelectedEdges) return;
 
-		if (hasSelectedNodes) nodes = nodes.filter((n) => !n.selected);
+		// Locked nodes are protected: a select-all + delete leaves them behind.
+		if (hasSelectedNodes)
+			nodes = nodes.filter((n) => !n.selected || (n.data as any)?.locked);
 		if (hasSelectedEdges) edges = edges.filter((e) => !e.selected);
 	}
 
@@ -641,6 +660,49 @@
 		if (selected.length === 0) return;
 		const others = nodes.filter((n) => !n.selected);
 		nodes = [...selected, ...others];
+	}
+
+	// Single-step z-order. Later in the array = rendered on top, so "forward"
+	// moves selected nodes toward the end. Walking from the front edge inward
+	// swaps each selected node past exactly one unselected neighbour without
+	// leapfrogging others in the same selection.
+	function handleBringForward() {
+		if (!nodes.some((n) => n.selected)) return;
+		const next = [...nodes];
+		for (let i = next.length - 2; i >= 0; i--) {
+			if (next[i].selected && !next[i + 1].selected) {
+				[next[i], next[i + 1]] = [next[i + 1], next[i]];
+			}
+		}
+		nodes = next;
+	}
+
+	function handleSendBackward() {
+		if (!nodes.some((n) => n.selected)) return;
+		const next = [...nodes];
+		for (let i = 1; i < next.length; i++) {
+			if (next[i].selected && !next[i - 1].selected) {
+				[next[i], next[i - 1]] = [next[i - 1], next[i]];
+			}
+		}
+		nodes = next;
+	}
+
+	// Per-node lock: freeze one node's drag / connect / delete while keeping it
+	// selectable, so it can still be right-clicked to unlock. The `locked` flag
+	// lives in data so it persists; cloneNodes re-derives the props on hydrate.
+	function handleToggleNodeLock(id: string) {
+		nodes = nodes.map((n) => {
+			if (n.id !== id) return n;
+			const locked = !(n.data as any)?.locked;
+			return {
+				...n,
+				draggable: !locked,
+				connectable: !locked,
+				deletable: !locked,
+				data: { ...n.data, locked }
+			};
+		});
 	}
 
 	// =========================================================================
@@ -785,6 +847,9 @@
 		share: handleShare,
 		bringToFront: handleBringToFront,
 		sendToBack: handleSendToBack,
+		bringForward: handleBringForward,
+		sendBackward: handleSendBackward,
+		toggleNodeLock: handleToggleNodeLock,
 		group: handleGroup,
 		ungroup: handleUngroup,
 		toggleShowGrid: handleToggleShowGrid,
@@ -1209,7 +1274,7 @@
 	};
 </script>
 
-<main class="editor-root">
+<main class="flex h-screen flex-col">
 	<MenuBar />
 	<ToolBar />
 	<input
@@ -1220,7 +1285,7 @@
 		hidden
 	/>
 	<section
-		class="canvas-shell"
+		class="canvas-shell relative min-h-0 flex-auto"
 		class:locked={editorActionsState.locked}
 		bind:clientWidth
 		bind:clientHeight
@@ -1297,18 +1362,13 @@
 </main>
 
 <style>
-	main {
-		height: 100vh;
-		display: flex;
-		flex-direction: column;
-	}
-
-	/* Canvas shell reserves all remaining height above the footer. */
-	.canvas-shell {
-		position: relative;
-		flex: 1 1 auto;
-		min-height: 0;
-	}
+	/*
+	 * The layout classes (main = flex h-screen flex-col, canvas-shell = relative
+	 * min-h-0 flex-auto) now live inline as Tailwind utilities. The rules below
+	 * stay in CSS because they reach into xyflow's own DOM via :global — there's
+	 * no element in this template to hang a utility class on. `.canvas-shell` and
+	 * `.locked` are kept purely as :global hooks for these selectors.
+	 */
 
 	/*
 	 * Lock mode: disable every interaction inside the canvas (clicks, drags,

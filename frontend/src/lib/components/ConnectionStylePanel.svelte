@@ -196,8 +196,13 @@
 	</svg>
 {/snippet}
 
-<aside class="conn-panel" aria-label="Connection style">
-	<header class="panel-head">
+<aside
+	class="absolute top-4 right-4 z-50 flex max-h-[calc(100%-32px)] w-[280px] flex-col
+		overflow-hidden rounded-xl border border-line bg-panel font-sans
+		shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
+	aria-label="Connection style"
+>
+	<header class="flex flex-shrink-0 items-center gap-2 border-b border-line px-[18px] py-[14px] text-ink-soft">
 		<svg
 			viewBox="0 0 16 16"
 			width="16"
@@ -212,68 +217,76 @@
 			<path d="M4.5,11.5 C7,9 9,7 11.5,4.5" />
 			<circle cx="13" cy="3" r="1.8" fill="currentColor" stroke="none" />
 		</svg>
-		<h2>Connection</h2>
+		<h2 class="m-0 text-[0.95rem] font-semibold">Connection</h2>
 	</header>
 
-	<div class="content">
-		<section class="group">
-			<h3 class="group-label">ENDPOINTS</h3>
-			<div class="grid-2">
-				<div class="field">
-					<span class="field-label">Start</span>
+	<div class="flex flex-col gap-5 overflow-y-auto p-[18px]">
+		<section class="flex flex-col gap-2.5">
+			<h3 class="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">ENDPOINTS</h3>
+			<div class="grid grid-cols-2 gap-2.5">
+				<div class="flex flex-col gap-1.5">
+					<span class="text-[0.78rem] text-[#6f7068]">Start</span>
 					<button
 						type="button"
-						class="dd-trigger"
+						class="dd-trigger flex w-full cursor-pointer items-center gap-2 rounded-lg border
+							border-line bg-white px-2.5 py-[9px] text-[0.85rem] text-ink-soft
+							hover:border-[#c4c1b8] focus-visible:border-mq-red focus-visible:outline-none"
 						aria-haspopup="listbox"
 						aria-expanded={openMenu === 'start'}
 						aria-label="Start endpoint"
 						onclick={(e) => toggleMenu('start', e)}
 					>
 						<MarkerPreview kind={markerStart} end="start" />
-						<span class="chev">{@render chevron()}</span>
+						<span class="ml-auto inline-flex flex-shrink-0 text-ink-muted">{@render chevron()}</span>
 					</button>
 				</div>
-				<div class="field">
-					<span class="field-label">End</span>
+				<div class="flex flex-col gap-1.5">
+					<span class="text-[0.78rem] text-[#6f7068]">End</span>
 					<button
 						type="button"
-						class="dd-trigger"
+						class="dd-trigger flex w-full cursor-pointer items-center gap-2 rounded-lg border
+							border-line bg-white px-2.5 py-[9px] text-[0.85rem] text-ink-soft
+							hover:border-[#c4c1b8] focus-visible:border-mq-red focus-visible:outline-none"
 						aria-haspopup="listbox"
 						aria-expanded={openMenu === 'end'}
 						aria-label="End endpoint"
 						onclick={(e) => toggleMenu('end', e)}
 					>
 						<MarkerPreview kind={markerEnd} end="end" />
-						<span class="chev">{@render chevron()}</span>
+						<span class="ml-auto inline-flex flex-shrink-0 text-ink-muted">{@render chevron()}</span>
 					</button>
 				</div>
 			</div>
 		</section>
 
-		<section class="group">
-			<h3 class="group-label">LINE STYLE</h3>
+		<section class="flex flex-col gap-2.5">
+			<h3 class="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">LINE STYLE</h3>
 			<button
 				type="button"
-				class="dd-trigger"
+				class="dd-trigger flex w-full cursor-pointer items-center gap-2 rounded-lg border
+					border-line bg-white px-2.5 py-[9px] text-[0.85rem] text-ink-soft hover:border-[#c4c1b8]
+					focus-visible:border-mq-red focus-visible:outline-none"
 				aria-haspopup="listbox"
 				aria-expanded={openMenu === 'line'}
 				aria-label="Line style"
 				onclick={(e) => toggleMenu('line', e)}
 			>
 				{@render linePreview(lineStyle)}
-				<span class="dd-text">{LINE_STYLES.find((s) => s.id === lineStyle)?.label}</span>
-				<span class="chev">{@render chevron()}</span>
+				<span class="flex-1 text-left">{LINE_STYLES.find((s) => s.id === lineStyle)?.label}</span>
+				<span class="ml-auto inline-flex flex-shrink-0 text-ink-muted">{@render chevron()}</span>
 			</button>
 		</section>
 
-		<section class="group">
-			<h3 class="group-label">ROUTING</h3>
-			<div class="routing-row">
+		<section class="flex flex-col gap-2.5">
+			<h3 class="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">ROUTING</h3>
+			<div class="flex gap-2.5">
 				{#each ROUTINGS as r (r.id)}
 					<button
 						type="button"
-						class="routing-btn"
-						class:active={routing === r.id}
+						class="flex flex-1 cursor-pointer items-center justify-center rounded-lg border py-2.5
+							transition-colors duration-[120ms] {routing === r.id
+							? 'border-mq-red bg-[#f7e3e4] text-mq-red'
+							: 'border-line bg-white text-[#5f5e5a] hover:border-[#c4c1b8]'}"
 						aria-pressed={routing === r.id}
 						aria-label="{r.label} routing"
 						title={r.label}
@@ -285,38 +298,54 @@
 			</div>
 		</section>
 
-		<section class="group">
-			<h3 class="group-label">LINE WIDTH</h3>
-			<div class="width-row">
-				<button type="button" aria-label="Decrease line width" onclick={() => adjustWidth(-0.5)}
-					>−</button
+		<section class="flex flex-col gap-2.5">
+			<h3 class="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">LINE WIDTH</h3>
+			<div class="flex items-stretch gap-2.5">
+				<button
+					type="button"
+					class="w-10 cursor-pointer rounded-lg border border-line bg-white text-base leading-none
+						text-ink-soft hover:border-[#c4c1b8] hover:bg-[#faf9f6]"
+					aria-label="Decrease line width"
+					onclick={() => adjustWidth(-0.5)}>−</button
 				>
-				<div class="width-value">{strokeWidth} px</div>
-				<button type="button" aria-label="Increase line width" onclick={() => adjustWidth(0.5)}
-					>+</button
+				<div
+					class="flex flex-1 items-center justify-center rounded-lg border border-line bg-white py-2.5
+						text-[0.88rem] tabular-nums text-ink-soft"
+				>
+					{strokeWidth} px
+				</div>
+				<button
+					type="button"
+					class="w-10 cursor-pointer rounded-lg border border-line bg-white text-base leading-none
+						text-ink-soft hover:border-[#c4c1b8] hover:bg-[#faf9f6]"
+					aria-label="Increase line width"
+					onclick={() => adjustWidth(0.5)}>+</button
 				>
 			</div>
 		</section>
 
-		<section class="group">
-			<h3 class="group-label">COLOR</h3>
-			<div class="color-row">
+		<section class="flex flex-col gap-2.5">
+			<h3 class="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">COLOR</h3>
+			<div class="flex items-center gap-2.5">
 				{#each SWATCHES as c (c)}
 					<button
 						type="button"
-						class="swatch"
-						class:selected={strokeColor === c}
+						class="h-7 w-7 flex-shrink-0 cursor-pointer rounded-full border-none p-0 {strokeColor === c
+							? 'shadow-[0_0_0_2px_#f5f3ef,0_0_0_4px_#76232f]'
+							: ''}"
 						style="background-color: {c};"
 						aria-label="Line colour {c}"
 						onclick={() => onDataChange({ strokeColor: c })}
 					></button>
 				{/each}
 				<label
-					class="swatch rainbow"
-					class:selected={!SWATCHES.includes(strokeColor)}
+					class="relative inline-block h-7 w-7 flex-shrink-0 cursor-pointer rounded-full
+						[background:conic-gradient(#ff4d4d,#ffb14d,#f5e04d,#5ad45a,#4dc3ff,#6a5cff,#e14dff,#ff4d4d)]
+						{!SWATCHES.includes(strokeColor) ? 'shadow-[0_0_0_2px_#f5f3ef,0_0_0_4px_#76232f]' : ''}"
 					aria-label="Custom line colour"
 				>
 					<input
+						class="absolute inset-0 h-full w-full cursor-pointer border-none p-0 opacity-0"
 						type="color"
 						value={strokeColor}
 						oninput={(e) => onDataChange({ strokeColor: e.currentTarget.value.toUpperCase() })}
@@ -325,7 +354,13 @@
 			</div>
 		</section>
 
-		<button type="button" class="delete-btn" onclick={onDelete}>
+		<button
+			type="button"
+			class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border
+				border-line bg-white py-3 text-[0.88rem] text-mq-red transition-colors duration-[120ms]
+				hover:border-mq-red hover:bg-[#fdf2f1]"
+			onclick={onDelete}
+		>
 			<Trash2 size={15} />
 			Delete connection
 		</button>
@@ -335,13 +370,21 @@
 {#if openMenu === 'start' || openMenu === 'end'}
 	{@const end = openMenu}
 	{@const current = end === 'start' ? markerStart : markerEnd}
-	<div class="dd-menu" role="listbox" aria-label="Endpoint markers" bind:this={menuEl} style={menuStyle}>
+	<div
+		class="fixed z-[120] flex flex-col gap-0.5 overflow-y-auto rounded-lg border border-line
+			bg-white p-1.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+		role="listbox"
+		aria-label="Endpoint markers"
+		bind:this={menuEl}
+		style={menuStyle}
+	>
 		<button
 			type="button"
 			role="option"
 			aria-selected={current === 'none'}
-			class="dd-option label-option"
-			class:checked={current === 'none'}
+			class="-mx-1.5 flex cursor-pointer items-center justify-center gap-2.5 border-b
+				border-[#eae7dd] bg-transparent px-2.5 py-2 text-[0.85rem] whitespace-nowrap text-ink-soft
+				{current === 'none' ? 'bg-[#f7e9ea]' : 'hover:bg-[#f3f1ea]'}"
 			onclick={() => pickMarker(end, 'none')}
 		>
 			None
@@ -351,8 +394,9 @@
 				type="button"
 				role="option"
 				aria-selected={m.id === current}
-				class="dd-option"
-				class:checked={m.id === current}
+				class="flex cursor-pointer items-center gap-2.5 rounded-md border-none bg-transparent px-2.5
+					py-[7px] text-left text-[0.85rem] whitespace-nowrap text-ink-soft
+					{m.id === current ? 'bg-[#f7e9ea]' : 'hover:bg-[#f3f1ea]'}"
 				title={m.label}
 				aria-label={m.label}
 				onclick={() => pickMarker(end, m.id)}
@@ -360,17 +404,30 @@
 				<MarkerPreview kind={m.id} {end} width={64} />
 			</button>
 		{/each}
-		<button type="button" class="dd-option label-option more" onclick={openMore}>More</button>
+		<button
+			type="button"
+			class="-mx-1.5 flex cursor-pointer items-center justify-center gap-2.5 border-t border-[#eae7dd]
+				bg-transparent px-2.5 py-2 text-[0.85rem] whitespace-nowrap text-[#5f5e5a] hover:bg-[#f3f1ea]"
+			onclick={openMore}>More</button
+		>
 	</div>
 {:else if openMenu === 'line'}
-	<div class="dd-menu" role="listbox" aria-label="Line styles" bind:this={menuEl} style={menuStyle}>
+	<div
+		class="fixed z-[120] flex flex-col gap-0.5 overflow-y-auto rounded-lg border border-line
+			bg-white p-1.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+		role="listbox"
+		aria-label="Line styles"
+		bind:this={menuEl}
+		style={menuStyle}
+	>
 		{#each LINE_STYLES as s (s.id)}
 			<button
 				type="button"
 				role="option"
 				aria-selected={s.id === lineStyle}
-				class="dd-option"
-				class:checked={s.id === lineStyle}
+				class="flex cursor-pointer items-center gap-2.5 rounded-md border-none bg-transparent px-2.5
+					py-[7px] text-left text-[0.85rem] whitespace-nowrap text-ink-soft
+					{s.id === lineStyle ? 'bg-[#f7e9ea]' : 'hover:bg-[#f3f1ea]'}"
 				onclick={() => pickLineStyle(s.id)}
 			>
 				{@render linePreview(s.id)}
@@ -383,315 +440,3 @@
 {#if moreOpen}
 	<LineEndingsDialog onClose={() => (moreOpen = false)} />
 {/if}
-
-<style>
-	/* Mirrors StylePanel's shell so node + connection panels read as one UI. */
-	.conn-panel {
-		position: absolute;
-		top: 16px;
-		right: 16px;
-		width: 280px;
-		background: #f5f3ef;
-		border: 1px solid #d6d2c4;
-		border-radius: 12px;
-		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-		z-index: 50;
-		font-family:
-			'Inter',
-			system-ui,
-			-apple-system,
-			sans-serif;
-		max-height: calc(100% - 32px);
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-	}
-
-	.panel-head {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 14px 18px;
-		border-bottom: 1px solid #d6d2c4;
-		color: #373a36;
-		flex-shrink: 0;
-	}
-
-	.panel-head h2 {
-		margin: 0;
-		font-size: 0.95rem;
-		font-weight: 600;
-	}
-
-	.content {
-		display: flex;
-		flex-direction: column;
-		gap: 20px;
-		padding: 18px;
-		overflow-y: auto;
-	}
-
-	.group {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.group-label {
-		font-size: 0.7rem;
-		letter-spacing: 0.08em;
-		font-weight: 700;
-		color: #76232f;
-		margin: 0;
-	}
-
-	.grid-2 {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 10px;
-	}
-
-	.field {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
-
-	.field-label {
-		font-size: 0.78rem;
-		color: #6f7068;
-	}
-
-	.dd-trigger {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		width: 100%;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		padding: 9px 10px;
-		cursor: pointer;
-		color: #373a36;
-		font-family: inherit;
-		font-size: 0.85rem;
-	}
-
-	.dd-trigger:hover {
-		border-color: #c4c1b8;
-	}
-
-	.dd-trigger:focus-visible {
-		outline: none;
-		border-color: #a6192e;
-	}
-
-	.dd-trigger .dd-text {
-		flex: 1;
-		text-align: left;
-	}
-
-	.dd-trigger .chev {
-		margin-left: auto;
-		display: inline-flex;
-		color: #8a8b83;
-		flex-shrink: 0;
-	}
-
-	/* Escapes .conn-panel's overflow via position:fixed (coords from trigger). */
-	.dd-menu {
-		position: fixed;
-		z-index: 120;
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		padding: 6px;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
-		overflow-y: auto;
-	}
-
-	.dd-option {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		background: transparent;
-		border: none;
-		border-radius: 6px;
-		padding: 7px 10px;
-		font-family: inherit;
-		font-size: 0.85rem;
-		color: #373a36;
-		text-align: left;
-		cursor: pointer;
-		white-space: nowrap;
-	}
-
-	.dd-option:hover {
-		background: #f3f1ea;
-	}
-
-	.dd-option.checked {
-		background: #f7e9ea;
-	}
-
-	/* "None" (pinned first) and "More" (pinned last) rows: centred text with a
-	   separator toward the marker previews between them. */
-	.dd-option.label-option {
-		justify-content: center;
-		border-bottom: 1px solid #eae7dd;
-		border-radius: 0;
-		margin: 0 -6px;
-		padding: 8px 10px;
-	}
-
-	.dd-option.label-option.more {
-		border-bottom: none;
-		border-top: 1px solid #eae7dd;
-		color: #5f5e5a;
-	}
-
-	.routing-row {
-		display: flex;
-		gap: 10px;
-	}
-
-	.routing-btn {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		padding: 10px 0;
-		cursor: pointer;
-		color: #5f5e5a;
-		transition:
-			border-color 0.12s ease,
-			background 0.12s ease,
-			color 0.12s ease;
-	}
-
-	.routing-btn:hover {
-		border-color: #c4c1b8;
-	}
-
-	.routing-btn.active {
-		border-color: #a6192e;
-		background: #f7e3e4;
-		color: #a6192e;
-	}
-
-	.width-row {
-		display: flex;
-		align-items: stretch;
-		gap: 10px;
-	}
-
-	.width-row button {
-		width: 40px;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		cursor: pointer;
-		color: #373a36;
-		font-size: 1rem;
-		line-height: 1;
-		font-family: inherit;
-	}
-
-	.width-row button:hover {
-		border-color: #c4c1b8;
-		background: #faf9f6;
-	}
-
-	.width-value {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		padding: 10px 0;
-		font-size: 0.88rem;
-		color: #373a36;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.color-row {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-	}
-
-	.swatch {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		border: none;
-		cursor: pointer;
-		padding: 0;
-		flex-shrink: 0;
-	}
-
-	.swatch.selected {
-		box-shadow:
-			0 0 0 2px #f5f3ef,
-			0 0 0 4px #76232f;
-	}
-
-	/* Custom colour: a rainbow wheel wrapping the native picker. */
-	.swatch.rainbow {
-		position: relative;
-		display: inline-block;
-		background: conic-gradient(
-			#ff4d4d,
-			#ffb14d,
-			#f5e04d,
-			#5ad45a,
-			#4dc3ff,
-			#6a5cff,
-			#e14dff,
-			#ff4d4d
-		);
-	}
-
-	.swatch.rainbow input {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		opacity: 0;
-		cursor: pointer;
-		border: none;
-		padding: 0;
-	}
-
-	.delete-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		width: 100%;
-		background: #ffffff;
-		border: 1px solid #d6d2c4;
-		border-radius: 8px;
-		padding: 12px 0;
-		font-family: inherit;
-		font-size: 0.88rem;
-		color: #a6192e;
-		cursor: pointer;
-		transition:
-			background 0.12s ease,
-			border-color 0.12s ease;
-	}
-
-	.delete-btn:hover {
-		background: #fdf2f1;
-		border-color: #a6192e;
-	}
-</style>

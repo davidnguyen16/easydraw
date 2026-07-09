@@ -304,6 +304,7 @@
 		useSvelteFlow,
 		type NodeProps
 	} from '@xyflow/svelte';
+	import { toFiniteRotation } from '$lib/flow/nodes/style-utils';
 
 	// String → Position lookup so the VARIANTS config can stay as plain JSON-y
 	// values (no enum imports inside the module script).
@@ -339,6 +340,9 @@
 	const userBorderWidth = $derived((data.borderWidth as number) ?? 1.5);
 	const rounded = $derived((data.rounded as boolean) ?? false);
 	const shadow = $derived((data.shadow as boolean) ?? false);
+	const opacity = $derived(Math.max(0, Math.min(100, Number(data.opacity ?? 100))));
+	const visualOpacity = $derived(Number.isFinite(opacity) ? opacity / 100 : 1);
+	const rotation = $derived(toFiniteRotation(data.rotation));
 
 	// Border always reflects the user's colour/width — even while selected — so
 	// StylePanel edits show live (like the entity node). Selection is indicated
@@ -386,6 +390,14 @@
 
 	const containerFilter = $derived(
 		shadow ? 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.18))' : 'none'
+	);
+	const containerStyle = $derived(
+		[
+			`filter: ${containerFilter}`,
+			`transform: rotate(${rotation}deg)`,
+			'transform-origin: center',
+			'transition: transform 120ms ease'
+		].join('; ')
 	);
 
 	function onInput(evt: Event) {
@@ -478,7 +490,7 @@
 <div
 	class="group relative flex h-full min-h-[30px] w-full items-center justify-center"
 	class:selected
-	style="filter: {containerFilter};"
+	style={containerStyle}
 	ondblclick={(e) => {
 		e.stopPropagation();
 		startEditing();
@@ -496,11 +508,13 @@
 			class="pointer-events-none absolute inset-0 h-full w-full overflow-visible
 				group-[.selected]:shadow-[0_0_0_2px_#a6192e]"
 			style={boxedStyle}
+			style:opacity={visualOpacity}
 		></div>
 	{:else if variant.kind === 'svg'}
 		<svg
 			class="pointer-events-none absolute inset-0 h-full w-full overflow-visible
 				group-[.selected]:shadow-[0_0_0_2px_#a6192e]"
+			style:opacity={visualOpacity}
 			preserveAspectRatio="none"
 			viewBox="0 0 100 100"
 			aria-hidden="true"
@@ -669,7 +683,10 @@
 		/>
 	{/if}
 
-	<div class="pointer-events-auto relative w-full px-3 py-2 select-none">
+	<div
+		class="pointer-events-auto relative w-full px-3 py-2 select-none"
+		style:opacity={visualOpacity}
+	>
 		<input
 			bind:this={inputEl}
 			type="text"

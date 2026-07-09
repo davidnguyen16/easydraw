@@ -7,6 +7,8 @@
 		borderWidth?: number;
 		rounded?: boolean;
 		shadow?: boolean;
+		opacity?: number;
+		rotation?: number;
 		textColor?: string;
 		fontFamily?: string;
 		fontSize?: number;
@@ -18,8 +20,14 @@
 </script>
 
 <script lang="ts">
+	import { RotateCcw, RotateCw } from '@lucide/svelte';
 	import type { Node } from '@xyflow/svelte';
 	import { getShape } from '$lib/flow/nodes/registry';
+	import {
+		nearestRotationEquivalent,
+		normalizeRotation,
+		toFiniteRotation
+	} from '$lib/flow/nodes/style-utils';
 	import { FONT_FAMILIES, DEFAULT_FONT_FAMILY } from '$lib/fonts';
 	import ColorField from '$lib/components/ColorField.svelte';
 
@@ -82,8 +90,10 @@
 	let fillColor = $derived(style.fillColor ?? '#FFFFFF');
 	let borderColor = $derived(style.borderColor ?? '#2C2C2A');
 	let borderWidth = $derived(style.borderWidth ?? 1);
-	let rounded = $derived(style.rounded ?? false);
 	let shadow = $derived(style.shadow ?? false);
+	let opacity = $derived(Math.max(0, Math.min(100, style.opacity ?? 100)));
+	let rotationRaw = $derived(toFiniteRotation(style.rotation));
+	let rotation = $derived(normalizeRotation(rotationRaw));
 
 	let textColor = $derived(style.textColor ?? '#2C2C2A');
 	let fontFamily = $derived(style.fontFamily ?? DEFAULT_FONT_FAMILY);
@@ -152,6 +162,68 @@
 		} else if (event.key === 'Escape') {
 			event.preventDefault();
 			borderWidthDraft = null;
+			input.blur();
+		}
+	}
+
+	const OPACITY_MIN = 0;
+	const OPACITY_MAX = 100;
+
+	function clampOpacity(value: number) {
+		return Math.max(OPACITY_MIN, Math.min(OPACITY_MAX, value));
+	}
+
+	let opacityDraft = $state<string | null>(null);
+
+	function commitOpacity() {
+		if (opacityDraft !== null) {
+			const n = parseFloat(opacityDraft);
+			if (!Number.isNaN(n)) {
+				onStyleChange({ opacity: clampOpacity(n) });
+			}
+		}
+		opacityDraft = null;
+	}
+
+	function onOpacityKeydown(event: KeyboardEvent) {
+		const input = event.currentTarget as HTMLInputElement;
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			commitOpacity();
+			input.blur();
+		} else if (event.key === 'Escape') {
+			event.preventDefault();
+			opacityDraft = null;
+			input.blur();
+		}
+	}
+
+	let rotationDraft = $state<string | null>(null);
+
+	function setRotation(next: number) {
+		rotationDraft = null;
+		onStyleChange({ rotation: toFiniteRotation(next) });
+	}
+
+	function commitRotation() {
+		if (rotationDraft !== null) {
+			const n = parseFloat(rotationDraft);
+			if (!Number.isNaN(n)) {
+				setRotation(nearestRotationEquivalent(n, rotationRaw));
+			}
+		}
+		rotationDraft = null;
+	}
+
+	function onRotationKeydown(event: KeyboardEvent) {
+		const input = event.currentTarget as HTMLInputElement;
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			commitRotation();
+			input.blur();
+		} else if (event.key === 'Escape') {
+			event.preventDefault();
+			rotationDraft = null;
 			input.blur();
 		}
 	}
@@ -409,17 +481,59 @@
 
 			<section class={GROUP}>
 				<h3 class={GROUP_LABEL}>EFFECTS</h3>
-				<div class={ROW}>
-					<span class={ROW_LABEL}>Rounded corners</span>
-					<label class={TOGGLE}>
-						<input
-							class="peer h-0 w-0 opacity-0"
-							type="checkbox"
-							checked={rounded}
-							onchange={(e) => onStyleChange({ rounded: e.currentTarget.checked })}
-						/>
-						<span class={TOGGLE_SLIDER}></span>
-					</label>
+				<div class="flex flex-col gap-2">
+					<div class={ROW}>
+						<span class={ROW_LABEL}>Opacity</span>
+						<label
+							class="inline-flex h-[30px] min-w-[58px] items-center rounded-md border border-line
+								bg-white px-2 text-[0.78rem] font-medium tabular-nums text-ink-soft
+								focus-within:border-mq-red"
+						>
+							<input
+								class="w-8 min-w-0 border-none bg-transparent p-0 text-right text-[0.78rem]
+									font-medium tabular-nums text-ink-soft outline-none [appearance:textfield]
+									[&::-webkit-inner-spin-button]:appearance-none
+									[&::-webkit-outer-spin-button]:appearance-none"
+								type="text"
+								inputmode="decimal"
+								aria-label="Opacity percentage"
+								value={opacityDraft ?? `${opacity}`}
+								oninput={(e) => (opacityDraft = e.currentTarget.value)}
+								onfocus={(e) => {
+									opacityDraft = `${opacity}`;
+									e.currentTarget.select();
+								}}
+								onblur={commitOpacity}
+								onkeydown={onOpacityKeydown}
+							/>
+							<span class="pl-0.5 text-ink-muted">%</span>
+						</label>
+					</div>
+					<input
+						type="range"
+						min="0"
+						max="100"
+						step="1"
+						value={opacity}
+						aria-label="Opacity"
+						aria-valuetext={`${opacity}%`}
+						class="h-2 w-full cursor-pointer appearance-none rounded-full bg-[#e8e5de]
+							accent-mq-red outline-none
+							[&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4
+							[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2
+							[&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-mq-red
+							[&::-moz-range-thumb]:shadow-[0_1px_3px_rgba(0,0,0,0.25)]
+							[&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4
+							[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full
+							[&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white
+							[&::-webkit-slider-thumb]:bg-mq-red
+							[&::-webkit-slider-thumb]:shadow-[0_1px_3px_rgba(0,0,0,0.25)]"
+						style={`background: linear-gradient(to right, #a6192e 0%, #a6192e ${opacity}%, #e8e5de ${opacity}%, #e8e5de 100%);`}
+						oninput={(e) => {
+							opacityDraft = null;
+							onStyleChange({ opacity: e.currentTarget.valueAsNumber });
+						}}
+					/>
 				</div>
 				<div class={ROW}>
 					<span class={ROW_LABEL}>Shadow</span>
@@ -726,6 +840,61 @@
 			</section>
 
 			<section class={GROUP}>
+				<h3 class={GROUP_LABEL}>ROTATION</h3>
+				<div class={ROW}>
+					<span class={ROW_LABEL}>Angle</span>
+					<div class="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-1 py-0.5">
+						<button
+							type="button"
+							class={STEPPER_BTN}
+							aria-label="Rotate counterclockwise 1 degree"
+							onclick={() => setRotation(rotationRaw - 1)}
+						>
+							<RotateCcw size={14} strokeWidth={2} />
+						</button>
+						<label class="flex items-center">
+							<input
+								class="w-10 min-w-0 border-none bg-transparent p-0 text-right text-[0.85rem]
+									tabular-nums text-ink-soft outline-none [appearance:textfield]
+									[&::-webkit-inner-spin-button]:appearance-none
+									[&::-webkit-outer-spin-button]:appearance-none"
+								type="text"
+								inputmode="numeric"
+								aria-label="Rotation degrees"
+								value={rotationDraft ?? `${rotation}`}
+								oninput={(e) => (rotationDraft = e.currentTarget.value)}
+								onfocus={(e) => {
+									rotationDraft = `${rotation}`;
+									e.currentTarget.select();
+								}}
+								onblur={commitRotation}
+								onkeydown={onRotationKeydown}
+							/>
+							<span class="pl-0.5 text-[0.78rem] text-ink-muted">°</span>
+						</label>
+						<button
+							type="button"
+							class={STEPPER_BTN}
+							aria-label="Rotate clockwise 1 degree"
+							onclick={() => setRotation(rotationRaw + 1)}
+						>
+							<RotateCw size={14} strokeWidth={2} />
+						</button>
+					</div>
+				</div>
+				<button
+					type="button"
+					class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md
+						border border-line bg-white p-2.5 text-[0.85rem] font-medium text-ink-soft
+						transition-colors duration-[120ms] hover:border-mq-maroon hover:text-mq-maroon"
+					onclick={() => setRotation(rotationRaw + 90)}
+				>
+					<RotateCw size={15} strokeWidth={2} />
+					Rotate 90°
+				</button>
+			</section>
+
+			<section class={GROUP}>
 				<h3 class={GROUP_LABEL}>ORDER</h3>
 				<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
 					<button type="button" class={ACTION_BTN} onclick={onBringToFront}>To front</button>
@@ -743,4 +912,3 @@
 		{/if}
 	</div>
 </aside>
-

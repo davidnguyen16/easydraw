@@ -14,8 +14,11 @@ import { derived, get, writable } from 'svelte/store';
 
 import { parseEasyDraw } from '$lib/exporters/easydraw';
 
+export type DiagramStatus = 'draft' | 'complete' | 'archived';
+
 export const editorMetaData = $state({
 	fileName: 'Untitled',
+	status: 'draft' as DiagramStatus,
 	lastSaved: Date.now()
 });
 
@@ -32,6 +35,7 @@ export interface EditorState {
 	pages: EditorPage[];
 	activePageId: string;
 	fileName?: string; // Optional: persisted file name (kept optional for backward compat)
+	status?: DiagramStatus; // Optional: persisted status (kept optional for backward compat)
 }
 
 const STORAGE_KEY = 'easydraw.editor.v1';
@@ -81,6 +85,10 @@ function isEditorState(value: unknown): value is EditorState {
 	if (state.pages.length === 0) return false;
 
 	return state.pages.some((page) => page.id === state.activePageId);
+}
+
+function isDiagramStatus(value: unknown): value is DiagramStatus {
+	return value === 'draft' || value === 'complete' || value === 'archived';
 }
 
 // Bootstraps the editor with one empty default page (no starter/demo node).
@@ -162,7 +170,8 @@ export function saveActivePageToStorage() {
 	const nextState: EditorState = {
 		pages: nextPages,
 		activePageId: activePage.id,
-		fileName: editorMetaData.fileName // Persist file name alongside pages
+		fileName: editorMetaData.fileName, // Persist file name alongside pages
+		status: editorMetaData.status
 	};
 
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
@@ -199,6 +208,7 @@ export function loadEditorStateFromJSON(rawContent: string): boolean {
 		if (parsedState.fileName) {
 			editorMetaData.fileName = parsedState.fileName;
 		}
+		editorMetaData.status = isDiagramStatus(parsedState.status) ? parsedState.status : 'draft';
 
 		return true;
 	} catch {
@@ -226,6 +236,7 @@ export function resetEditorState() {
 	savedPageSignaturesStore.set({});
 	clearAllCanvasDirtyPages();
 	editorMetaData.fileName = 'Untitled';
+	editorMetaData.status = 'draft';
 }
 
 // Serializes the current editor state for download/clipboard.
@@ -234,7 +245,8 @@ export function exportEditorStateAsJSON(): string {
 	return JSON.stringify(
 		{
 			...state,
-			fileName: editorMetaData.fileName
+			fileName: editorMetaData.fileName,
+			status: editorMetaData.status
 		},
 		null,
 		2
@@ -357,7 +369,8 @@ export function saveFullStateToStorage() {
 	const currentState = get(editorStoreSvelte);
 	const nextState: EditorState = {
 		...currentState,
-		fileName: editorMetaData.fileName
+		fileName: editorMetaData.fileName,
+		status: editorMetaData.status
 	};
 
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));

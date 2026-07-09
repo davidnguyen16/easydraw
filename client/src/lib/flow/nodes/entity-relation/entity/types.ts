@@ -79,6 +79,8 @@ export interface EntityData {
 	borderWidth?: number;
 	rounded?: boolean;
 	shadow?: boolean;
+	opacity?: number;
+	rotation?: number;
 	textColor?: string;
 	fontFamily?: string;
 	fontSize?: number;
@@ -86,6 +88,12 @@ export interface EntityData {
 	italic?: boolean;
 	underline?: boolean;
 	textAlign?: 'left' | 'center' | 'right';
+
+	/**
+	 * Weak entities share the full Entity editor/rendering stack, with only the
+	 * ERD visual convention changed: a second inner border around the card.
+	 */
+	weak?: boolean;
 
 	/**
 	 * Drag-dropped nodes are wired with this shim in Flow.svelte so the

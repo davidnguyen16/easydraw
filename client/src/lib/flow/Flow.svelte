@@ -183,7 +183,11 @@
 		zoomPercent: 100,
 		showGrid: true,
 		snapToGrid: false,
-		locked: false
+		locked: false,
+		// Present mode: hides all editor chrome (menubar/toolbar/sidebar/panels/
+		// footer) and shows just the canvas, read-only. Toggled by the menubar's
+		// Present button; Esc exits.
+		presenting: false
 	});
 
 	// In-memory clipboard for Copy / Paste. JSON-clean (no function refs).
@@ -818,6 +822,67 @@
 		editorActionsState.locked = !editorActionsState.locked;
 	}
 
+	// ─── Present mode ───────────────────────────────────────────────────
+	// Enter a clean, read-only fullscreen-ish view of the current page.
+	function handlePresent() {
+		// Clear selection so no red ring / style panel lingers over the canvas.
+		nodes = nodes.map((n) => ({ ...n, selected: false }));
+		edges = edges.map((e) => ({ ...e, selected: false }));
+		editorActionsState.presenting = true;
+		// Re-fit after the chrome is hidden (the canvas grows to fill the screen).
+		requestAnimationFrame(() => handleFitView());
+	}
+
+	function handleExitPresent() {
+		editorActionsState.presenting = false;
+	}
+
+	// Present top-bar auto-hide: the bar floats over the canvas and slides up
+	// after 2s unless the cursor is near the top edge (Lucidchart-style).
+	let presentBarVisible = $state(true);
+	const PRESENT_BAR_ZONE = 64; // px from the top that keeps/reveals the bar
+
+	$effect(() => {
+		if (!editorActionsState.presenting) return;
+
+		presentBarVisible = true;
+		let hideTimer: ReturnType<typeof setTimeout> | null = null;
+
+		const cancelHide = () => {
+			if (hideTimer) clearTimeout(hideTimer);
+			hideTimer = null;
+		};
+		const startHide = () => {
+			if (hideTimer) return; // already counting down since leaving the top
+			hideTimer = setTimeout(() => {
+				presentBarVisible = false;
+				hideTimer = null;
+			}, 2000);
+		};
+
+		const onMove = (e: MouseEvent) => {
+			if (e.clientY <= PRESENT_BAR_ZONE) {
+				presentBarVisible = true; // cursor at top → reveal + keep open
+				cancelHide();
+			} else {
+				startHide(); // cursor left the top → retract after 2s
+			}
+		};
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') handleExitPresent();
+		};
+
+		window.addEventListener('mousemove', onMove);
+		window.addEventListener('keydown', onKey);
+		startHide(); // auto-hide 2s after entering if the cursor isn't at the top
+
+		return () => {
+			cancelHide();
+			window.removeEventListener('mousemove', onMove);
+			window.removeEventListener('keydown', onKey);
+		};
+	});
+
 	// SvelteFlow viewport changes drive the live zoom % shown in the toolbar.
 	function handleViewportMove(_event: any, viewport: { zoom: number }) {
 		editorActionsState.zoomPercent = Math.round(viewport.zoom * 100);
@@ -828,6 +893,7 @@
 		state: editorActionsState,
 		history: historyState,
 		save: handleSave,
+		present: handlePresent,
 		newFile: handleNewFile,
 		open: handleOpenFile,
 		saveAs: handleSaveAs,
@@ -1275,8 +1341,67 @@
 </script>
 
 <main class="flex h-screen flex-col">
-	<MenuBar />
-	<ToolBar />
+	{#if editorActionsState.presenting}
+		<!-- Present mode: a minimal top bar floating over the canvas. It's `fixed`
+		     (out of flow) so the canvas fills the whole screen, and slides up when
+		     `presentBarVisible` is false (2s after the cursor leaves the top). -->
+		<header
+			class="fixed inset-x-0 top-0 z-50 flex h-[52px] items-center justify-between border-b
+				border-line-soft bg-white px-4 shadow-sm transition-transform duration-300 ease-out
+				{presentBarVisible ? 'translate-y-0' : '-translate-y-full'}"
+		>
+			<button
+				type="button"
+				class="inline-flex cursor-pointer items-center gap-2 rounded-md border-none bg-transparent
+					px-2 py-1.5 text-[0.95rem] text-ink-soft hover:bg-surface-hover"
+				onclick={handleExitPresent}
+			>
+				<svg
+					viewBox="0 0 24 24"
+					class="h-5 w-5"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.8"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<polyline points="15 18 9 12 15 6" />
+				</svg>
+				Back
+				<span class="text-[0.8rem] text-ink-muted">ESC</span>
+			</button>
+
+			<span class="text-[0.95rem] font-medium text-ink">
+				{editorMetaData.fileName || 'Untitled'}
+			</span>
+
+			<button
+				type="button"
+				class="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border-none
+					bg-transparent text-ink-soft hover:bg-surface-hover"
+				aria-label="Toggle grid"
+				onclick={handleToggleShowGrid}
+			>
+				<svg
+					viewBox="0 0 24 24"
+					class="h-5 w-5"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.7"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<rect x="3" y="3" width="7" height="7" rx="1" />
+					<rect x="14" y="3" width="7" height="7" rx="1" />
+					<rect x="3" y="14" width="7" height="7" rx="1" />
+					<rect x="14" y="14" width="7" height="7" rx="1" />
+				</svg>
+			</button>
+		</header>
+	{:else}
+		<MenuBar />
+		<ToolBar />
+	{/if}
 	<input
 		type="file"
 		accept=".easydraw,.json,application/xml,application/json"
@@ -1306,9 +1431,9 @@
 			onconnectend={onConnectEnd}
 			onmove={handleViewportMove}
 			snapGrid={editorActionsState.snapToGrid ? [20, 20] : undefined}
-			nodesDraggable={!editorActionsState.locked}
-			nodesConnectable={!editorActionsState.locked}
-			elementsSelectable={!editorActionsState.locked}
+			nodesDraggable={!editorActionsState.locked && !editorActionsState.presenting}
+			nodesConnectable={!editorActionsState.locked && !editorActionsState.presenting}
+			elementsSelectable={!editorActionsState.locked && !editorActionsState.presenting}
 			{nodeTypes}
 			{edgeTypes}
 			connectionMode={ConnectionMode.Loose}
@@ -1330,35 +1455,39 @@
 			{/if}
 		</SvelteFlow>
 
-		<Sidebar />
+		{#if !editorActionsState.presenting}
+			<Sidebar />
 
-		{#if selectedNode}
-			{@const activeNode = selectedNode}
-			<StylePanel
-				node={activeNode}
-				onStyleChange={handleStyleChange}
-				onPositionChange={handlePositionChange}
-				onSizeChange={handleSizeChange}
-				onBringToFront={handleBringToFront}
-				onSendToBack={handleSendToBack}
-				onDuplicate={handleDuplicate}
-				onDelete={handleDeleteSelected}
-			/>
-		{:else if selectedEdge}
-			{@const activeEdge = selectedEdge}
-			<ConnectionStylePanel
-				edge={activeEdge}
-				onDataChange={(patch) => updateEdgeData(activeEdge.id, patch)}
-				onDelete={handleDeleteSelected}
-			/>
+			{#if selectedNode}
+				{@const activeNode = selectedNode}
+				<StylePanel
+					node={activeNode}
+					onStyleChange={handleStyleChange}
+					onPositionChange={handlePositionChange}
+					onSizeChange={handleSizeChange}
+					onBringToFront={handleBringToFront}
+					onSendToBack={handleSendToBack}
+					onDuplicate={handleDuplicate}
+					onDelete={handleDeleteSelected}
+				/>
+			{:else if selectedEdge}
+				{@const activeEdge = selectedEdge}
+				<ConnectionStylePanel
+					edge={activeEdge}
+					onDataChange={(patch) => updateEdgeData(activeEdge.id, patch)}
+					onDelete={handleDeleteSelected}
+				/>
+			{/if}
 		{/if}
 	</section>
 
-	<EditorFooter
-		onSwitchPage={handleSwitchPage}
-		onCreatePage={handleCreatePage}
-		onDeletePage={handleDeletePage}
-	/>
+	{#if !editorActionsState.presenting}
+		<EditorFooter
+			onSwitchPage={handleSwitchPage}
+			onCreatePage={handleCreatePage}
+			onDeletePage={handleDeletePage}
+		/>
+	{/if}
 </main>
 
 <style>

@@ -59,6 +59,7 @@ import { terminatorShape } from './flowchart/terminator/shape';
 import { databaseShape } from './flowchart/database/shape';
 // ── entity relation ──────────────────────────────────────────────────
 import { entityShape } from './entity-relation/entity/shape';
+import { weakEntityShape } from './entity-relation/weak-entity/shape';
 // ── uml ──────────────────────────────────────────────────────────────
 import { actorShape } from './uml/actor/shape';
 import { documentShape } from './uml/document/shape';
@@ -67,7 +68,7 @@ import type { NodeCategory, NodeShape } from './types';
 // Order drives left-to-right, top-to-bottom layout within each sidebar
 // category tile grid: rectangle / rounded / ellipse / circle, then
 // diamond / parallelogram / triangle / pill, then document / cube / text.
-// (Actor lives in the UML category; Entity in ENTITY RELATION.)
+// (Actor lives in the UML category; Entity shapes in ENTITY RELATION.)
 export const SHAPES: readonly NodeShape[] = [
 	rectangleShape,
 	roundedRectangleShape,
@@ -93,6 +94,7 @@ export const SHAPES: readonly NodeShape[] = [
 	cubeShape,
 	textShape,
 	entityShape,
+	weakEntityShape,
 	arrowRightShape,
 	arrowLeftShape,
 	arrowUpShape,

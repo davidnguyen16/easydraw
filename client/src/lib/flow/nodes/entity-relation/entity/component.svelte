@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Handle, Position, NodeResizer, useSvelteFlow, type NodeProps } from '@xyflow/svelte';
+	import { toFiniteRotation } from '$lib/flow/nodes/style-utils';
 	import { resolveFieldKey, type EntityData } from './types';
 
 	let { id, data, selected }: NodeProps = $props();
@@ -27,15 +28,35 @@
 	// Style overrides from StylePanel. Anything left undefined keeps the
 	// entity's built-in defaults (white card, white header, dark title).
 	// fillColor is intentionally scoped to the header only.
+	const opacity = $derived(Math.max(0, Math.min(100, Number(entity.opacity ?? 100))));
+	const visualOpacity = $derived(Number.isFinite(opacity) ? opacity / 100 : 1);
+	const borderColor = $derived(entity.borderColor ?? '#373a36');
+	const borderWidth = $derived(entity.borderWidth ?? 1);
+	const cardRadius = $derived(entity.rounded === false ? '0' : '4px');
+	const rotation = $derived(toFiniteRotation(entity.rotation));
+
 	const cardStyle = $derived(
 		[
 			entity.borderColor ? `border-color: ${entity.borderColor}` : '',
 			entity.borderWidth !== undefined ? `border-width: ${entity.borderWidth}px` : '',
 			entity.rounded !== undefined ? `border-radius: ${entity.rounded ? '4px' : '0'}` : '',
-			entity.shadow ? 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)' : ''
+			entity.shadow ? 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)' : '',
+			`opacity: ${visualOpacity}`,
+			`transform: rotate(${rotation}deg)`,
+			'transform-origin: center',
+			'transition: transform 120ms ease, box-shadow 150ms ease'
 		]
 			.filter(Boolean)
 			.join('; ')
+	);
+
+	const weakInnerBorderStyle = $derived(
+		[
+			`inset: ${Math.max(3, borderWidth + 2)}px`,
+			`border-color: ${borderColor}`,
+			`border-width: ${borderWidth}px`,
+			`border-radius: ${cardRadius === '0' ? '0' : '2px'}`
+		].join('; ')
 	);
 
 	const headerStyle = $derived(entity.fillColor ? `background-color: ${entity.fillColor}` : '');
@@ -156,12 +177,20 @@
 -->
 <div class="group relative h-full w-full min-w-[180px] min-h-[80px]" class:active={selected}>
 	<div
-		class="entity-card flex h-full w-full flex-col overflow-hidden rounded-[4px] border
+		class="entity-card relative flex h-full w-full flex-col overflow-hidden rounded-[4px] border
 			border-[#373a36] bg-white font-sans shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow
 			duration-150 group-hover:shadow-[0_4px_12px_rgba(166,25,46,0.15)]
 			group-[.active]:shadow-[0_4px_12px_rgba(166,25,46,0.15)]"
 		style={cardStyle}
 	>
+		{#if entity.weak}
+			<span
+				class="pointer-events-none absolute z-10 border"
+				style={weakInnerBorderStyle}
+				aria-hidden="true"
+			></span>
+		{/if}
+
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<header
 			class="border-b border-[#373a36] px-3 py-2 text-center select-none"

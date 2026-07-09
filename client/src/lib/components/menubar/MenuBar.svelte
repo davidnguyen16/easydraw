@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { getContext, onMount } from 'svelte';
-	import { editorMetaData } from '$lib/stores/editor.store.svelte';
+	import {
+		editorMetaData,
+		type DiagramStatus,
+		visibleUnsavedPageIdsStore
+	} from '$lib/stores/editor.store.svelte';
 	import type { Exporter } from '$lib/exporters';
 
 	interface MenuItem {
@@ -40,6 +44,7 @@
 		sendToBack: () => void;
 		group: () => void;
 		ungroup: () => void;
+		present: () => void;
 		toggleShowGrid: () => void;
 		toggleSnapToGrid: () => void;
 		share: () => void;
@@ -48,18 +53,46 @@
 	const editor = getContext<EditorContext>('editor');
 
 	const USER_INITIALS = 'MD';
+	const DOCUMENT_STATUSES: { id: DiagramStatus; label: string; color: string }[] = [
+		{ id: 'draft', label: 'Draft', color: '#f97316' },
+		{ id: 'complete', label: 'Complete', color: '#22c55e' },
+		{ id: 'archived', label: 'Archived', color: '#9ca3af' }
+	];
+
+	// Save status for the top-right indicator. Interim: any unsaved page ⇒ show
+	// the spinning "saving" icon; otherwise the "saved" check. Wire this to the
+	// real auto-save request status later.
+	const saving = $derived($visibleUnsavedPageIdsStore.length > 0);
+	const currentDocumentStatus = $derived(
+		DOCUMENT_STATUSES.find((status) => status.id === editorMetaData.status) ?? DOCUMENT_STATUSES[0]
+	);
 
 	let openMenu: string | null = $state(null);
 	let openSubmenu: string | null = $state(null);
+	let statusMenuOpen = $state(false);
 
 	function toggleMenu(label: string) {
 		openMenu = openMenu === label ? null : label;
 		openSubmenu = null;
+		statusMenuOpen = false;
+	}
+
+	function toggleStatusMenu() {
+		const nextOpen = !statusMenuOpen;
+		openMenu = null;
+		openSubmenu = null;
+		statusMenuOpen = nextOpen;
+	}
+
+	function selectStatus(status: DiagramStatus) {
+		editorMetaData.status = status;
+		statusMenuOpen = false;
 	}
 
 	function closeMenus() {
 		openMenu = null;
 		openSubmenu = null;
+		statusMenuOpen = false;
 	}
 
 	function runItem(item: MenuItem) {
@@ -80,7 +113,7 @@
 			// `data-menu-root` marks the <nav> that holds the triggers + dropdowns
 			// (a DOM hook that survives the Tailwind migration — don't key this on
 			// a styling class, those get renamed).
-			if (target?.closest('[data-menu-root]')) return;
+			if (target?.closest('[data-menu-root], [data-status-root]')) return;
 			closeMenus();
 		};
 		const onKey = (event: KeyboardEvent) => {
@@ -109,7 +142,7 @@
 			{ icon: 'new', label: 'New', shortcut: 'Ctrl+N', onClick: editor.newFile },
 			{ icon: 'open', label: 'Open…', shortcut: 'Ctrl+O', onClick: editor.open },
 			{ icon: 'save', label: 'Save', shortcut: 'Ctrl+S', onClick: editor.save },
-			{ icon: 'save', label: 'Save As…', shortcut: 'Ctrl+Shift+S', onClick: editor.saveAs },
+			{ icon: 'save-as', label: 'Save As…', shortcut: 'Ctrl+Shift+S', onClick: editor.saveAs },
 			{ type: 'divider' },
 			{ icon: 'export', label: 'Export as', submenu: exportSubmenu }
 		],
@@ -225,18 +258,28 @@
 		stroke-linejoin="round"
 	>
 		{#if name === 'new'}
-			<path d="M14 3v5h5" />
-			<path d="M5 3h9l5 5v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-			<line x1="12" y1="12" x2="12" y2="18" />
-			<line x1="9" y1="15" x2="15" y2="15" />
+			<path d="M8 3.5h7l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 7 20v-5.5" />
+			<path d="M15 3.5V8h4" />
+			<path d="M4 7.5h6" />
+			<path d="M7 4.5v6" />
 		{:else if name === 'open'}
-			<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+			<path d="M3.5 7.5h6l2 2h9" />
+			<path d="M3.5 7.5v11a1.5 1.5 0 0 0 1.5 1.5h14a1.5 1.5 0 0 0 1.45-1.1l1.05-6.4H7.5L6 15" />
 		{:else if name === 'save'}
-			<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+			<path d="M5 3.5h12l2 2V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20z" />
+			<path d="M8 3.5V9h7V3.5" />
+			<path d="M8 21.5v-7h8v7" />
+			<path d="M14 6.5h1" />
+		{:else if name === 'save-as'}
+			<path d="M8 3.5h8l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5H8z" />
+			<path d="M16 3.5V7h3" />
+			<path d="M12 9.5v7" />
+			<path d="M9.5 14 12 16.5 14.5 14" />
+			<path d="M9 18.5h6" />
 		{:else if name === 'export'}
-			<path d="M12 14V3" />
-			<polyline points="8 7 12 3 16 7" />
-			<path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" />
+			<path d="M12 17V5" />
+			<path d="M8 9l4-4 4 4" />
+			<path d="M5 15.5V20h14v-4.5" />
 		{:else if name === 'undo'}
 			<polyline points="9 14 4 9 9 4" />
 			<path d="M4 9h11a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5h-4" />
@@ -341,12 +384,60 @@
 		placeholder="Untitled"
 	/>
 
-	<span
-		class="inline-flex h-6 flex-shrink-0 items-center gap-1.5 rounded-full bg-black/[0.18] px-2.5
-			text-[0.78rem] font-semibold text-white/[0.92]"
-	>
-		<span class="h-[7px] w-[7px] rounded-full bg-[#ff5a5f]"></span>Draft
-	</span>
+	<div class="relative flex-shrink-0" data-status-root>
+		<button
+			type="button"
+			class="inline-flex h-6 cursor-pointer items-center gap-1.5 rounded-full border-none
+				bg-black/[0.18] px-2.5 text-[0.78rem] font-semibold text-white/[0.92]
+				transition-colors duration-150 hover:bg-white/[0.18]
+				focus-visible:outline-offset-1 focus-visible:[outline:2px_solid_rgba(255,255,255,0.6)]"
+			aria-label="Document status"
+			aria-haspopup="menu"
+			aria-expanded={statusMenuOpen}
+			onclick={toggleStatusMenu}
+		>
+			<span
+				class="h-[7px] w-[7px] rounded-full"
+				style={`background-color: ${currentDocumentStatus.color};`}
+			></span>
+			<span>{currentDocumentStatus.label}</span>
+		</button>
+
+		{#if statusMenuOpen}
+			<div
+				class="absolute top-[calc(100%+10px)] left-1/2 z-50 flex w-[220px] -translate-x-1/2
+					flex-col gap-px rounded-[10px] border border-line-dropdown bg-white p-1.5
+					text-[#2a2a2a] shadow-[0_12px_28px_rgba(0,0,0,0.12)]"
+				role="menu"
+				aria-label="Document status"
+			>
+				<span
+					class="absolute top-[-6px] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45
+						border-t border-l border-line-dropdown bg-white"
+					aria-hidden="true"
+				></span>
+				{#each DOCUMENT_STATUSES as status}
+					<button
+						type="button"
+						role="menuitemradio"
+						aria-checked={editorMetaData.status === status.id}
+						class="group relative flex w-full cursor-pointer items-center gap-3 rounded-md
+							border-none bg-transparent px-3 py-2 text-left text-[0.875rem] text-[#2a2a2a]
+							transition-colors duration-100 enabled:hover:bg-mq-pink enabled:hover:text-mq-maroon
+							[&.active]:bg-mq-pink [&.active]:text-mq-maroon"
+						class:active={editorMetaData.status === status.id}
+						onclick={() => selectStatus(status.id)}
+					>
+						<span
+							class="h-[9px] w-[9px] flex-shrink-0 rounded-full"
+							style={`background-color: ${status.color};`}
+						></span>
+						<span class="flex-1">{status.label}</span>
+					</button>
+				{/each}
+			</div>
+		{/if}
+	</div>
 
 	<nav class="ml-2 flex gap-[0.1rem]" data-menu-root>
 		{#each menuLabels as label}
@@ -465,27 +556,46 @@
 	<div class="flex-auto"></div>
 
 	<div class="flex flex-shrink-0 items-center gap-2">
+		<!-- Save status: spins while there are unsaved changes, shows a check when
+		     saved. Click to force a save. (Interim behaviour → auto-save later.) -->
 		<button
 			type="button"
-			class="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px]
-				border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
+			class="mb-tip relative inline-flex h-8 w-8 cursor-pointer items-center justify-center
+				rounded-[7px] border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
 				hover:bg-white/[0.16]"
-			aria-label="Collaborators"
+			aria-label={saving ? 'Saving…' : 'Saved'}
+			onclick={editor.save}
 		>
-			<svg
-				viewBox="0 0 24 24"
-				class="h-[19px] w-[19px]"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="1.7"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<circle cx="9" cy="8" r="3" />
-				<path d="M3 20c0-3 2.7-5 6-5s6 2 6 5" />
-				<path d="M16 4a3 3 0 0 1 0 6" />
-				<path d="M17.5 14c2.2.4 3.5 2 3.5 4" />
-			</svg>
+			{#if saving}
+				<svg
+					viewBox="0 0 24 24"
+					class="h-[18px] w-[18px] animate-spin"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.8"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M23 4v6h-6" />
+					<path d="M1 20v-6h6" />
+					<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+					<path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+				</svg>
+			{:else}
+				<!-- Saved: cloud with a check (image 2). -->
+				<svg
+					viewBox="0 0 24 24"
+					class="h-[18px] w-[18px]"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.7"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M17.5 19a4.5 4.5 0 1 0 0-9h-1.8A7 7 0 1 0 4 15.3" />
+					<path d="m8.5 13.5 2.5 2.5 4.5-4.5" />
+				</svg>
+			{/if}
 		</button>
 
 		<div
@@ -497,50 +607,29 @@
 
 		<button
 			type="button"
-			class="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px]
-				border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
-				hover:bg-white/[0.16]"
-			aria-label="Present"
+			class="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-[8px]
+				border-none bg-mq-red px-[18px] text-[0.95rem] font-semibold text-white transition-colors
+				duration-[120ms] hover:bg-mq-red-hover"
+			onclick={editor.present}
 		>
 			<svg
 				viewBox="0 0 24 24"
 				class="h-[19px] w-[19px]"
 				fill="none"
 				stroke="currentColor"
-				stroke-width="1.7"
+				stroke-width="1.8"
 				stroke-linecap="round"
 				stroke-linejoin="round"
 			>
 				<path d="M8 5v14l11-7z" />
 			</svg>
+			Present
 		</button>
 
 		<button
 			type="button"
-			class="inline-flex h-[34px] cursor-pointer items-center gap-[7px] rounded-[8px] border-none
-				bg-mq-red px-4 text-[0.88rem] font-semibold text-white transition-colors duration-[120ms]
-				hover:bg-mq-red-hover"
-			onclick={editor.share}
-		>
-			<svg
-				viewBox="0 0 24 24"
-				class="h-4 w-4"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="1.7"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path d="M22 2 11 13" />
-				<path d="M22 2 15 22l-4-9-9-4 20-7z" />
-			</svg>
-			Share
-		</button>
-
-		<button
-			type="button"
-			class="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px]
-				border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
+			class="mb-tip relative inline-flex h-8 w-8 cursor-pointer items-center justify-center
+				rounded-[7px] border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
 				hover:bg-white/[0.16]"
 			aria-label="Copy link"
 			onclick={editor.share}
@@ -560,3 +649,36 @@
 		</button>
 	</div>
 </header>
+
+<style>
+	/*
+	 * Hover tooltip for the right-cluster icon buttons — same look as the
+	 * ToolBar's `.tb-tip` (dark pill, drops below the button). Kept as scoped
+	 * CSS because the text comes from `content: attr(aria-label)`, which
+	 * Tailwind can't express (its --tw-content var wins → empty tooltip).
+	 * `.mb-tip` buttons must be `relative` so the absolute tip anchors to them.
+	 */
+	.mb-tip::after {
+		content: attr(aria-label);
+		position: absolute;
+		top: calc(100% + 7px);
+		left: 50%;
+		transform: translateX(-50%);
+		background: #373a36;
+		color: #fff;
+		font-family: system-ui, -apple-system, sans-serif;
+		font-size: 0.72rem;
+		font-weight: 500;
+		padding: 4px 8px;
+		border-radius: 4px;
+		white-space: nowrap;
+		z-index: 200;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.12s ease;
+	}
+	.mb-tip:hover::after {
+		opacity: 1;
+		transition-delay: 0.45s;
+	}
+</style>

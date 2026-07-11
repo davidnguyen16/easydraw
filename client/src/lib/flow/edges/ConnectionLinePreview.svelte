@@ -12,58 +12,22 @@
 	 * connection state comes from the `useConnection()` hook instead.
 	 */
 	import { Position, useConnection } from '@xyflow/svelte';
+	import { ENDPOINT_INSET, outlineInsetRatioForType } from './endpoint-insets';
 	import { buildSvgPath, routeOrthogonal, type Rect } from './routing';
 
 	const CORNER_RADIUS = 8;
-	// Keep in sync with ConnectionEdge.OUTLINE_INSET: some shapes' dots sit on the
-	// bbox edge, but the visible outline is inset from there on a side, so push the
-	// wire end in to touch it (the dot stays put). +4px so the tip crosses the
-	// edge. Triangle side ≈ 25.5% in; parallelogram side ≈ 10.5% in; document
-	// bottom ≈ 18% up.
-	const ENDPOINT_INSET = 4;
-	type OutlineInset = Partial<Record<Position, number>>;
-	const OUTLINE_INSET: Record<string, OutlineInset> = {
-		TriangleNode: { [Position.Left]: 0.255, [Position.Right]: 0.255 },
-		ParallelogramNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
-		// Flowchart Data = the same parallelogram slant under a different id.
-		DataNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
-		DocumentNode: { [Position.Bottom]: 0.18 },
-		OrthogonalTriangleNode: { [Position.Top]: 0.49, [Position.Right]: 0.49 },
-		StarNode: { [Position.Left]: 0.17, [Position.Right]: 0.17, [Position.Bottom]: 0.25 },
-		HalfCircleNode: { [Position.Left]: 0.076, [Position.Right]: 0.076 },
-		ArrowRightNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
-		// Pentagon: side edges at mid-height are ~4.7% in (apex + base touch).
-		PentagonNode: { [Position.Left]: 0.047, [Position.Right]: 0.047 },
-		ArrowLeftNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
-		ArrowUpNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 },
-		ArrowDownNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 },
-		NotchedArrowNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29, [Position.Left]: 0.14 },
-		TwoWayArrowNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
-		UTurnArrowNode: { [Position.Right]: 0.24, [Position.Bottom]: 0.2 },
-		BendArrowNode: { [Position.Left]: 0.48, [Position.Right]: 0.24, [Position.Bottom]: 0.14 },
-		BendDoubleArrowNode: {
-			[Position.Top]: 0.13,
-			[Position.Left]: 0.48,
-			[Position.Right]: 0.24,
-			[Position.Bottom]: 0.14
-		},
-		// Trapezoid L/R: slant at mid-height is ~12% in (25,1 75,1 99,99 1,99).
-		TrapezoidNode: { [Position.Left]: 0.12, [Position.Right]: 0.12 },
-		// Chevron: left notch vertex sits at x=24%; the right tip touches.
-		ChevronNode: { [Position.Left]: 0.24 },
-		// Drop: the flank curves at mid-height sit ~3.5% inside the bbox sides.
-		DropNode: { [Position.Left]: 0.035, [Position.Right]: 0.035 }
-	};
 
 	const connection = useConnection();
 
 	// Inset fraction for a node's connection end at `position`, or 0 when this end
 	// doesn't inset. Also serves as the "is an inset outline end" test (ratio > 0),
-	// used to skip self-avoidance for that node below.
+	// used to skip self-avoidance for that node below. The table itself lives in
+	// endpoint-insets.ts — ONE source shared with ConnectionEdge, so the drag
+	// preview and the released edge can never disagree again.
 	function outlineInsetRatio(node: unknown, position: Position | null | undefined): number {
 		if (position == null) return 0;
 		const type = (node as { type?: string } | null | undefined)?.type;
-		return (type && OUTLINE_INSET[type]?.[position]) || 0;
+		return outlineInsetRatioForType(type, position);
 	}
 
 	// Mirrors ConnectionEdge.insetForEnd for inset outline ends, so the live drag

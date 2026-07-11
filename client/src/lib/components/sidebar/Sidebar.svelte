@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import NodeContainer from '$lib/components/NodeContainer.svelte';
+	import NodeContainer from '$lib/components/sidebar/NodeContainer.svelte';
 	import CollapseButton from '$lib/components/sidebar/CollapseButton.svelte';
 	import ResizeHandle from '$lib/components/sidebar/ResizeHandle.svelte';
 	import { loadSidebarStateFromStorage, sidebarState } from '$lib/stores/sidebar.store.svelte';

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
-	import { EdgeLabel, Position, useSvelteFlow, type EdgeProps } from '@xyflow/svelte';
+	import { Position, useSvelteFlow, type EdgeProps } from '@xyflow/svelte';
+	import ConnectionLabels from './ConnectionLabels.svelte';
 	import EndpointHandle from './EndpointHandle.svelte';
 	import Pill from './Pill.svelte';
 	import {
@@ -13,10 +14,11 @@
 		routeOrthogonal,
 		type Rect
 	} from './routing';
-	import { ANCHOR_HANDLE_ID, ANCHOR_NODE_TYPE } from '../../nodes/anchor/anchor';
-	import { nanoid } from 'nanoid';
+	import { ANCHOR_HANDLE_ID, ANCHOR_NODE_TYPE } from '../nodes/anchor/anchor';
 	import MarkerGlyph from './MarkerGlyph.svelte';
 	import { MARKER_GLYPHS } from './marker-glyphs';
+	import { createConnectionLabelEditor } from './connection-label-editor.svelte';
+	import { insetForEnd, outlineInsetRatioForType } from './endpoint-insets';
 	import type {
 		Axis,
 		ConnectionEdgeData,
@@ -60,74 +62,12 @@
 	const CORNER_RADIUS = 8;
 	const HIT_WIDTH = 20;
 
-	/**
-	 * Pixels to push the LINE'S source/target endpoints INWARD past each
-	 * shape's bbox edge.
-	 *
-	 * The bbox edge is where xyflow positions the handle, and it's also
-	 * roughly where the shape's visible border sits. Because xyflow renders
-	 * nodes ABOVE edges in z-order, a line whose tip lands exactly on the
-	 * bbox edge has its last 1–2 px painted over by the border — visually,
-	 * the line "stops short" of the node, leaving the gap the user sees.
-	 *
-	 * Pushing the line tip a few pixels INSIDE the node means the line
-	 * visibly traverses the border (it crosses through, instead of stopping
-	 * at it). The endpoint markers are still anchored to the original bbox
-	 * edge so the marker sits exactly at the border; the marker's solid
-	 * white fill hides the inset portion of the line on the selected state.
-	 */
-	const ENDPOINT_INSET = 4;
-
 	let hovered = $state(false);
 
 	// Which end (if any) is currently being reconnect-dragged. Kept so the
 	// endpoint handles + active styling stay visible for the whole drag even if
 	// the pointer leaves the line (which would otherwise clear `hovered`).
 	let draggingEnd = $state<'source' | 'target' | null>(null);
-
-	// ─── Label editing (Lucidchart-style text ALONG the edge) ───────────
-	// Multiple labels live on one edge, each pinned to a normalised position
-	// `t` along the path. `editingId` is the label currently in the inline
-	// editor (null = none). `draft` holds the in-progress text; `cancelled`
-	// lets Escape leave edit mode through blur WITHOUT saving; `editingWasNew`
-	// makes Escape DELETE a label that was created by this edit session.
-	let editingId = $state<string | null>(null);
-	let editingT = $state(0.5);
-	let draft = $state('');
-	let cancelled = false;
-	let editingWasNew = false;
-	// The live contenteditable element (bound below) — needed to force a blur
-	// when the user clicks away without the browser moving focus.
-	let editorEl = $state<HTMLElement>();
-
-	const isEditing = $derived(editingId !== null);
-
-	// While a label is being edited this edge is the sole selection (see
-	// selectEdgeForStyling). Clicking the pane / a node DESELECTS it, but
-	// xyflow's pane handler preventDefault()s the pointerdown, so the browser
-	// never blurs the contenteditable — the editor would stay stuck open.
-	// Deselection-while-editing means the user clicked away → commit through
-	// the normal blur path.
-	$effect(() => {
-		if (editingId !== null && !selected) {
-			editorEl?.blur();
-		}
-	});
-
-	// Belt and braces for every other "click away" (canvas pan-start, the
-	// edge's own line, …): while editing, ANY pointerdown outside the editor
-	// commits it. Capture phase, so it runs before xyflow's handlers and
-	// can't be stopped by them.
-	$effect(() => {
-		if (editingId === null) return;
-		const onPointerDown = (e: PointerEvent) => {
-			if (e.target instanceof Node && editorEl && !editorEl.contains(e.target)) {
-				editorEl.blur();
-			}
-		};
-		window.addEventListener('pointerdown', onPointerDown, true);
-		return () => window.removeEventListener('pointerdown', onPointerDown, true);
-	});
 
 	const connectionData = $derived((data ?? {}) as ConnectionEdgeData);
 	const bendPoints = $derived(connectionData.bendPoints ?? []);
@@ -183,25 +123,8 @@
 		].join('; ')
 	);
 
-	/**
-	 * Returns `p` shifted `ENDPOINT_INSET` px in the direction that goes
-	 * AWAY from the connection (i.e. into the node). Used for the line's
-	 * source / target only — the endpoint markers stay at the original
-	 * point so they mark the actual border.
-	 */
-	function insetIntoNode(p: Point, position: Position, amount = ENDPOINT_INSET): Point {
-		switch (position) {
-			case Position.Top:
-				return { x: p.x, y: p.y + amount };
-			case Position.Right:
-				return { x: p.x - amount, y: p.y };
-			case Position.Bottom:
-				return { x: p.x, y: p.y - amount };
-			case Position.Left:
-				return { x: p.x + amount, y: p.y };
-			default:
-				return p;
-		}
+	function nodeTypeOf(nodeId: string): string | undefined {
+		return flow.getInternalNode(nodeId)?.type;
 	}
 
 	// Current rendered box of a node (handles origin/measured size), or null
@@ -216,133 +139,25 @@
 		return { x: pos.x, y: pos.y, width, height };
 	}
 
-	// Shapes whose connection dots sit on the bbox edge (default cardinal
-	// position) but whose visible outline is inset from that edge on some side.
-	// The dot marker stays on the bbox edge; the WIRE endpoint is pushed inward
-	// toward the outline by the listed fraction of the node's width (left/right)
-	// or height (top/bottom), so the line visibly reaches the shape. Values are
-	// read off each shape's SVG at the handle's position:
-	//   Triangle L/R:      slant at mid-height is ~25.5% in (50,1 99,99 1,99).
-	//   Parallelogram L/R: slant at mid-height is ~10.5% in (20,1 99,1 80,99 1,99).
-	//   Document bottom:   wavy edge at mid-width sits at y≈82%, i.e. ~18% up from
-	//                      the bbox bottom (path …L99,82 Q75,98 50,82 T1,82).
-	type OutlineInset = Partial<Record<Position, number>>;
-	const OUTLINE_INSET: Record<string, OutlineInset> = {
-		TriangleNode: { [Position.Left]: 0.255, [Position.Right]: 0.255 },
-		ParallelogramNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
-		// Flowchart Data = the same parallelogram slant under a different id.
-		DataNode: { [Position.Left]: 0.105, [Position.Right]: 0.105 },
-		DocumentNode: { [Position.Bottom]: 0.18 },
-		// Right triangle (◣): hypotenuse crosses mid-height/width at 50%.
-		OrthogonalTriangleNode: { [Position.Top]: 0.49, [Position.Right]: 0.49 },
-		// Star: side points are at y=38%, so the mid-height outline is ~17% in;
-		// the bottom centre is the concave notch between the feet (y≈74%).
-		StarNode: { [Position.Left]: 0.17, [Position.Right]: 0.17, [Position.Bottom]: 0.25 },
-		// Dome: the arc at mid-height sits ~7.6% inside the bbox sides.
-		HalfCircleNode: { [Position.Left]: 0.076, [Position.Right]: 0.076 },
-		// Pentagon: side edges at mid-height are ~4.7% in (apex + base touch).
-		PentagonNode: { [Position.Left]: 0.047, [Position.Right]: 0.047 },
-		// Trapezoid L/R: slant at mid-height is ~12% in (25,1 75,1 99,99 1,99).
-		TrapezoidNode: { [Position.Left]: 0.12, [Position.Right]: 0.12 },
-		// Chevron: left notch vertex sits at x=24%; the right tip touches.
-		ChevronNode: { [Position.Left]: 0.24 },
-		// Drop: the flank curves at mid-height sit ~3.5% inside the bbox sides.
-		DropNode: { [Position.Left]: 0.035, [Position.Right]: 0.035 },
-		// Arrow Right: the arrowhead is inset from the bbox edge.
-		ArrowRightNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
-		// Arrow Left: the arrowhead is inset from the bbox edge.
-		ArrowLeftNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
-		// Arrow Up: the arrowhead is inset from the bbox edge.
-		ArrowUpNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 },
-		// Arrow Down: shaft sides sit at x=30/70, like ArrowUp.
-		ArrowDownNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 },
-		// Notched Arrow: ArrowRight shaft (y=30/70) + tail notch vertex at x=15.
-		NotchedArrowNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29, [Position.Left]: 0.14 },
-		// Two Way Arrow: shaft top/bottom at y=30/70; both tips touch.
-		TwoWayArrowNode: { [Position.Top]: 0.29, [Position.Bottom]: 0.29 },
-		// U-Turn: right leg outer edge at x=75; bottom-centre ray hits the head
-		// slant at y≈80 (legs/tip leave the centre open). Quad Arrow needs no
-		// entry — all four tips land exactly on the handles.
-		UTurnArrowNode: { [Position.Right]: 0.24, [Position.Bottom]: 0.2 },
-		// Bend: at mid-height only the vertical arm remains (x=49..75); the
-		// bottom-centre ray hits the head slant at y≈85.
-		BendArrowNode: { [Position.Left]: 0.48, [Position.Right]: 0.24, [Position.Bottom]: 0.14 },
-		// Bend Double: like Bend, plus the arm band top at y=14 under the top handle.
-		BendDoubleArrowNode: {
-			[Position.Top]: 0.13,
-			[Position.Left]: 0.48,
-			[Position.Right]: 0.24,
-			[Position.Bottom]: 0.14
-		}
-	};
-
 	// Inset fraction for a node's end at `position`, or 0 when it doesn't inset.
-	// Also the "is an inset outline end" test (ratio > 0), which tells
-	// routedPoints to skip self-avoidance for that node.
 	function outlineInsetRatio(nodeId: string, position: Position): number {
-		const type = flow.getInternalNode(nodeId)?.type;
-		return (type && OUTLINE_INSET[type]?.[position]) || 0;
+		return outlineInsetRatioForType(nodeTypeOf(nodeId), position);
 	}
 
-	// Shapes whose visible outline never reaches the bbox edge at the handle
-	// points (stick figure / bare text). Forcing endpoint contact would just
-	// strand the tip in empty space, so their ends stay at the bbox edge.
-	const NO_TOUCH_TYPES = new Set(['ActorNode', 'TextNode']);
-
-	// How far past the SLANTED outline (triangle side, document wave, …) a
-	// marker tip buries itself. The node body renders above edges, so the
-	// overshoot is hidden — the head reads as planted ON the outline.
-	const MARKER_TOUCH = 2.5;
-
-	// Bury amount for a marker tip at a bbox-edge end. SVG shapes draw their
-	// outline ~1% INSIDE their bbox, so the air gap between a tip stopped at
-	// the bbox edge and the visible outline GROWS with node size — scale the
-	// bury with the crossed dimension (+2px for the border stroke itself).
-	function markerBury(rect: Rect | null, position: Position): number {
-		const dim = rect
-			? position === Position.Left || position === Position.Right
-				? rect.width
-				: rect.height
-			: 0;
-		return dim * 0.01 + 2;
-	}
-
-	// Resolves where the LINE tip lands for an end attached to `nodeId`.
-	//   plain end  → crosses the outline by ENDPOINT_INSET (as always).
-	//   marker end → tip buries slightly past the visible outline so the head
-	//                sits firmly ON the shape edge instead of hovering short
-	//                of it. Exceptions: NO_TOUCH_TYPES stay at the bbox edge,
-	//                and FLUSH glyphs (bar-style ticks lying across the line)
-	//                sit ON the edge — burying them would hide them under
-	//                the node body.
-	function insetForEnd(
+	function insetForNodeEnd(
 		nodeId: string,
-		p: Point,
+		point: Point,
 		position: Position,
 		marker: MarkerKind = 'none'
 	): Point {
-		const glyph = marker === 'none' ? null : MARKER_GLYPHS[marker];
-		const ratio = outlineInsetRatio(nodeId, position);
-		if (ratio > 0) {
-			const rect = rectOf(nodeId);
-			if (rect) {
-				const cross = glyph ? (glyph.flush ? 0 : MARKER_TOUCH) : ENDPOINT_INSET;
-				const dx = rect.width * ratio + cross;
-				const dy = rect.height * ratio + cross;
-				if (position === Position.Left) return { x: p.x + dx, y: p.y };
-				if (position === Position.Right) return { x: p.x - dx, y: p.y };
-				if (position === Position.Top) return { x: p.x, y: p.y + dy };
-				if (position === Position.Bottom) return { x: p.x, y: p.y - dy };
-			}
-		}
-		if (glyph) {
-			const type = flow.getInternalNode(nodeId)?.type;
-			if ((type && NO_TOUCH_TYPES.has(type)) || glyph.flush) return p;
-			return insetIntoNode(p, position, markerBury(rectOf(nodeId), position));
-		}
-		return insetIntoNode(p, position);
+		return insetForEnd({
+			nodeType: nodeTypeOf(nodeId),
+			point,
+			position,
+			marker,
+			rect: rectOf(nodeId)
+		});
 	}
-
 	// A connection anchor is a free wire end — treat it as FLOATING so the
 	// released edge routes exactly like the drag preview (which had no node at
 	// the pointer). See routeOrthogonal's floating handling.
@@ -361,12 +176,12 @@
 	const sourcePoint = $derived(
 		sourceFloating
 			? { x: sourceX, y: sourceY }
-			: insetForEnd(source, { x: sourceX, y: sourceY }, sourcePosition, markerStart)
+			: insetForNodeEnd(source, { x: sourceX, y: sourceY }, sourcePosition, markerStart)
 	);
 	const targetPoint = $derived(
 		targetFloating
 			? { x: targetX, y: targetY }
-			: insetForEnd(target, { x: targetX, y: targetY }, targetPosition, markerEnd)
+			: insetForNodeEnd(target, { x: targetX, y: targetY }, targetPosition, markerEnd)
 	);
 	const sourceAxis = $derived(positionToAxis(sourcePosition));
 
@@ -872,12 +687,8 @@
 		window.addEventListener('pointercancel', onUp);
 	}
 
-	// ─── Labels along the edge ──────────────────────────────────────────
-	// Minimum centre-to-centre distance (px along the path) between labels.
-	// Keeps a sliver of line visible between neighbours and blocks dropping a
-	// new label on top of an existing one (the "can't click on a text" rule).
-	const MIN_LABEL_GAP_PX = 14;
-
+	// Label editing lives in a small controller; the edge keeps only the data
+	// patcher because xyflow owns edge updates.
 	function patchLabels(updater: (prev: ConnectionLabel[]) => ConnectionLabel[]) {
 		flow.updateEdge(id, (edge) => {
 			const current = (edge.data ?? {}) as ConnectionEdgeData;
@@ -885,129 +696,24 @@
 		});
 	}
 
-	// Open a fresh editor at the clicked point — UNLESS it's within
-	// MIN_LABEL_GAP_PX of an existing label (then ignore, so labels never
-	// stack). The new label isn't written to data until it's committed with
-	// non-empty text, so the editor renders off local state (editingT/draft).
-	function createLabelAt(flowPoint: Point) {
-		const t = tAtFlowPoint(flowPoint);
-		const tooClose = labels.some((l) => Math.abs(l.t - t) * totalLength < MIN_LABEL_GAP_PX);
-		if (tooClose) return;
-		editingWasNew = true;
-		editingT = t;
-		draft = '';
-		editingId = nanoid();
-		// Select this edge so the toolbar can style the label as it's typed.
-		selectEdgeForStyling(id);
+	const labelEditor = createConnectionLabelEditor({
+		getLabels: () => labels,
+		getTotalLength: () => totalLength,
+		tAtFlowPoint,
+		screenToFlowPosition: (point) => flow.screenToFlowPosition(point),
+		patchLabels,
+		selectEdgeForStyling: () => selectEdgeForStyling(id)
+	});
+
+	function createLabelOnDblclick(node: Element) {
+		return labelEditor.attachCreateOnDblclick(node);
 	}
 
-	function startEditingLabel(labelId: string) {
-		const found = labels.find((l) => l.id === labelId);
-		if (!found) return;
-		editingWasNew = false;
-		editingT = found.t;
-		draft = found.text;
-		editingId = labelId;
-		// Select this edge so the toolbar targets it (clicking a toolbar control
-		// blurs the editor, but the edge stays selected so the font still applies).
-		selectEdgeForStyling(id);
-	}
+	$effect(() => {
+		labelEditor.blurIfDeselected(selected);
+	});
 
-	// xyflow's pane swallows the bubbling dblclick: d3-zoom's `dblclick.zoom`
-	// handler runs on the pane and the event is consumed before it reaches the
-	// listener Svelte uses for delegated `ondblclick` (mounted at the app root).
-	// So a plain `ondblclick=` on an edge child NEVER fires. Attaching the
-	// listener DIRECTLY makes it run during bubbling BEFORE the pane sees the
-	// event; stopPropagation then also suppresses the canvas double-click zoom.
-
-	// GROUP-level: double-click anywhere on the line drops a new label there.
-	function dblclickNewLabel(node: Element) {
-		const handler = (event: Event) => {
-			event.stopPropagation();
-			const me = event as MouseEvent;
-			createLabelAt(flow.screenToFlowPosition({ x: me.clientX, y: me.clientY }));
-		};
-		node.addEventListener('dblclick', handler);
-		return { destroy: () => node.removeEventListener('dblclick', handler) };
-	}
-
-	// LABEL-level: double-click an existing label edits THAT label. Its
-	// stopPropagation also keeps the group handler from creating a duplicate.
-	function dblclickEditLabel(node: Element, labelId: string) {
-		let current = labelId;
-		const handler = (event: Event) => {
-			event.stopPropagation();
-			startEditingLabel(current);
-		};
-		node.addEventListener('dblclick', handler);
-		return {
-			update: (next: string) => (current = next),
-			destroy: () => node.removeEventListener('dblclick', handler)
-		};
-	}
-
-	// Seed + focus the contenteditable on mount; caret AFTER the text. rAF
-	// waits for the portal to place the node into the edge-label layer first.
-	// (An ACTION, not {@attach}: it must run ONCE, not re-run every keystroke.)
-	function initEditor(node: HTMLElement) {
-		node.textContent = draft;
-		requestAnimationFrame(() => {
-			node.focus();
-			const range = document.createRange();
-			range.selectNodeContents(node);
-			range.collapse(false); // caret at end
-			const sel = window.getSelection();
-			sel?.removeAllRanges();
-			sel?.addRange(range);
-		});
-	}
-
-	function onEditorKeydown(event: KeyboardEvent) {
-		// Keep keystrokes out of xyflow's global shortcut handler.
-		event.stopPropagation();
-		if (event.key === 'Enter' && !event.shiftKey) {
-			event.preventDefault();
-			(event.currentTarget as HTMLElement).blur(); // → onEditorBlur commits
-		} else if (event.key === 'Escape') {
-			event.preventDefault();
-			cancelled = true;
-			(event.currentTarget as HTMLElement).blur(); // → onEditorBlur discards
-		}
-	}
-
-	// Commit (Enter / click-out): write the draft; empty text prunes the label.
-	function commitLabel() {
-		const text = draft.trim();
-		const targetId = editingId;
-		const wasNew = editingWasNew;
-		const t = editingT;
-		patchLabels((prev) => {
-			if (!text) return prev.filter((l) => l.id !== targetId);
-			if (wasNew) return [...prev, { id: targetId as string, t, text }];
-			return prev.map((l) => (l.id === targetId ? { ...l, text } : l));
-		});
-		editingId = null;
-	}
-
-	// Cancel (Escape): a brand-new label was never written to data, and an
-	// existing one is left untouched — so we just close the editor.
-	function cancelLabel() {
-		editingId = null;
-	}
-
-	function onEditorBlur() {
-		// Drop any text selection left inside the contenteditable so no
-		// highlight lingers after a click-away that xyflow preventDefault()ed
-		// (see ShapeNode.onLabelBlur for the same Chromium quirk).
-		window.getSelection()?.removeAllRanges();
-		if (cancelled) {
-			cancelled = false;
-			cancelLabel();
-		} else {
-			commitLabel();
-		}
-	}
-
+	$effect(() => labelEditor.installClickAway());
 	// pointerenter/leave on the outer <g> only fire when the pointer enters
 	// or leaves the group as a whole — moving from the line into a pill (or
 	// vice versa) does NOT toggle hovered, so pills don't flicker out from
@@ -1017,7 +723,7 @@
 <g
 	role="presentation"
 	class="connection-edge"
-	use:dblclickNewLabel
+	use:createLabelOnDblclick
 	onpointerenter={() => (hovered = true)}
 	onpointerleave={() => {
 		hovered = false;
@@ -1088,7 +794,7 @@
 
 	<!-- Bend pills only exist for orthogonal routing — straight and curved
          paths have no draggable segments. -->
-	{#if active && !isEditing && isOrthogonal}
+	{#if active && !labelEditor.isEditing && isOrthogonal}
 		{#if isFreeForm}
 			<!-- Pristine edge: one handle to add the first bend. It slides along
                  the line to dodge any label, so it's never hidden entirely. -->
@@ -1114,7 +820,7 @@
 		{/if}
 	{/if}
 
-	{#if selected && !isEditing && isOrthogonal}
+	{#if selected && !labelEditor.isEditing && isOrthogonal}
 		{#each bendPoints as bend, bendIndex (bendIndex)}
 			{#if !nearLabel(bend)}
 				<Pill
@@ -1136,7 +842,7 @@
         floating. `floating` styles a free end as a dashed white dot, vs a solid
         dot when it's pinned to a node.
     -->
-	{#if active && !isEditing}
+	{#if active && !labelEditor.isEditing}
 		<EndpointHandle
 			x={sourceX}
 			y={sourceY}
@@ -1152,58 +858,13 @@
 	{/if}
 </g>
 
-<!--
-    Labels along the edge. Each EdgeLabel portals into xyflow's HTML edge-label
-    layer (ABOVE the SVG edges), positioned with translate(-50%, -50%) at the
-    flow point for its `t` — so text is always horizontal and the opaque
-    background masks the strip of line behind it, giving a clean gap WITHOUT
-    ever bending the line. The label being edited renders from local state
-    (editingId/editingT/draft) so it shows instantly, before the data round-trip.
--->
-{#each labels as lab (lab.id)}
-	{#if lab.id !== editingId}
-		{@const p = pointAtT(lab.t)}
-		<EdgeLabel x={p.x} y={p.y} transparent class="conn-label-host">
-			<div
-				class="nodrag nopan cursor-text rounded-[2px] px-1.5 py-0.5 text-[13px] font-semibold
-					leading-[1.25] whitespace-nowrap text-[#1f1d1a] select-none
-					{selected ? 'bg-[#b3d4f5]' : 'bg-white'}"
-				role="button"
-				tabindex="-1"
-				aria-label="Connection label, double-click to edit"
-				use:dblclickEditLabel={lab.id}
-				onpointerdown={(e) => e.stopPropagation()}
-				style={labelStyle}
-			>
-				{lab.text}
-			</div>
-		</EdgeLabel>
-	{/if}
-{/each}
-
-{#if editingId !== null}
-	{@const p = pointAtT(editingT)}
-	<EdgeLabel x={p.x} y={p.y} transparent class="conn-label-host">
-		<div
-			class="nodrag nopan nowheel min-w-1.5 cursor-text rounded-[2px] bg-[#b3d4f5] px-1.5 py-0.5
-				text-[13px] font-semibold leading-[1.25] whitespace-nowrap text-[#1f1d1a] outline-none
-				select-text [caret-color:#1f1d1a]"
-			role="textbox"
-			tabindex="0"
-			aria-label="Edit connection label"
-			contenteditable="true"
-			spellcheck="false"
-			bind:this={editorEl}
-			use:initEditor
-			oninput={(e) => (draft = e.currentTarget.textContent ?? '')}
-			onkeydown={onEditorKeydown}
-			onblur={onEditorBlur}
-			onpointerdown={(e) => e.stopPropagation()}
-			style={labelStyle}
-		></div>
-	</EdgeLabel>
-{/if}
-
+<ConnectionLabels
+	{labels}
+	{selected}
+	{labelStyle}
+	{pointAtT}
+	editor={labelEditor}
+/>
 <style>
 	/*
 	 * Only :global rules remain — they reach xyflow's DOM (snap-target node

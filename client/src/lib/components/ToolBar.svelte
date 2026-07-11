@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { getContext, onMount } from 'svelte';
+	import UiIcon from '$lib/components/icons/UiIcon.svelte';
 	import { FolderOpen, Save } from '@lucide/svelte';
 	import { FONT_FAMILIES } from '$lib/fonts';
-	import type { NodeStyleData } from '$lib/components/StylePanel.svelte';
+	import type { NodeStyleData } from '$lib/components/style-panel/StylePanel.svelte';
 
 	interface NodeTextStyle {
 		fontFamily: string;
@@ -186,60 +187,7 @@
 </script>
 
 {#snippet icon(name: string)}
-	<svg
-		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="1.8"
-		stroke-linecap="round"
-		stroke-linejoin="round"
-	>
-		{#if name === 'undo'}
-			<polyline points="9 14 4 9 9 4" />
-			<path d="M4 9h11a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5h-4" />
-		{:else if name === 'redo'}
-			<polyline points="15 14 20 9 15 4" />
-			<path d="M20 9H9a5 5 0 0 0-5 5v0a5 5 0 0 0 5 5h4" />
-		{:else if name === 'zoom-in'}
-			<circle cx="11" cy="11" r="7" />
-			<line x1="20" y1="20" x2="16" y2="16" />
-			<line x1="11" y1="8" x2="11" y2="14" />
-			<line x1="8" y1="11" x2="14" y2="11" />
-		{:else if name === 'zoom-out'}
-			<circle cx="11" cy="11" r="7" />
-			<line x1="20" y1="20" x2="16" y2="16" />
-			<line x1="8" y1="11" x2="14" y2="11" />
-		{:else if name === 'fullscreen'}
-			<polyline points="9 4 4 4 4 9" />
-			<polyline points="15 4 20 4 20 9" />
-			<polyline points="9 20 4 20 4 15" />
-			<polyline points="15 20 20 20 20 15" />
-		{:else if name === 'lock-closed'}
-			<rect x="5" y="11" width="14" height="10" rx="2" />
-			<path d="M8 11V7a4 4 0 0 1 8 0v4" />
-		{:else if name === 'lock-open'}
-			<rect x="5" y="11" width="14" height="10" rx="2" />
-			<path d="M8 11V7a4 4 0 0 1 7.5 -2" />
-		{:else if name === 'copy'}
-			<rect x="9" y="9" width="11" height="11" rx="2" />
-			<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
-		{:else if name === 'delete'}
-			<polyline points="3 6 5 6 21 6" />
-			<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-			<path d="M10 11v6" />
-			<path d="M14 11v6" />
-			<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-		{:else if name === 'chevron'}
-			<polyline points="6 9 12 15 18 9" />
-		{:else if name === 'check'}
-			<polyline points="5 12 10 17 19 8" />
-		{:else if name === 'fit'}
-			<polyline points="4 9 4 4 9 4" />
-			<polyline points="20 9 20 4 15 4" />
-			<polyline points="4 15 4 20 9 20" />
-			<polyline points="20 15 20 20 15 20" />
-		{/if}
-	</svg>
+	<UiIcon {name} strokeWidth={1.8} />
 {/snippet}
 
 <div

@@ -159,6 +159,16 @@ body {
 	-webkit-font-smoothing: antialiased;
 }
 
+/* Full-screen editor app: the PAGE itself never scrolls — no native browser
+   scrollbars, ever. Panning happens inside the xyflow canvas, and the canvas
+   scrollbars (CanvasScrollbars.svelte) take over when nodes are out of view.
+   Without this, any 1px overflow sprouts the native bars next to ours. */
+html,
+body {
+	height: 100%;
+	overflow: hidden;
+}
+
 /* 6. Improve media defaults */
 /*img, picture, video, canvas, svg {*/
 /*    display: block;*/

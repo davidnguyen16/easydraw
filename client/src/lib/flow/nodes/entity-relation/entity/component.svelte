@@ -35,6 +35,18 @@
 	const cardRadius = $derived(entity.rounded === false ? '0' : '4px');
 	const rotation = $derived(toFiniteRotation(entity.rotation));
 
+	// Rotation lives on the ROOT div (like ShapeNode's container) so the
+	// selection ring, resize anchors and connection handles — all children of
+	// the root — rotate together with the card instead of staying axis-aligned
+	// while the card turns underneath them.
+	const rootStyle = $derived(
+		[
+			`transform: rotate(${rotation}deg)`,
+			'transform-origin: center',
+			'transition: transform 120ms ease'
+		].join('; ')
+	);
+
 	const cardStyle = $derived(
 		[
 			entity.borderColor ? `border-color: ${entity.borderColor}` : '',
@@ -42,9 +54,7 @@
 			entity.rounded !== undefined ? `border-radius: ${entity.rounded ? '4px' : '0'}` : '',
 			entity.shadow ? 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)' : '',
 			`opacity: ${visualOpacity}`,
-			`transform: rotate(${rotation}deg)`,
-			'transform-origin: center',
-			'transition: transform 120ms ease, box-shadow 150ms ease'
+			'transition: box-shadow 150ms ease'
 		]
 			.filter(Boolean)
 			.join('; ')
@@ -175,7 +185,11 @@
 	          the rounded corners. The `entity-card` class is a cross-component
 	          DOM hook (ConnectionEdge's snap-target rule shadows it) — keep it.
 -->
-<div class="group relative h-full w-full min-w-[180px] min-h-[80px]" class:active={selected}>
+<div
+	class="group relative h-full w-full min-w-[180px] min-h-[80px]"
+	class:active={selected}
+	style={rootStyle}
+>
 	<div
 		class="entity-card relative flex h-full w-full flex-col overflow-hidden rounded-[4px] border
 			border-[#373a36] bg-white font-sans shadow-[0_2px_6px_rgba(0,0,0,0.06)] transition-shadow

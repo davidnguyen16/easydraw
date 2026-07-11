@@ -5,9 +5,9 @@
 	 * endings dialog rows (long). Glyph geometry comes from the shared
 	 * MARKER_GLYPHS catalog, so previews always match what the edge draws.
 	 */
-	import MarkerGlyph from '$lib/flow/edges/connection/MarkerGlyph.svelte';
-	import { MARKER_GLYPHS } from '$lib/flow/edges/connection/marker-glyphs';
-	import type { MarkerKind } from '$lib/flow/edges/connection/types';
+	import MarkerGlyph from '$lib/flow/edges/MarkerGlyph.svelte';
+	import { MARKER_GLYPHS } from '$lib/flow/edges/marker-glyphs';
+	import type { MarkerKind } from '$lib/flow/edges/types';
 
 	interface Props {
 		kind: MarkerKind;

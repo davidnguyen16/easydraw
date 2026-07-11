@@ -10,7 +10,7 @@
  * dropdowns — edges already using it keep rendering it.
  */
 import { browser } from '$app/environment';
-import { MARKER_DEFS } from '$lib/flow/edges/connection/markers';
+import { MARKER_DEFS } from '$lib/flow/edges/markers';
 
 const STORAGE_KEY = 'easydraw.line-endings.v1';
 

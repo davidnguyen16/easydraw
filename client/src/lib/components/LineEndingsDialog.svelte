@@ -15,7 +15,7 @@
 		MARKER_CATEGORIES,
 		getMarkersByCategory,
 		type MarkerCategory
-	} from '$lib/flow/edges/connection/markers';
+	} from '$lib/flow/edges/markers';
 	import { markerPalette, setEnabledMarkers } from '$lib/stores/markers.store.svelte';
 
 	interface Props {

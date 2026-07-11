@@ -27,63 +27,65 @@ The current behavior is intentionally explicit:
 
 File: `src/lib/stores/editor.store.svelte.ts`
 
-- Module header/API contract: lines `1-125`
+- Module header/API contract: lines `1-22`
 - Type model:
-    - `EditorPage`: line `132`
-    - `EditorState`: line `140`
+    - `EditorPage`: line `26`
+    - `EditorState`: line `34`
 - Internal constants/helpers:
-    - `STORAGE_KEY`: line `172`
-    - `savedPageSignaturesStore`: line `175`
-    - `canvasDirtyPageIdsStore`: line `177`
-    - `getPageSignature(...)`: line `180`
-    - `buildPageSignatures(...)`: line `189`
-    - `isEditorPage(...)`: line `197`
-    - `isEditorState(...)`: line `210`
+    - `STORAGE_KEY`: line `41`
+    - `savedPageSignaturesStore`: line `44`
+    - `canvasDirtyPageIdsStore`: line `46`
+    - `getPageSignature(...)`: line `49`
+    - `buildPageSignatures(...)`: line `58`
+    - `isEditorPage(...)`: line `66`
+    - `isEditorState(...)`: line `79`
 - Initial/default state:
-    - `initialEditorState`: line `222`
-    - `editorStoreSvelte`: line `242`
+    - `initialEditorState`: line `95`
+    - `editorStoreSvelte`: line `108`
 - Unsaved indicators:
-    - `unsavedPageIdsStore`: line `245`
-    - `visibleUnsavedPageIdsStore`: line `255`
-    - `markCanvasDirtyPage(...)`: line `263`
-    - `clearCanvasDirtyPage(...)`: line `268`
-    - `clearAllCanvasDirtyPages(...)`: line `273`
+    - `unsavedPageIdsStore`: line `111`
+    - `visibleUnsavedPageIdsStore`: line `121`
+    - `markCanvasDirtyPage(...)`: line `129`
+    - `clearCanvasDirtyPage(...)`: line `134`
+    - `clearAllCanvasDirtyPages(...)`: line `139`
 - Storage I/O:
-    - `saveActivePageToStorage(...)`: line `278`
-    - `loadEditorStateFromStorage(...)`: line `317`
+    - `saveActivePageToStorage(...)`: line `144`
+    - `loadEditorStateFromStorage(...)`: line `187`
 - Page/state mutation:
-    - `switchPage(...)`: line `337`
-    - `createPage(...)`: line `351`
-    - `updateActiveGraph(...)`: line `382`
-    - `renamePage(...)`: line `403`
-    - `deletePage(...)`: line `418`
-    - `activePageStore`: line `439`
+    - `switchPage(...)`: line `257`
+    - `createPage(...)`: line `271`
+    - `updateActiveGraph(...)`: line `302`
+    - `renamePage(...)`: line `323`
+    - `deletePage(...)`: line `338`
+    - `activePageStore`: line `385`
 
 ### 2) Canvas Coordination
 
 File: `src/lib/flow/Flow.svelte`
 
-- Imports from store (sync + storage + dirty API): lines `21-30`
+- Imports from store (sync + storage + dirty API): lines `57-70`
 - Snapshot/clone/signature helpers:
-    - `getActivePageSnapshot(...)`: line `41`
-    - `cloneGraph(...)`: line `47`
-    - `createCanvasSignature(...)`: line `53`
+    - `getActivePageSnapshot(...)`: line `125`
+    - `cloneGraph(...)`: line `131`
+    - `createCanvasSignature(...)`: line `170`
 - Canvas baseline + dirty tracking state:
-    - `canvasPageId`: line `67`
-    - `baselineCanvasSignature`: line `68`
-    - `isHydratingCanvas`: line `69`
+    - `canvasPageId`: line `184`
+    - `baselineCanvasSignature`: line `185`
+    - `isHydratingCanvas`: line `186`
 - Explicit sync functions:
-    - `persistCanvasToStore(...)`: line `143`
-    - `hydrateCanvasFromStore(...)`: line `152`
-    - `handleSwitchPage(...)`: line `172`
-    - `handleCreatePage(...)`: line `180`
+    - `persistCanvasToStore(...)`: line `356`
+    - `hydrateCanvasFromStore(...)`: line `365`
+    - `handleSwitchPage(...)`: line `388`
+    - `handleCreatePage(...)`: line `396`
 - Immediate dirty marker effect:
-    - `$effect` marking/clearing dirty page: lines `187-201`
+    - `$effect` marking/clearing dirty page: lines `852-873`
 - On-load + save shortcut:
-    - `onMount(...)`: line `204`
-    - `Ctrl/Cmd + S` storage save path: lines `209-215`
+    - `onMount(...)`: line `876`
+    - `Ctrl/Cmd + S` shortcut router: `src/lib/flow/keyboard-shortcuts.ts:37-40`
+    - Save handler wiring: `Flow.svelte:895-897`
+    - `handleSave(...)` storage save path: lines `435-438`
 - Footer callback wiring:
-    - `<EditorFooter onSwitchPage={...} onCreatePage={...} />`: line `256`
+    - `<EditorFooter onSwitchPage={...} onCreatePage={...} />`: line `1235`
 
 ### 3) Footer UI + Unsaved Dot
 
@@ -92,47 +94,46 @@ File: `src/lib/components/EditorFooter.svelte`
 - Unsaved list import:
     - `visibleUnsavedPageIdsStore`: line `9`
 - Switch/create handlers:
-    - `handleCreatePage(...)`: line `35`
-    - `handleSwitchPage(...)`: line `45`
+    - `handleCreatePage(...)`: line `37`
+    - `handleSwitchPage(...)`: line `47`
 - Inline name update:
-    - `handlePageNameInput(...)`: line `60`
+    - `handlePageNameInput(...)`: line `62`
 - Delete action:
-    - `handleDeletePage(...)`: line `78`
+    - `handleDeletePage(...)`: line `82`
 - Dot render:
-    - `{#if $visibleUnsavedPageIdsStore.includes(page.id)}`: line `97`
-    - `<span class="unsaved-dot" ...>`: line `98`
-- Dot style:
-    - `.unsaved-dot`: line `188`
+    - `{#if $visibleUnsavedPageIdsStore.includes(page.id)}`: line `116`
+    - Inline red dot `<span>`: lines `117-123`
 
 ## Event Flows
 
 ### A) Switch Page
 
-1. Footer calls `onSwitchPage(pageId)` in Flow (`Flow.svelte:172`)
-2. Flow calls `persistCanvasToStore()` (`Flow.svelte:143`)
-3. Flow calls `switchPage(pageId)` (`Flow.svelte:174`)
-4. Flow calls `hydrateCanvasFromStore()` (`Flow.svelte:175`)
+1. Footer calls `onSwitchPage(pageId)` in Flow (`Flow.svelte:388`)
+2. Flow calls `persistCanvasToStore()` (`Flow.svelte:389`)
+3. Flow calls `switchPage(pageId)` (`Flow.svelte:390`)
+4. Flow calls `hydrateCanvasFromStore()` (`Flow.svelte:391`)
 
 ### B) Create Page
 
-1. Footer calls `onCreatePage()` in Flow (`Flow.svelte:180`)
-2. Flow persists current canvas (`Flow.svelte:181`)
-3. Flow creates page (`Flow.svelte:182`)
-4. Flow hydrates canvas from new active page (`Flow.svelte:183`)
+1. Footer calls `onCreatePage()` in Flow (`Flow.svelte:396`)
+2. Flow persists current canvas (`Flow.svelte:397`)
+3. Flow creates page (`Flow.svelte:398`)
+4. Flow hydrates canvas from new active page (`Flow.svelte:399`)
 
 ### C) Save Active Page (`Ctrl/Cmd + S`)
 
-1. Flow intercepts shortcut (`Flow.svelte:209-213`)
-2. Flow syncs canvas -> store (`Flow.svelte:214`)
-3. Flow saves active page -> localStorage (`Flow.svelte:215`)
-4. Store updates saved signature + clears canvas dirty marker (`editor.store.svelte.ts:281-286`)
+1. Keyboard router intercepts shortcut (`keyboard-shortcuts.ts:37-40`)
+2. Flow wires the save handler into the router (`Flow.svelte:895-897`)
+3. Flow syncs canvas -> store (`Flow.svelte:436`)
+4. Flow saves active page -> localStorage (`Flow.svelte:437`)
+5. Store updates saved signature + clears canvas dirty marker (`editor.store.svelte.ts:178-182`)
 
 ### D) Load from Storage (On Mount)
 
-1. Flow calls `loadEditorStateFromStorage()` (`Flow.svelte:205`)
-2. Store validates payload and sets `editorStoreSvelte` (`editor.store.svelte.ts:296-303`)
-3. Store rebuilds saved signatures + clears canvas dirty markers (`editor.store.svelte.ts:301-302`)
-4. Flow hydrates canvas from new active page snapshot (`Flow.svelte:206`)
+1. Flow calls `loadEditorStateFromStorage()` (`Flow.svelte:877`)
+2. Store validates payload and sets `editorStoreSvelte` (`editor.store.svelte.ts:198-204`)
+3. Store rebuilds saved signatures + clears canvas dirty markers (`editor.store.svelte.ts:205-206`)
+4. Flow hydrates canvas from new active page snapshot (`Flow.svelte:878`)
 
 ## Unsaved Indicator Rules
 

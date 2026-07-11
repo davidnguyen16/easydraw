@@ -18,13 +18,13 @@
 	import { get } from 'svelte/store';
 
 	import { useDnD } from '$lib/flow/DnDProvider.svelte';
-	import Sidebar from '$lib/components/Sidebar.svelte';
+	import Sidebar from '$lib/components/sidebar/Sidebar.svelte';
 
 	import ConnectionStylePanel from '$lib/components/ConnectionStylePanel.svelte';
-	import StylePanel, { type NodeStyleData } from '$lib/components/StylePanel.svelte';
+	import StylePanel, { type NodeStyleData } from '$lib/components/style-panel/StylePanel.svelte';
 	import { EXPORTERS, getExporter } from '$lib/exporters';
-	import ConnectionEdge from '$lib/flow/edges/connection/ConnectionEdge.svelte';
-	import ConnectionLinePreview from '$lib/flow/edges/connection/ConnectionLinePreview.svelte';
+	import ConnectionEdge from '$lib/flow/edges/ConnectionEdge.svelte';
+	import ConnectionLinePreview from '$lib/flow/edges/ConnectionLinePreview.svelte';
 	import { buildNodeTypesMap, getShape } from '$lib/flow/nodes/registry';
 	import AnchorNode from '$lib/flow/nodes/anchor/AnchorNode.svelte';
 	import {
@@ -32,11 +32,28 @@
 		ANCHOR_NODE_TYPE,
 		createAnchorNode
 	} from '$lib/flow/nodes/anchor/anchor';
+	import {
+		bringSelectedForward,
+		bringSelectedToFront,
+		copySelection,
+		deleteSelectedGraph,
+		duplicateSelectedNodes,
+		groupSelectedNodes,
+		pasteSnapshot,
+		selectAllGraph,
+		sendSelectedBackward,
+		sendSelectedToBack,
+		toggleNodeLock,
+		ungroupSelectedNodes,
+		type ClipboardSnapshot
+	} from '$lib/flow/graph-actions';
+	import { createEditorKeyboardHandler } from '$lib/flow/keyboard-shortcuts';
 
 	import EditorFooter from '$lib/components/EditorFooter.svelte';
-	import MenuBar from '$lib/components/menubar/MenuBar.svelte';
-	import ToolBar from '$lib/components/toolbar/ToolBar.svelte';
-	import ContextMenu from '$lib/flow/context-menu/ContextMenu.svelte';
+	import MenuBar from '$lib/components/MenuBar.svelte';
+	import ToolBar from '$lib/components/ToolBar.svelte';
+	import CanvasScrollbars from '$lib/flow/CanvasScrollbars.svelte';
+	import ContextMenu from '$lib/flow/ContextMenu.svelte';
 	import {
 		clearCanvasDirtyPage,
 		createPage,
@@ -191,12 +208,11 @@
 	});
 
 	// In-memory clipboard for Copy / Paste. JSON-clean (no function refs).
-	let clipboardSnapshot: { nodes: Node[]; edges: Edge[] } | null = null;
+	let clipboardSnapshot: ClipboardSnapshot | null = null;
 
 	// Successive pastes cascade diagonally so each Ctrl+V lands offset from the
 	// previous one (and from the originals) instead of stacking on the same spot
 	// — that way it's obvious a new copy appeared. Reset on every fresh copy.
-	const PASTE_OFFSET_STEP = 32;
 	let pasteCount = 0;
 
 	// Default text style applied to newly-dropped nodes. Editable from the
@@ -532,45 +548,27 @@
 		flow.fitView();
 	}
 
+	function createNodeEditHandler(nodeId: string) {
+		return (newData: any) => updateNodeData(nodeId, newData);
+	}
+
 	function handleDuplicate() {
-		const selected = nodes.filter((n) => n.selected);
-		if (selected.length === 0) return;
-
-		const copies = selected.map((n) => {
-			const newId = nanoid();
-			return {
-				...n,
-				id: newId,
-				position: { x: n.position.x + 30, y: n.position.y + 30 },
-				selected: false,
-				data: {
-					...n.data,
-					onEdit: (newData: any) => updateNodeData(newId, newData)
-				}
-			};
-		});
-
-		nodes = [...nodes.map((n) => ({ ...n, selected: false })), ...copies];
+		const nextNodes = duplicateSelectedNodes(nodes, createNodeEditHandler);
+		if (nextNodes !== nodes) nodes = nextNodes;
 	}
 
 	function handleDeleteSelected() {
-		const hasSelectedNodes = nodes.some((n) => n.selected);
-		const hasSelectedEdges = edges.some((e) => e.selected);
-		if (!hasSelectedNodes && !hasSelectedEdges) return;
-
-		// Locked nodes are protected: a select-all + delete leaves them behind.
-		if (hasSelectedNodes)
-			nodes = nodes.filter((n) => !n.selected || (n.data as any)?.locked);
-		if (hasSelectedEdges) edges = edges.filter((e) => !e.selected);
+		const next = deleteSelectedGraph(nodes, edges);
+		if (!next.changed) return;
+		nodes = next.nodes;
+		edges = next.edges;
 	}
 
 	function handleSelectAll() {
-		// Connection anchors are internal floating-endpoint dots, not user
-		// content — don't sweep them into a select-all.
-		nodes = nodes.map((n) => (n.type === ANCHOR_NODE_TYPE ? n : { ...n, selected: true }));
-		edges = edges.map((e) => ({ ...e, selected: true }));
+		const next = selectAllGraph(nodes, edges);
+		nodes = next.nodes;
+		edges = next.edges;
 	}
-
 	async function handleShare() {
 		persistCanvasToStore();
 		const json = exportEditorStateAsJSON();
@@ -584,28 +582,15 @@
 	}
 
 	// =========================================================================
-	// Copy / Paste — uses an in-memory snapshot keyed by selection.
+	// Copy / Paste - uses an in-memory snapshot keyed by selection.
 	// =========================================================================
 	function handleCopy() {
-		const selectedNodes = nodes.filter((n) => n.selected);
-		if (selectedNodes.length === 0) return;
-
-		const selectedIds = new Set(selectedNodes.map((n) => n.id));
-		const selectedEdges = edges.filter(
-			(e) => selectedIds.has(e.source) && selectedIds.has(e.target)
-		);
-
-		// Strip onEdit so the clone is JSON-clean. cloneNodes re-attaches it on paste.
-		clipboardSnapshot = {
-			nodes: JSON.parse(JSON.stringify(selectedNodes)),
-			edges: JSON.parse(JSON.stringify(selectedEdges))
-		};
-		// Fresh copy → restart the paste cascade from the first offset.
+		const snapshot = copySelection(nodes, edges);
+		if (!snapshot) return;
+		clipboardSnapshot = snapshot;
 		pasteCount = 0;
 	}
 
-	// Cut = copy the current selection to the in-memory clipboard, then remove
-	// it from the canvas. Mirrors the same selection rules as Copy.
 	function handleCut() {
 		const hasSelection = nodes.some((n) => n.selected) || edges.some((e) => e.selected);
 		if (!hasSelection) return;
@@ -615,181 +600,55 @@
 
 	function handlePaste() {
 		if (!clipboardSnapshot) return;
-
-		const idMap = new Map<string, string>();
-
-		// Each paste steps further down-right than the previous one.
 		pasteCount += 1;
-		const offset = PASTE_OFFSET_STEP * pasteCount;
-
-		const pastedNodes = clipboardSnapshot.nodes.map((n) => {
-			const newId = nanoid();
-			idMap.set(n.id, newId);
-			return {
-				...n,
-				id: newId,
-				position: { x: n.position.x + offset, y: n.position.y + offset },
-				selected: true,
-				data: {
-					...n.data,
-					onEdit: (newData: any) => updateNodeData(newId, newData)
-				}
-			} as Node;
-		});
-
-		const pastedEdges = clipboardSnapshot.edges.map((e) => ({
-			...e,
-			id: nanoid(),
-			source: idMap.get(e.source) ?? e.source,
-			target: idMap.get(e.target) ?? e.target,
-			selected: true
-		}));
-
-		nodes = [...nodes.map((n) => ({ ...n, selected: false })), ...pastedNodes];
-		edges = [...edges.map((e) => ({ ...e, selected: false })), ...pastedEdges];
+		const next = pasteSnapshot(nodes, edges, clipboardSnapshot, pasteCount, createNodeEditHandler);
+		nodes = next.nodes;
+		edges = next.edges;
 	}
-
 	// =========================================================================
-	// Z-order — array order controls render stacking in SvelteFlow.
+	// Graph actions - array order controls stacking in SvelteFlow.
 	// =========================================================================
 	function handleBringToFront() {
-		const selected = nodes.filter((n) => n.selected);
-		if (selected.length === 0) return;
-		const others = nodes.filter((n) => !n.selected);
-		nodes = [...others, ...selected];
+		const nextNodes = bringSelectedToFront(nodes);
+		if (nextNodes !== nodes) nodes = nextNodes;
 	}
 
 	function handleSendToBack() {
-		const selected = nodes.filter((n) => n.selected);
-		if (selected.length === 0) return;
-		const others = nodes.filter((n) => !n.selected);
-		nodes = [...selected, ...others];
+		const nextNodes = sendSelectedToBack(nodes);
+		if (nextNodes !== nodes) nodes = nextNodes;
 	}
 
-	// Single-step z-order. Later in the array = rendered on top, so "forward"
-	// moves selected nodes toward the end. Walking from the front edge inward
-	// swaps each selected node past exactly one unselected neighbour without
-	// leapfrogging others in the same selection.
 	function handleBringForward() {
-		if (!nodes.some((n) => n.selected)) return;
-		const next = [...nodes];
-		for (let i = next.length - 2; i >= 0; i--) {
-			if (next[i].selected && !next[i + 1].selected) {
-				[next[i], next[i + 1]] = [next[i + 1], next[i]];
-			}
-		}
-		nodes = next;
+		const nextNodes = bringSelectedForward(nodes);
+		if (nextNodes !== nodes) nodes = nextNodes;
 	}
 
 	function handleSendBackward() {
-		if (!nodes.some((n) => n.selected)) return;
-		const next = [...nodes];
-		for (let i = 1; i < next.length; i++) {
-			if (next[i].selected && !next[i - 1].selected) {
-				[next[i], next[i - 1]] = [next[i - 1], next[i]];
-			}
-		}
-		nodes = next;
+		const nextNodes = sendSelectedBackward(nodes);
+		if (nextNodes !== nodes) nodes = nextNodes;
 	}
 
-	// Per-node lock: freeze one node's drag / connect / delete while keeping it
-	// selectable, so it can still be right-clicked to unlock. The `locked` flag
-	// lives in data so it persists; cloneNodes re-derives the props on hydrate.
 	function handleToggleNodeLock(id: string) {
-		nodes = nodes.map((n) => {
-			if (n.id !== id) return n;
-			const locked = !(n.data as any)?.locked;
-			return {
-				...n,
-				draggable: !locked,
-				connectable: !locked,
-				deletable: !locked,
-				data: { ...n.data, locked }
-			};
-		});
+		nodes = toggleNodeLock(nodes, id);
 	}
 
-	// =========================================================================
-	// Group / Ungroup — wraps selected nodes in a parent container.
-	// =========================================================================
 	function handleGroup() {
-		// Exclude internal anchor dots — only real shapes get grouped.
-		const selected = nodes.filter(
-			(n) => n.selected && !(n as any).parentId && n.type !== ANCHOR_NODE_TYPE
-		);
-		if (selected.length < 2) {
+		const next = groupSelectedNodes(nodes);
+		if (!next.grouped) {
 			alert('Select at least 2 nodes to group.');
 			return;
 		}
-
-		const PADDING = 24;
-		const minX = Math.min(...selected.map((n) => n.position.x));
-		const minY = Math.min(...selected.map((n) => n.position.y));
-		const maxX = Math.max(
-			...selected.map((n) => n.position.x + ((n as any).width ?? n.measured?.width ?? 150))
-		);
-		const maxY = Math.max(
-			...selected.map((n) => n.position.y + ((n as any).height ?? n.measured?.height ?? 80))
-		);
-
-		const groupId = nanoid();
-		const groupNode = {
-			id: groupId,
-			type: 'group',
-			position: { x: minX - PADDING, y: minY - PADDING },
-			data: {},
-			style: `width: ${maxX - minX + PADDING * 2}px; height: ${maxY - minY + PADDING * 2}px;`
-		} as unknown as Node;
-
-		const selectedIds = new Set(selected.map((n) => n.id));
-		const next: Node[] = [
-			groupNode,
-			...nodes.map((n) => {
-				if (!selectedIds.has(n.id)) return n;
-				return {
-					...n,
-					parentId: groupId,
-					extent: 'parent' as const,
-					position: {
-						x: n.position.x - (minX - PADDING),
-						y: n.position.y - (minY - PADDING)
-					},
-					selected: false
-				};
-			})
-		];
-		nodes = next;
+		nodes = next.nodes;
 	}
 
 	function handleUngroup() {
-		const selectedGroups = nodes.filter((n) => n.selected && n.type === 'group');
-		if (selectedGroups.length === 0) {
+		const next = ungroupSelectedNodes(nodes);
+		if (!next.ungrouped) {
 			alert('Select a group node to ungroup.');
 			return;
 		}
-
-		const groupIds = new Set(selectedGroups.map((g) => g.id));
-		const groupById = new Map(selectedGroups.map((g) => [g.id, g]));
-
-		nodes = nodes
-			.filter((n) => !groupIds.has(n.id))
-			.map((n) => {
-				const parentId = (n as any).parentId as string | undefined;
-				if (parentId && groupIds.has(parentId)) {
-					const parent = groupById.get(parentId)!;
-					const { parentId: _drop, extent: _drop2, ...rest } = n as any;
-					return {
-						...rest,
-						position: {
-							x: parent.position.x + n.position.x,
-							y: parent.position.y + n.position.y
-						}
-					} as Node;
-				}
-				return n;
-			});
+		nodes = next.nodes;
 	}
-
 	// =========================================================================
 	// View toggles + Export.
 	// =========================================================================
@@ -883,9 +742,13 @@
 		};
 	});
 
-	// SvelteFlow viewport changes drive the live zoom % shown in the toolbar.
-	function handleViewportMove(_event: any, viewport: { zoom: number }) {
+	// Live viewport transform — drives the toolbar zoom % AND the canvas
+	// scrollbars (they need x/y to know which world region is visible).
+	let canvasViewport = $state({ x: 0, y: 0, zoom: 1 });
+
+	function handleViewportMove(_event: any, viewport: { x: number; y: number; zoom: number }) {
 		editorActionsState.zoomPercent = Math.round(viewport.zoom * 100);
+		canvasViewport = viewport;
 	}
 
 	// Single context object exposed to MenuBar and ToolBar as 'editor'.
@@ -1034,136 +897,28 @@
 
 		// Centralized shortcut router. Reuses the same handlers wired into the
 		// MenuBar / ToolBar so behavior stays in lockstep with the UI.
-		const handleKeyboard = (event: KeyboardEvent) => {
-			const target = event.target as HTMLElement;
-			const isInInput =
-				target.tagName === 'INPUT' ||
-				target.tagName === 'TEXTAREA' ||
-				target.isContentEditable;
-
-			const meta = event.ctrlKey || event.metaKey;
-			const key = event.key.toLowerCase();
-
-			if (meta && key === 's') {
-				event.preventDefault();
-				if (event.shiftKey) handleSaveAs();
-				else handleSave();
-				return;
-			}
-
-			if (meta && key === 'z') {
-				if (isInInput) return;
-				event.preventDefault();
-				if (event.shiftKey) handleRedo();
-				else handleUndo();
-				return;
-			}
-
-			if (meta && key === 'y') {
-				if (isInInput) return;
-				event.preventDefault();
-				handleRedo();
-				return;
-			}
-
-			if (meta && key === 'd') {
-				if (isInInput) return;
-				event.preventDefault();
-				handleDuplicate();
-				return;
-			}
-
-			if (meta && key === 'a') {
-				if (isInInput) return;
-				event.preventDefault();
-				handleSelectAll();
-				return;
-			}
-
-			if (meta && key === 'c') {
-				if (isInInput) return;
-				event.preventDefault();
-				handleCopy();
-				return;
-			}
-
-			if (meta && key === 'x') {
-				if (isInInput) return;
-				event.preventDefault();
-				handleCut();
-				return;
-			}
-
-			if (meta && key === 'v') {
-				if (isInInput) return;
-				event.preventDefault();
-				handlePaste();
-				return;
-			}
-
-			// Text formatting (Ctrl+B / Ctrl+I / Ctrl+U). Only act when something
-			// is selected, otherwise let the browser keep its own shortcut.
-			if (meta && !event.shiftKey && (key === 'b' || key === 'i' || key === 'u')) {
-				if (isInInput) return;
-				if (!selectedNode && !selectedEdge) return;
-				event.preventDefault();
-				toggleTextStyle(key === 'b' ? 'bold' : key === 'i' ? 'italic' : 'underline');
-				return;
-			}
-
-			if (meta && event.shiftKey && key === 'f') {
-				event.preventDefault();
-				handleBringToFront();
-				return;
-			}
-
-			if (meta && event.shiftKey && key === 'b') {
-				event.preventDefault();
-				handleSendToBack();
-				return;
-			}
-
-			if (meta && event.shiftKey && key === 'g') {
-				if (isInInput) return;
-				event.preventDefault();
-				handleUngroup();
-				return;
-			}
-
-			if (meta && key === 'g') {
-				if (isInInput) return;
-				event.preventDefault();
-				handleGroup();
-				return;
-			}
-
-			if (meta && event.shiftKey && key === 'h') {
-				event.preventDefault();
-				handleFitView();
-				return;
-			}
-
-			if (meta && (key === '=' || key === '+')) {
-				event.preventDefault();
-				handleZoomIn();
-				return;
-			}
-
-			if (meta && key === '-') {
-				event.preventDefault();
-				handleZoomOut();
-				return;
-			}
-
-			if (event.key === 'Delete' || event.key === 'Backspace') {
-				if (isInInput) return;
-				const hasSelected = nodes.some((n) => n.selected) || edges.some((e) => e.selected);
-				if (!hasSelected) return;
-				event.preventDefault();
-				handleDeleteSelected();
-			}
-		};
-
+		const handleKeyboard = createEditorKeyboardHandler({
+			save: handleSave,
+			saveAs: handleSaveAs,
+			undo: handleUndo,
+			redo: handleRedo,
+			duplicate: handleDuplicate,
+			selectAll: handleSelectAll,
+			copy: handleCopy,
+			cut: handleCut,
+			paste: handlePaste,
+			deleteSelected: handleDeleteSelected,
+			bringToFront: handleBringToFront,
+			sendToBack: handleSendToBack,
+			group: handleGroup,
+			ungroup: handleUngroup,
+			fitView: handleFitView,
+			zoomIn: handleZoomIn,
+			zoomOut: handleZoomOut,
+			toggleTextStyle,
+			hasSelection: () => nodes.some((n) => n.selected) || edges.some((e) => e.selected),
+			hasStyleSelection: () => !!selectedNode || !!selectedEdge
+		});
 		window.addEventListener('keydown', handleKeyboard);
 		return () => {
 			window.removeEventListener('keydown', handleKeyboard);
@@ -1454,6 +1209,15 @@
 				/>
 			{/if}
 		</SvelteFlow>
+
+		<!-- Draw.io-style scrollbars: only visible when a node is out of view
+		     on that axis; dragging a thumb pans the viewport to reach it. -->
+		<CanvasScrollbars
+			{nodes}
+			viewport={canvasViewport}
+			width={clientWidth}
+			height={clientHeight}
+		/>
 
 		{#if !editorActionsState.presenting}
 			<Sidebar />

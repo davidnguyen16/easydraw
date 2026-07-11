@@ -12,14 +12,14 @@
 	import { Trash2 } from '@lucide/svelte';
 	import LineEndingsDialog from '$lib/components/LineEndingsDialog.svelte';
 	import MarkerPreview from '$lib/components/MarkerPreview.svelte';
-	import { MARKER_DEFS } from '$lib/flow/edges/connection/markers';
+	import { MARKER_DEFS } from '$lib/flow/edges/markers';
 	import { markerPalette } from '$lib/stores/markers.store.svelte';
 	import type {
 		ConnectionEdgeData,
 		EdgeLineStyle,
 		EdgeRouting,
 		MarkerKind
-	} from '$lib/flow/edges/connection/types';
+	} from '$lib/flow/edges/types';
 
 	interface Props {
 		edge: Edge;

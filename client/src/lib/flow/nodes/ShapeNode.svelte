@@ -72,7 +72,8 @@
 			`font-weight: ${bold ? '700' : '400'}`,
 			`font-style: ${italic ? 'italic' : 'normal'}`,
 			`text-decoration: ${underline ? 'underline' : 'none'}`,
-			`text-align: ${textAlign}`
+			`text-align: ${textAlign}`,
+			'line-height: 1.25'
 		].join('; ')
 	);
 
@@ -106,16 +107,25 @@
 	);
 
 	function onInput(evt: Event) {
-		const target = evt.target as HTMLInputElement;
+		const target = evt.target as HTMLTextAreaElement;
 		updateNodeData(id, { label: target.value });
+		fitLabelTextarea();
 	}
 
 	// ─── Label editing (double-click to type, like connection labels) ───
 	// At rest the label is read-only and ignores the pointer, so a single click
 	// just selects the node (xyflow). Only a double-click enters edit mode, which
 	// focuses the field and lets you type; Enter / Escape / blur leaves it.
-	let inputEl = $state<HTMLInputElement>();
+	let labelBoxEl = $state<HTMLDivElement>();
+	let inputEl = $state<HTMLTextAreaElement>();
 	let editing = $state(false);
+
+	function fitLabelTextarea() {
+		const el = inputEl;
+		if (!el) return;
+		el.style.height = 'auto';
+		el.style.height = `${el.scrollHeight}px`;
+	}
 
 	function startEditing() {
 		editing = true;
@@ -123,6 +133,7 @@
 		requestAnimationFrame(() => {
 			inputEl?.focus();
 			inputEl?.select();
+			fitLabelTextarea();
 		});
 	}
 
@@ -173,6 +184,20 @@
 		};
 		window.addEventListener('pointerdown', onPointerDown, true);
 		return () => window.removeEventListener('pointerdown', onPointerDown, true);
+	});
+
+	$effect(() => {
+		data.label;
+		labelStyle;
+		requestAnimationFrame(fitLabelTextarea);
+	});
+
+	$effect(() => {
+		const el = labelBoxEl;
+		if (!el) return;
+		const observer = new ResizeObserver(() => fitLabelTextarea());
+		observer.observe(el);
+		return () => observer.disconnect();
 	});
 
 	// Connection-handle classes. `shape-conn` is a DOM hook kept for the xyflow
@@ -389,24 +414,28 @@
 	{/if}
 
 	<div
+		bind:this={labelBoxEl}
 		class="pointer-events-auto relative w-full px-3 py-2 select-none"
 		style:opacity={visualOpacity}
 	>
-		<input
+		<textarea
 			bind:this={inputEl}
-			type="text"
-			value={data.label ?? ''}
+			rows="1"
+			value={String(data.label ?? '')}
 			oninput={onInput}
 			readonly={!editing}
 			onkeydown={onLabelKeydown}
 			onblur={onLabelBlur}
 			onpointerdown={(e) => editing && e.stopPropagation()}
-			class="nodrag m-0 w-full appearance-none border-none bg-transparent p-0 outline-none
+			spellcheck="false"
+			aria-label="Node label"
+			class="nodrag m-0 block w-full resize-none appearance-none overflow-hidden border-none
+				bg-transparent p-0 whitespace-pre-wrap outline-none break-words [overflow-wrap:anywhere]
 				{editing
 				? 'pointer-events-auto cursor-text select-text'
 				: 'pointer-events-none cursor-[inherit]'}"
 			style={labelStyle}
-		/>
+		></textarea>
 	</div>
 </div>
 

@@ -15,7 +15,7 @@
 	}
 
 	interface EditorContext {
-		state: { zoomPercent: number; locked: boolean };
+		state: { zoomPercent: number; locked: boolean; showStylePanel: boolean };
 		history: { canUndo: boolean; canRedo: boolean };
 		save: () => void;
 		open: () => void;
@@ -28,6 +28,7 @@
 		fitSelection: () => void;
 		setZoom: (percent: number) => void;
 		toggleLock: () => void;
+		toggleStylePanel: () => void;
 		copy: () => void;
 		duplicate: () => void;
 		deleteSelected: () => void;
@@ -191,8 +192,8 @@
 {/snippet}
 
 <div
-	class="flex w-full flex-[0_0_46px] items-center gap-1 border-b border-line-soft bg-white px-3
-		[font-family:system-ui,-apple-system,sans-serif]"
+	class="relative flex w-full flex-[0_0_46px] items-center gap-1 border-b border-line-soft bg-white
+		py-0 pr-14 pl-3 [font-family:system-ui,-apple-system,sans-serif]"
 >
 	<!-- File -->
 	<div class="flex items-center gap-0.5">
@@ -527,6 +528,23 @@
 		</button>
 		<button type="button" class={ICON_BTN} aria-label="Delete" onclick={editor.deleteSelected}>
 			{@render icon('delete')}
+		</button>
+	</div>
+
+	<!-- Style-panel toggle: PINNED to the toolbar's right corner (absolute, out
+	     of the icon flow) so it stays glued to the screen edge no matter how
+	     crowded the toolbar gets. Root is `relative` + `pr-14` reserves its
+	     lane so flowing icons never slide underneath. -->
+	<div class="absolute top-1/2 right-3 -translate-y-1/2">
+		<button
+			type="button"
+			class={ICON_BTN}
+			class:toggled={editor.state.showStylePanel}
+			aria-label={editor.state.showStylePanel ? 'Hide style panel' : 'Show style panel'}
+			aria-pressed={editor.state.showStylePanel}
+			onclick={editor.toggleStylePanel}
+		>
+			{@render icon('style-panel')}
 		</button>
 	</div>
 </div>

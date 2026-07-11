@@ -201,6 +201,7 @@
 		showGrid: true,
 		snapToGrid: false,
 		locked: false,
+		showStylePanel: true,
 		// Present mode: hides all editor chrome (menubar/toolbar/sidebar/panels/
 		// footer) and shows just the canvas, read-only. Toggled by the menubar's
 		// Present button; Esc exits.
@@ -681,6 +682,10 @@
 		editorActionsState.locked = !editorActionsState.locked;
 	}
 
+	function handleToggleStylePanel() {
+		editorActionsState.showStylePanel = !editorActionsState.showStylePanel;
+	}
+
 	// ─── Present mode ───────────────────────────────────────────────────
 	// Enter a clean, read-only fullscreen-ish view of the current page.
 	function handlePresent() {
@@ -786,6 +791,7 @@
 		setZoom: handleSetZoom,
 		fitSelection: handleFitSelection,
 		toggleLock: handleToggleLock,
+		toggleStylePanel: handleToggleStylePanel,
 		// Text style of the current selection (or null) + a patcher — drives the
 		// ToolBar's font / size / B / I / U / colour controls. A getter so reads
 		// stay reactive to the current selection. A selected NODE wins; otherwise
@@ -1222,25 +1228,27 @@
 		{#if !editorActionsState.presenting}
 			<Sidebar />
 
-			{#if selectedNode}
-				{@const activeNode = selectedNode}
-				<StylePanel
-					node={activeNode}
-					onStyleChange={handleStyleChange}
-					onPositionChange={handlePositionChange}
-					onSizeChange={handleSizeChange}
-					onBringToFront={handleBringToFront}
-					onSendToBack={handleSendToBack}
-					onDuplicate={handleDuplicate}
-					onDelete={handleDeleteSelected}
-				/>
-			{:else if selectedEdge}
-				{@const activeEdge = selectedEdge}
-				<ConnectionStylePanel
-					edge={activeEdge}
-					onDataChange={(patch) => updateEdgeData(activeEdge.id, patch)}
-					onDelete={handleDeleteSelected}
-				/>
+			{#if editorActionsState.showStylePanel}
+				{#if selectedNode}
+					{@const activeNode = selectedNode}
+					<StylePanel
+						node={activeNode}
+						onStyleChange={handleStyleChange}
+						onPositionChange={handlePositionChange}
+						onSizeChange={handleSizeChange}
+						onBringToFront={handleBringToFront}
+						onSendToBack={handleSendToBack}
+						onDuplicate={handleDuplicate}
+						onDelete={handleDeleteSelected}
+					/>
+				{:else if selectedEdge}
+					{@const activeEdge = selectedEdge}
+					<ConnectionStylePanel
+						edge={activeEdge}
+						onDataChange={(patch) => updateEdgeData(activeEdge.id, patch)}
+						onDelete={handleDeleteSelected}
+					/>
+				{/if}
 			{/if}
 		{/if}
 	</section>

@@ -19,18 +19,21 @@ export class JwtAuthGuard implements CanActivate {
 
     canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest<Request>();
-        const header = request.headers.authorization;
 
-        if (!header || !header.startsWith('Bearer ')) {
+        const cookieToken = request.cookies?.access_token as string | undefined;
+        const header = request.headers.authorization;
+        const bearerToken = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
+        const token = cookieToken ?? bearerToken;
+
+        if (!token) {
             throw new UnauthorizedException('Missing token');
         }
         
         try {
-            const payload = this.jwtService.verify<JwtPayload>(header.slice(7));
-            request.user = payload;
+            request.user = this.jwtService.verify<JwtPayload>(token);
             return true;
-        } catch (error) {
-            throw new UnauthorizedException('Invalid token');
+        } catch {
+            throw new UnauthorizedException('Invalid or Expired token');
         }
     }
 }

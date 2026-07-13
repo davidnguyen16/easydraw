@@ -42,6 +42,39 @@ export class AuthService {
         return this.issueToken(user);
     }
 
+    async validateGoogleUser(profile: { googleId: string; email: string; name?: string}) {
+        // Have logined with Google before -> Find by Google ID
+        let user = await this.prisma.user.findUnique({
+            where: { googleId: profile.googleId },
+        });
+
+        if (user) return this.issueToken(user);
+
+        // Have registered with Email account before -> Update googleId to existed account 
+        const existing = await this.prisma.user.findUnique({
+            where: { email: profile.email },
+        });
+
+        if (existing) {
+            user = await this.prisma.user.update({
+                where: { id: existing.id },
+                data: { googleId: profile.googleId },
+            });
+            return this.issueToken(user);
+        }
+
+        // New User - First time login with Google -> Create account (no passwordHash because login with Google)
+        user = await this.prisma.user.create({
+            data: {
+                email: profile.email,
+                googleId: profile.googleId,
+                name: profile.name,
+            },
+        });
+        return this.issueToken(user);
+    }
+    
+    
     async login(email: string, password: string) {
         const user = await this.prisma.user.findUnique({ where: { email } });
 

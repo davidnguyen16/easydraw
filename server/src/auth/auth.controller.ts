@@ -1,5 +1,6 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
-import type { Response } from 'express';
+import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -34,5 +35,20 @@ export class AuthController {
     logout(@Res({ passthrough: true }) res: Response) {
         res.clearCookie('access_token');
         return { loggedOut: true };
+    }
+
+    // ROUTE 1 - kick off the flow. Guard redirects to Google; body never runs.
+    @Get('google')
+    @UseGuards(AuthGuard('google'))
+    googleAuth() {}
+
+    // ROUTE 2 - Google redirects back with ?code=...
+    @Get('google/callback')
+    @UseGuards(AuthGuard('google'))
+    googleCallback(@Req() req: Request, @Res() res: Response) {
+        // validate() returned { access_token, user } -> Pasport put it on req.user
+        const { access_token } = req.user as unknown as { access_token: string };
+        this.setTokenCookie(res, access_token);
+        return res.redirect('http://localhost:5173');
     }
 }

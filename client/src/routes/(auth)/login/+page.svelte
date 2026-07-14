@@ -2,15 +2,33 @@
 	import { Mail, Lock, Eye, EyeOff } from '@lucide/svelte';
 	import { API_URL } from '$lib/api';
 	import GoogleIcon from '$lib/components/icons/GoogleIcon.svelte';
+	import { goto } from '$app/navigation';
+	import { authStore } from '$lib/stores/auth.store.svelte';
 
 	let email = $state('');
 	let password = $state('');
 	let showPassword = $state(false);
+	let error = $state('');
 
-	function handleSubmit(e: SubmitEvent) {
+	async function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();
-		// TODO: POST `${API_URL}/auth/login` with credentials: 'include', then goto('/dashboard').
-		console.log('login', { email, password });
+		error = '';
+
+		const res = await fetch(`${API_URL}/auth/login`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email, password })
+		});
+
+		if (!res.ok) {
+			error = 'Email or password is incorrect';
+			return;
+		}
+
+		const data = await res.json();
+		authStore.user = data.user;
+		goto('/dashboard');
 	}
 </script>
 
@@ -77,6 +95,10 @@
 			Sign in
 		</button>
 	</form>
+
+	{#if error}
+		<p class="rounded-lg bg-mq-pink px-3 py-2 text-mq-red">{error}</p>
+	{/if}
 
 	<div class="my-5 flex items-center gap-3">
 		<span class="h-px flex-1 bg-line"></span>

@@ -9,12 +9,18 @@
 		FileText,
 		Search,
 		ArrowUpDown,
-		Check
+		Check,
+		MoreHorizontal,
+		FolderOpen,
+		Pencil,
+		Copy,
+		Trash2
 	} from '@lucide/svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import { authStore, logout } from '$lib/stores/auth.store.svelte';
 	import { API_URL } from '$lib/api';
 	import NewDiagramDialog from '$lib/components/NewDiagramDialog.svelte';
+	import DeleteDiagramDialog from '$lib/components/DeleteDiagramDialog.svelte';
 	import { DIAGRAM_TYPE_MAP, type DiagramType } from '$lib/diagram-types';
 
 	type Diagram = { id: string; title: string; type: string; updatedAt: string };
@@ -29,6 +35,9 @@
 	type SortKey = 'recent' | 'oldest' | 'name-asc' | 'name-desc';
 	let sortBy = $state<SortKey>('recent');
 	let sortMenuOpen = $state(false);
+	let menuFor = $state<string | null>(null);
+	let deleteOpen = $state(false);
+	let deleteTarget = $state<Diagram | null>(null);
 
 	const sortOptions: { value: SortKey; label: string }[] = [
 		{ value: 'recent', label: 'Recently updated' },
@@ -88,6 +97,60 @@
 		if (!res.ok) return;
 		const created = await res.json();
 		goto(`/editor/${created.id}`);
+	}
+
+	function openDiagram(d: Diagram) {
+		menuFor = null;
+		goto(`/editor/${d.id}`);
+	}
+
+	async function renameDiagram(d: Diagram) {
+		menuFor = null;
+		const name = prompt('Rename diagram', d.title)?.trim();
+		if (!name || name === d.title) return;
+		const res = await fetch(`${API_URL}/diagrams/${d.id}`, {
+			method: 'PATCH',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ title: name })
+		});
+		if (res.ok) d.title = name;
+	}
+
+	async function duplicateDiagram(d: Diagram) {
+		menuFor = null;
+		// The list doesn't carry `data`, so fetch the full diagram first, then copy it.
+		const src = await fetch(`${API_URL}/diagrams/${d.id}`, { credentials: 'include' });
+		if (!src.ok) return;
+		const full = await src.json();
+		const res = await fetch(`${API_URL}/diagrams`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ title: `${d.title} (copy)`, type: d.type, data: full.data })
+		});
+		if (!res.ok) return;
+		const created = await res.json();
+		diagrams = [
+			{ id: created.id, title: created.title, type: created.type, updatedAt: created.updatedAt },
+			...diagrams
+		];
+	}
+
+	function askDelete(d: Diagram) {
+		menuFor = null;
+		deleteTarget = d;
+		deleteOpen = true;
+	}
+
+	async function confirmDelete() {
+		const d = deleteTarget;
+		if (!d) return;
+		const res = await fetch(`${API_URL}/diagrams/${d.id}`, {
+			method: 'DELETE',
+			credentials: 'include'
+		});
+		if (res.ok) diagrams = diagrams.filter((x) => x.id !== d.id);
 	}
 
 	async function handleLogout() {
@@ -265,23 +328,73 @@
 					{#each filtered as d (d.id)}
 						{@const meta = typeMeta(d.type)}
 						{@const Icon = meta.icon}
-						<a
-							href={`/editor/${d.id}`}
-							class="group overflow-hidden rounded-2xl border border-line-soft bg-white shadow-sm transition hover:border-mq-red hover:shadow-md"
+						<div
+							class="group relative overflow-hidden rounded-2xl border border-line-soft bg-white shadow-sm transition hover:border-mq-red hover:shadow-md"
 						>
-							<div class="flex aspect-[4/3] flex-col items-center justify-center gap-2 bg-panel/50">
-								<Icon
-									size={40}
-									strokeWidth={1.4}
-									class="text-mq-red/70 transition-transform group-hover:scale-105"
-								/>
-								<span class="text-xs font-semibold tracking-wide text-mq-red/70">{meta.label}</span>
-							</div>
-							<div class="border-t border-line-soft px-4 py-3">
-								<p class="truncate text-sm font-medium text-ink">{d.title}</p>
-								<p class="mt-0.5 text-xs text-ink-muted">Edited {formatDate(d.updatedAt)}</p>
-							</div>
-						</a>
+							<a href={`/editor/${d.id}`} class="block">
+								<div class="flex aspect-[4/3] flex-col items-center justify-center gap-2 bg-panel/50">
+									<Icon
+										size={40}
+										strokeWidth={1.4}
+										class="text-mq-red/70 transition-transform group-hover:scale-105"
+									/>
+									<span class="text-xs font-semibold tracking-wide text-mq-red/70">{meta.label}</span>
+								</div>
+								<div class="border-t border-line-soft px-4 py-3">
+									<p class="truncate text-sm font-medium text-ink">{d.title}</p>
+									<p class="mt-0.5 text-xs text-ink-muted">Edited {formatDate(d.updatedAt)}</p>
+								</div>
+							</a>
+
+							<!-- ⋯ actions button (shown on hover / while its menu is open) -->
+							<button
+								onclick={() => (menuFor = menuFor === d.id ? null : d.id)}
+								aria-label="Diagram actions"
+								class="absolute top-2 right-2 flex size-8 items-center justify-center rounded-lg border border-line bg-white text-ink-muted shadow-sm transition-opacity hover:text-ink {menuFor ===
+								d.id
+									? 'opacity-100'
+									: 'opacity-0 group-hover:opacity-100'}"
+							>
+								<MoreHorizontal size={18} />
+							</button>
+
+							{#if menuFor === d.id}
+								<button
+									class="fixed inset-0 z-10 cursor-default"
+									onclick={() => (menuFor = null)}
+									aria-label="Close"
+									tabindex="-1"
+								></button>
+								<div
+									class="absolute top-11 right-2 z-20 w-40 overflow-hidden rounded-lg border border-line bg-white py-1 shadow-lg"
+								>
+									<button
+										onclick={() => openDiagram(d)}
+										class="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-hover"
+									>
+										<FolderOpen size={16} /> Open
+									</button>
+									<button
+										onclick={() => renameDiagram(d)}
+										class="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-hover"
+									>
+										<Pencil size={16} /> Rename
+									</button>
+									<button
+										onclick={() => duplicateDiagram(d)}
+										class="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-hover"
+									>
+										<Copy size={16} /> Duplicate
+									</button>
+									<button
+										onclick={() => askDelete(d)}
+										class="mt-1 flex w-full items-center gap-2.5 border-t border-line px-3 py-2 text-left text-sm text-mq-red hover:bg-mq-pink"
+									>
+										<Trash2 size={16} /> Delete
+									</button>
+								</div>
+							{/if}
+						</div>
 					{/each}
 				</div>
 			{/if}
@@ -289,4 +402,10 @@
 	</main>
 
 	<NewDiagramDialog bind:open={dialogOpen} onCreate={handleCreateDiagram} />
+
+	<DeleteDiagramDialog
+		bind:open={deleteOpen}
+		name={deleteTarget?.title ?? ''}
+		onConfirm={confirmDelete}
+	/>
 </div>

@@ -2,6 +2,11 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import '../global.css';
 	let { children } = $props();
+	
+	import { onMount } from 'svelte';
+	import { fetchMe } from '$lib/stores/auth.store.svelte';
+	onMount(fetchMe);
+
 </script>
 
 <svelte:head>

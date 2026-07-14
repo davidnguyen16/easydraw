@@ -131,12 +131,17 @@
 	font-display: swap;
 }
 
-/* 1. Use a more-intuitive box-sizing model */
-*,
-*::before,
-*::after {
-	box-sizing: border-box;
-}
+/* These are custom base/reset rules. They MUST live inside `@layer base` so
+   Tailwind's utilities (which sit in the later `utilities` layer) can override
+   them. If left unlayered, they beat every layered utility — e.g. `*{margin:0}`
+   silently kills `mx-auto`, `ml-auto`, `mt-*`, etc. across the whole app. */
+@layer base {
+	/* 1. Use a more-intuitive box-sizing model */
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
 
 /* 2. Remove default margin */
 *:not(dialog) {
@@ -166,6 +171,12 @@ body {
 html,
 body {
 	height: 100%;
+}
+
+/* Full-screen editor route locks page scroll (see (app)/editor/[id]/+page.svelte,
+   which toggles this class on mount). Landing / auth / dashboard pages scroll
+   normally. */
+body.editor-mode {
 	overflow: hidden;
 }
 
@@ -210,4 +221,5 @@ h6 {
 #root,
 #__next {
 	isolation: isolate;
+}
 }

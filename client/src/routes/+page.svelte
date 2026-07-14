@@ -1,12 +1,1 @@
-<script>
-	import { SvelteFlowProvider } from '@xyflow/svelte';
-
-	import Flow from '$lib/flow/Flow.svelte';
-	import DnDProvider from '$lib/flow/DnDProvider.svelte';
-</script>
-
-<SvelteFlowProvider>
-	<DnDProvider>
-		<Flow />
-	</DnDProvider>
-</SvelteFlowProvider>
+<!-- Root route always redirects to /login (see +page.ts); nothing renders here. -->

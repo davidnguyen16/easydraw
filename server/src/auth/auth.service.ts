@@ -78,16 +78,26 @@ export class AuthService {
     async login(email: string, password: string) {
         const user = await this.prisma.user.findUnique({ where: { email } });
 
-    if (!user || !user.passwordHash) {
-        throw new UnauthorizedException('Email or password is incorrect');
+        if (!user || !user.passwordHash) {
+            throw new UnauthorizedException('Email or password is incorrect');
+        }
+
+        const valid = await bcrypt.compare(password, user.passwordHash);
+        
+        if (!valid) {
+            throw new UnauthorizedException('Email or password is incorrect');
+        }
+
+        return this.issueToken(user);
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    
-    if (!valid) {
-        throw new UnauthorizedException('Email or password is incorrect');
-    }
+    async me(userId: string) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId }});
+        
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
 
-    return this.issueToken(user);
-  }
+        return { id: user.id, email: user.email, name: user.name };
+    }
 }

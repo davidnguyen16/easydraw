@@ -8,17 +8,18 @@ export class DiagramsService {
   findAll(userId: string) {
     return this.prisma.diagram.findMany({
       where: { ownerId: userId },
-      select: { id: true, title: true, createdAt: true, updatedAt: true },
+      select: { id: true, title: true, type: true, createdAt: true, updatedAt: true },
       orderBy: { updatedAt: 'desc' },
     });
   }
 
-  create(userId: string, title: string, data: any) {
+  create(userId: string, title: string, type: string, data: any) {
     return this.prisma.diagram.create({
       data: {
         title,
+        type,
         data: data ?? {}, 
-        ownerId: userId
+        ownerId: userId,
       },
     });
   }

@@ -256,16 +256,25 @@
 	class="flex h-[52px] items-center gap-[0.4rem] bg-mq-maroon px-[0.85rem] text-white
 		[font-family:system-ui,-apple-system,sans-serif]"
 >
-	<div
-		class="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[7px] bg-mq-red"
-		aria-label="EasyDraw"
+	<a
+		href="/dashboard"
+		title="Back to dashboard"
+		aria-label="Back to dashboard"
+		class="flex flex-shrink-0 items-center rounded-md p-1 transition-colors hover:bg-white/10"
 	>
-		<svg viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="none" aria-hidden="true">
-			<rect x="3" y="3" width="8" height="8" rx="2" fill="#ffffff" />
-			<rect x="13" y="13" width="8" height="8" rx="2" fill="#ffffff" />
-			<path d="M11 7h4a2 2 0 0 1 2 2v4" stroke="#ffffff" stroke-width="1.8" />
+		<svg width="40" height="40" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+			<rect x="4" y="4" width="40" height="40" rx="8" fill="#A6192E" />
+			<rect x="12" y="12" width="12" height="8" rx="2" fill="white" opacity="0.95" />
+			<rect x="28" y="28" width="12" height="8" rx="2" fill="white" opacity="0.95" />
+			<path
+				d="M24 16 L28 16 L28 32"
+				stroke="white"
+				stroke-width="2"
+				stroke-linecap="round"
+				opacity="0.8"
+			/>
 		</svg>
-	</div>
+	</a>
 
 	<input
 		class="min-w-[6rem] max-w-[18rem] rounded-[6px] border border-transparent bg-transparent px-2

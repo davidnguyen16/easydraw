@@ -4,14 +4,19 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard, type JwtPayload } from './jwt-auth.guard';
+import { CurrentUser } from './current-user.decorator';
+
 
 @Controller('auth')
 export class AuthController {
     constructor (private readonly authService: AuthService) {}
 
     @Post('register')
-    register(@Body() body: RegisterDto) {
-        return this.authService.register(body.email, body.password, body.name);
+    async register(@Body() body: RegisterDto, @Res({ passthrough: true }) res: Response) {
+            const result = await this.authService.register(body.email, body.password, body.name);
+            this.setTokenCookie(res, result.access_token);
+            return result;
     }
 
     // Apply token to cookie httpOnly - Browser keeps, JS cannot read
@@ -37,6 +42,11 @@ export class AuthController {
         return { loggedOut: true };
     }
 
+    @UseGuards(JwtAuthGuard)
+    @Get('me')
+    me(@CurrentUser() user: JwtPayload) {
+        return this.authService.me(user.sub);
+    }
     // ROUTE 1 - kick off the flow. Guard redirects to Google; body never runs.
     @Get('google')
     @UseGuards(AuthGuard('google'))
@@ -49,6 +59,6 @@ export class AuthController {
         // validate() returned { access_token, user } -> Pasport put it on req.user
         const { access_token } = req.user as unknown as { access_token: string };
         this.setTokenCookie(res, access_token);
-        return res.redirect('http://localhost:5173');
+        return res.redirect('http://localhost:5173/dashboard');
     }
 }

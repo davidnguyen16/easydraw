@@ -19,7 +19,7 @@ export class DiagramsController {
 
   @Post()
   create(@CurrentUser() user: JwtPayload, @Body() body: CreateDiagramDto) {
-    return this.diagramsService.create(user.sub, body.title, body.data);
+    return this.diagramsService.create(user.sub, body.title, body.type, body.data);
   }
 
   @Get(':id')

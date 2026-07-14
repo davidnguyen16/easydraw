@@ -62,7 +62,6 @@
 		editorStoreSvelte,
 		exportEditorStateAsJSON,
 		loadEditorStateFromJSON,
-		loadEditorStateFromStorage,
 		markCanvasDirtyPage,
 		resetEditorState,
 		saveActivePageToStorage,
@@ -78,6 +77,9 @@
 		undo as historyUndo,
 		redo as historyRedo
 	} from '$lib/stores/history.store.svelte';
+
+	import { API_URL } from '$lib/api';
+	import { page } from '$app/state';
 
 	// xy-theme.css is our customised copy of @xyflow/svelte's default
 	// stylesheet — imported instead of the upstream `dist/style.css`.
@@ -434,9 +436,21 @@
 	// Editor action handlers (consumed by MenuBar / ToolBar via context).
 	// =========================================================================
 
-	function handleSave() {
+	async function handleSave() {
 		persistCanvasToStore();
 		saveActivePageToStorage();
+
+		try {
+			const data = JSON.parse(exportEditorStateAsJSON());
+			await fetch(`${API_URL}/diagrams/${page.params.id}`, {
+				method: 'PATCH',
+				credentials: 'include',
+				headers: { 'Content-type': 'application/json' },
+				body: JSON.stringify({ data, title: editorMetaData.fileName })
+			});
+		} catch (e) {
+			console.error('Save failed', e);
+		}
 	}
 
 	function handleNewFile() {
@@ -883,9 +897,22 @@
 		}
 	});
 
+	// Autosave: Automatically save to server ~1s after last changes on canvas
+	let autosaveTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		nodes;
+		edges;
+
+		if (isHydratingCanvas || !canvasPageId) return;
+		// Not anything changes compare to last modification -> Not autosave (avoid performance when just open)
+		if (createCanvasSignature(nodes, edges) === baselineCanvasSignature) return;
+
+		if (autosaveTimer) clearTimeout(autosaveTimer);
+		autosaveTimer = setTimeout(() => handleSave(), 1000);
+	})
+
 	// Loads editor store from localStorage once and hydrates canvas from it.
 	onMount(() => {
-		loadEditorStateFromStorage();
 		hydrateCanvasFromStore();
 
 		// Prevent navigation if unsaved changes

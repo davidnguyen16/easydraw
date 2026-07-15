@@ -60,6 +60,10 @@ import { databaseShape } from './flowchart/database/shape';
 // ── entity relation ──────────────────────────────────────────────────
 import { entityShape } from './entity-relation/entity/shape';
 import { weakEntityShape } from './entity-relation/weak-entity/shape';
+import { zeroToManyShape } from './entity-relation/zero-to-many/shape';
+import { oneToManyShape } from './entity-relation/one-to-many/shape';
+import { oneMandatoryShape } from './entity-relation/one-mandatory/shape';
+import { oneToOneShape } from './entity-relation/one-to-one/shape';
 // ── uml ──────────────────────────────────────────────────────────────
 import { actorShape } from './uml/actor/shape';
 import { documentShape } from './uml/document/shape';
@@ -95,6 +99,10 @@ export const SHAPES: readonly NodeShape[] = [
 	textShape,
 	entityShape,
 	weakEntityShape,
+	zeroToManyShape,
+	oneToManyShape,
+	oneMandatoryShape,
+	oneToOneShape,
 	arrowRightShape,
 	arrowLeftShape,
 	arrowUpShape,
@@ -139,11 +147,12 @@ export function getCategories(): NodeCategory[] {
 	return ordered;
 }
 
-/** xyflow's `nodeTypes` map, built from the registry. */
-export function buildNodeTypesMap(): Record<string, NodeShape['component']> {
-	const map: Record<string, NodeShape['component']> = {};
+/** xyflow's `nodeTypes` map, built from the registry. Connection-preset
+ *  tiles (edgePreset, no component) never render a node, so they're skipped. */
+export function buildNodeTypesMap(): Record<string, NonNullable<NodeShape['component']>> {
+	const map: Record<string, NonNullable<NodeShape['component']>> = {};
 	for (const shape of SHAPES) {
-		map[shape.id] = shape.component;
+		if (shape.component) map[shape.id] = shape.component;
 	}
 	return map;
 }

@@ -109,6 +109,34 @@
 		edges = edges.map((e) => ({ ...e, selected: e.id === edgeId }));
 	});
 
+	// Moves a fully-floating connection (both ends on anchors) as ONE rigid
+	// object. Flow owns the raw nodes/edges arrays, so both endpoint anchors
+	// and the edge's bend points update here in a single callback — one tick,
+	// so no frame renders with the body moved but an endpoint left behind, and
+	// the canvas dirty-tracking sees the change like any other graph edit.
+	setContext(
+		'moveFloatingConnection',
+		(update: {
+			edgeId: string;
+			sourceId: string;
+			sourcePosition: { x: number; y: number };
+			targetId: string;
+			targetPosition: { x: number; y: number };
+			bendPoints: { x: number; y: number }[];
+		}) => {
+			nodes = nodes.map((node) => {
+				if (node.id === update.sourceId) return { ...node, position: update.sourcePosition };
+				if (node.id === update.targetId) return { ...node, position: update.targetPosition };
+				return node;
+			});
+			edges = edges.map((edge) =>
+				edge.id === update.edgeId
+					? { ...edge, data: { ...edge.data, bendPoints: update.bendPoints } }
+					: edge
+			);
+		}
+	);
+
 	// Palette node types come from the shape registry. The connection anchor
 	// is an INTERNAL type (floating edge endpoints) — never a palette shape —
 	// so it's merged in here rather than added to the sidebar registry. New
@@ -276,6 +304,37 @@
 			x: event.clientX,
 			y: event.clientY
 		});
+
+		// Connection-preset tiles (e.g. ERD cardinalities) drop a free-floating
+		// CONNECTION — two anchor endpoints + one `connection` edge — exactly
+		// like detaching both ends of a connection. Both anchors and the edge
+		// land in the same tick so the orphan-anchor prune effect always sees
+		// them referenced. The edge drops selected so ConnectionStylePanel
+		// opens on it right away; grabbing its body rigid-moves it as one.
+		if (shape.edgePreset) {
+			const preset = shape.edgePreset(position);
+			const sourceId = nanoid();
+			const targetId = nanoid();
+			nodes = [
+				...nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
+				createAnchorNode(sourceId, preset.source),
+				createAnchorNode(targetId, preset.target)
+			];
+			edges = [
+				...edges.map((e) => (e.selected ? { ...e, selected: false } : e)),
+				{
+					id: nanoid(),
+					type: 'connection',
+					source: sourceId,
+					sourceHandle: ANCHOR_HANDLE_ID,
+					target: targetId,
+					targetHandle: ANCHOR_HANDLE_ID,
+					data: { bendPoints: [], ...preset.data },
+					selected: true
+				} as Edge
+			];
+			return;
+		}
 
 		const nodeData = shape.defaultData();
 		const newNodeId = nanoid();

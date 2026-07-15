@@ -253,6 +253,13 @@
 								>{key}</span
 							>
 						{/if}
+						{#if field.optionalKey}
+							<span
+								class="{BADGE_CLASS[field.optionalKey] ??
+									''} inline-block rounded-[2px] px-[5px] py-px text-[10px] font-semibold leading-[1.4]"
+								>{field.optionalKey}</span
+							>
+						{/if}
 					</span>
 					<input
 						class="nodrag min-w-0 flex-1 border-none bg-transparent p-0 text-[12px] text-ink-soft

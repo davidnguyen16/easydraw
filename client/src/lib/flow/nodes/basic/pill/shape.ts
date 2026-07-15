@@ -12,6 +12,6 @@ export const pillShape: NodeShape = {
 	// already contain pill nodes still render.
 	hidden: true,
 	defaultData: () => ({
-		label: 'Start'
+		label: ''
 	})
 };

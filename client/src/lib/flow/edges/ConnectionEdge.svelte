@@ -55,6 +55,21 @@
 	// pointer events, so editing never selects the edge on its own).
 	const selectEdgeForStyling = getContext<(edgeId: string) => void>('selectEdgeForStyling');
 
+	// Provided by Flow.svelte — rigid-moves a fully-floating connection (both
+	// anchors + bend points in one tick). Flow owns the nodes/edges arrays, so
+	// the whole translation goes through that single owner.
+	const moveFloatingConnection =
+		getContext<
+			(update: {
+				edgeId: string;
+				sourceId: string;
+				sourcePosition: Point;
+				targetId: string;
+				targetPosition: Point;
+				bendPoints: Point[];
+			}) => void
+		>('moveFloatingConnection');
+
 	// ─── Visual constants ───────────────────────────────────────────────
 	const COLOR_DEFAULT = '#B4B2A9';
 	const COLOR_ACTIVE = '#5F5E5A';
@@ -78,6 +93,10 @@
 	const routing = $derived(connectionData.routing ?? 'orthogonal');
 	const isOrthogonal = $derived(routing === 'orthogonal');
 	const lineStyle = $derived(connectionData.lineStyle ?? 'solid');
+	const lineCap = $derived(connectionData.lineCap ?? 'round');
+	// A near-zero dash only becomes a visible dot with round caps. Presets may
+	// use a flat cap for their open tail, so dotted lines override that here.
+	const renderedLineCap = $derived(lineStyle === 'dotted' ? 'round' : lineCap);
 	const markerStart = $derived<MarkerKind>(connectionData.markerStart ?? 'none');
 	const markerEnd = $derived<MarkerKind>(connectionData.markerEnd ?? 'none');
 	const userStrokeWidth = $derived(connectionData.strokeWidth ?? WIDTH_DEFAULT);
@@ -88,7 +107,11 @@
 		lineStyle === 'dashed'
 			? `${userStrokeWidth * 5} ${userStrokeWidth * 3.5}`
 			: lineStyle === 'dotted'
-				? `0.1 ${userStrokeWidth * 4}`
+				? // Round-capped dash of 1× width renders as a fat round dot (~2×
+					// width across), spaced ~2× width apart: clearly visible instead
+					// of the near-invisible hairline dots, yet still far shorter than
+					// the long dashes above so the two styles stay distinct.
+					`${userStrokeWidth} ${userStrokeWidth * 2}`
 				: undefined
 	);
 
@@ -168,6 +191,25 @@
 	const sourceFloating = $derived(isAnchor(source));
 	const targetFloating = $derived(isAnchor(target));
 
+	// BOTH ends floating → the connection is a free-standing object. Grabbing
+	// the line body then moves the WHOLE thing rigidly (see startMoveDrag);
+	// reshaping stays on its dedicated affordances only: endpoint dots (4-way
+	// cursor) and pills. With at least one end attached the path is derived
+	// from that node, so whole-line dragging stays off there.
+	const fullyFloating = $derived(sourceFloating && targetFloating);
+
+	// True while the whole connection is being rigid-dragged. Gates the ghost
+	// pill so the reshape affordance doesn't chase the cursor mid-move.
+	let movingWhole = $state(false);
+
+	// Anchor nodes use origin [0.5, 0.5], so their user-node position is the
+	// exact visual centre of the floating endpoint. xyflow's measured handle
+	// coordinate can differ by a few pixels; using it would inject a tiny first
+	// segment and rotate a marker-start (such as ||) onto that wrong segment.
+	function floatingAnchorPoint(nodeId: string, fallback: Point): Point {
+		return flow.getNode(nodeId)?.position ?? fallback;
+	}
+
 	// Line endpoints. For a real node, shift the tip `ENDPOINT_INSET` px inward
 	// so the line crosses the border instead of stopping at it. For a FLOATING
 	// end (anchor) there is no border to cross — and insetting would pull the
@@ -175,12 +217,12 @@
 	// raw point is used.
 	const sourcePoint = $derived(
 		sourceFloating
-			? { x: sourceX, y: sourceY }
+			? floatingAnchorPoint(source, { x: sourceX, y: sourceY })
 			: insetForNodeEnd(source, { x: sourceX, y: sourceY }, sourcePosition, markerStart)
 	);
 	const targetPoint = $derived(
 		targetFloating
-			? { x: targetX, y: targetY }
+			? floatingAnchorPoint(target, { x: targetX, y: targetY })
 			: insetForNodeEnd(target, { x: targetX, y: targetY }, targetPosition, markerEnd)
 	);
 	const sourceAxis = $derived(positionToAxis(sourcePosition));
@@ -201,12 +243,16 @@
 			// node's own rect — otherwise the leaving stub is bent around the shape
 			// even though it only crosses that empty region, not the body.
 			sourceRect:
-				sourceFloating || outlineInsetRatio(source, sourcePosition) > 0 ? null : rectOf(source),
+				sourceFloating || outlineInsetRatio(source, sourcePosition) > 0
+					? null
+					: rectOf(source),
 			sourceFloating,
 			target: targetPoint,
 			targetPosition,
 			targetRect:
-				targetFloating || outlineInsetRatio(target, targetPosition) > 0 ? null : rectOf(target),
+				targetFloating || outlineInsetRatio(target, targetPosition) > 0
+					? null
+					: rectOf(target),
 			targetFloating
 		})
 	);
@@ -634,7 +680,13 @@
 			handleId: (end === 'source' ? targetHandleId : sourceHandleId) ?? null
 		};
 		const startPoint =
-			end === 'source' ? { x: sourceX, y: sourceY } : { x: targetX, y: targetY };
+			end === 'source'
+				? sourceFloating
+					? sourcePoint
+					: { x: sourceX, y: sourceY }
+				: targetFloating
+					? targetPoint
+					: { x: targetX, y: targetY };
 
 		// Reuse an already-floating anchor; otherwise detach from the node onto a
 		// fresh anchor at the current endpoint so the edge is anchor-bound for the
@@ -680,6 +732,66 @@
 			setSnapTarget(null); // clear the highlight
 			draggingEnd = null;
 			if (snapped) repointEdge(end, snapped.nodeId, snapped.handleId);
+		};
+
+		window.addEventListener('pointermove', onMove);
+		window.addEventListener('pointerup', onUp);
+		window.addEventListener('pointercancel', onUp);
+	}
+
+	// ─── Whole-connection move (fully-floating edges only) ──────────────
+	// Grab the LINE BODY (not a pill, not an endpoint dot — both stop
+	// propagation before reaching the strip) and the whole connection
+	// translates like a node: both anchors + every bend shift by the same
+	// pointer delta, so the shape NEVER deforms. Cursor contract: grab/grabbing
+	// here, 4-way move on the endpoint dots, pills keep their own — whatever
+	// the cursor shows is what the drag will do.
+	function startMoveDrag(event: PointerEvent) {
+		if (!fullyFloating || event.button !== 0) return;
+
+		// Own the gesture like a node drag does: if this pointerdown reached the
+		// pane, SvelteFlow's left-drag pan would compete with the move and keep
+		// shifting screenToFlowPosition under us.
+		event.preventDefault();
+		event.stopPropagation();
+		selectEdgeForStyling(id);
+		movingWhole = true;
+
+		// Keep receiving the pointer even when it leaves the thin hit strip.
+		const dragTarget = event.currentTarget as Element;
+		dragTarget.setPointerCapture?.(event.pointerId);
+
+		const startFlow = flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+		const src0 = { ...(flow.getNode(source)?.position ?? sourcePoint) };
+		const tgt0 = { ...(flow.getNode(target)?.position ?? targetPoint) };
+		const bends0 = bendPoints.map((p) => ({ ...p }));
+		// Lock the closed-hand cursor for the whole gesture (same pattern as
+		// endpoint-dragging) so it never flips back mid-drag.
+		document.body.classList.add('connection-dragging');
+
+		const onMove = (ev: PointerEvent) => {
+			const flowPos = flow.screenToFlowPosition({ x: ev.clientX, y: ev.clientY });
+			const dx = flowPos.x - startFlow.x;
+			const dy = flowPos.y - startFlow.y;
+			moveFloatingConnection({
+				edgeId: id,
+				sourceId: source,
+				sourcePosition: { x: src0.x + dx, y: src0.y + dy },
+				targetId: target,
+				targetPosition: { x: tgt0.x + dx, y: tgt0.y + dy },
+				bendPoints: bends0.map((p) => ({ x: p.x + dx, y: p.y + dy }))
+			});
+		};
+
+		const onUp = () => {
+			window.removeEventListener('pointermove', onMove);
+			window.removeEventListener('pointerup', onUp);
+			window.removeEventListener('pointercancel', onUp);
+			if (dragTarget.hasPointerCapture?.(event.pointerId)) {
+				dragTarget.releasePointerCapture(event.pointerId);
+			}
+			document.body.classList.remove('connection-dragging');
+			movingWhole = false;
 		};
 
 		window.addEventListener('pointermove', onMove);
@@ -776,13 +888,16 @@
 		stroke-linejoin="round"
 		pointer-events="stroke"
 		class="connection-hit"
+		role="presentation"
+		style={fullyFloating ? 'cursor: grab;' : undefined}
+		onpointerdown={startMoveDrag}
 	/>
 
 	<!-- The visible line. CSS transitions on stroke + width avoid flicker. -->
 	<path
 		d={pathD}
 		fill="none"
-		stroke-linecap="round"
+		stroke-linecap={renderedLineCap}
 		stroke-linejoin="round"
 		pointer-events="none"
 		class="transition-[stroke,stroke-width] duration-[120ms]"
@@ -793,8 +908,10 @@
 	/>
 
 	<!-- Bend pills only exist for orthogonal routing — straight and curved
-         paths have no draggable segments. -->
-	{#if active && !labelEditor.isEditing && isOrthogonal}
+         paths have no draggable segments. Hidden while the whole connection
+         is being rigid-moved so the reshape affordance doesn't chase the
+         cursor mid-move. -->
+	{#if active && !labelEditor.isEditing && isOrthogonal && !movingWhole}
 		{#if isFreeForm}
 			<!-- Pristine edge: one handle to add the first bend. It slides along
                  the line to dodge any label, so it's never hidden entirely. -->
@@ -843,28 +960,28 @@
         dot when it's pinned to a node.
     -->
 	{#if active && !labelEditor.isEditing}
+		<!-- On a fully-floating edge the line body is itself grabbable (whole
+	         move), so the endpoint dots get a LARGER hit radius — the 4-way
+	         "this drag reshapes" zone must win the overlap with the strip. -->
 		<EndpointHandle
-			x={sourceX}
-			y={sourceY}
+			x={sourceFloating ? sourcePoint.x : sourceX}
+			y={sourceFloating ? sourcePoint.y : sourceY}
 			floating={sourceFloating}
+			hit={fullyFloating ? 16 : 10}
 			onpointerdown={(e) => startEndpointDrag('source', e)}
 		/>
 		<EndpointHandle
-			x={targetX}
-			y={targetY}
+			x={targetFloating ? targetPoint.x : targetX}
+			y={targetFloating ? targetPoint.y : targetY}
 			floating={targetFloating}
+			hit={fullyFloating ? 16 : 10}
 			onpointerdown={(e) => startEndpointDrag('target', e)}
 		/>
 	{/if}
 </g>
 
-<ConnectionLabels
-	{labels}
-	{selected}
-	{labelStyle}
-	{pointAtT}
-	editor={labelEditor}
-/>
+<ConnectionLabels {labels} {selected} {labelStyle} {pointAtT} editor={labelEditor} />
+
 <style>
 	/*
 	 * Only :global rules remain — they reach xyflow's DOM (snap-target node
@@ -879,6 +996,13 @@
 	:global(body.endpoint-dragging),
 	:global(body.endpoint-dragging *) {
 		cursor: move !important;
+	}
+
+	/* While a fully-floating connection is being rigid-moved as one object,
+	   keep the closed-hand cursor everywhere. Toggled by startMoveDrag. */
+	:global(body.connection-dragging),
+	:global(body.connection-dragging *) {
+		cursor: grabbing !important;
 	}
 
 	/* The node the dragged endpoint will snap onto — shown EXACTLY like that

@@ -12,6 +12,6 @@ export const donutShape: NodeShape = {
 	defaultWidth: 140,
 	defaultHeight: 140,
 	defaultData: () => ({
-		label: 'Donut'
+		label: ''
 	})
 };

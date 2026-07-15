@@ -13,6 +13,6 @@ export const polygonShape: NodeShape = {
 	defaultWidth: 160,
 	defaultHeight: 100,
 	defaultData: () => ({
-		label: 'Polygon'
+		label: ''
 	})
 };

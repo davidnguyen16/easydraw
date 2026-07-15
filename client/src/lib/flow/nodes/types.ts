@@ -49,8 +49,12 @@ export interface NodeShape {
 	label: string;
 	/** Sidebar palette grouping. */
 	category: NodeCategory;
-	/** The Svelte component xyflow renders for this node. */
-	component: Component<NodeProps>;
+	/**
+	 * The Svelte component xyflow renders for this node. Omitted only for
+	 * connection-preset tiles (`edgePreset` set) — those never render a node,
+	 * so they're skipped when building the xyflow nodeTypes map.
+	 */
+	component?: Component<NodeProps>;
 	/** SVG icon component rendered inside the sidebar palette tile. */
 	icon: Component;
 	/** Returns the initial data payload when a tile of this shape is dropped. */
@@ -72,4 +76,17 @@ export interface NodeShape {
 	 * saved diagrams that already contain it must still render.
 	 */
 	hidden?: boolean;
+	/**
+	 * Connection-preset tile: dropping it creates a free-floating CONNECTION
+	 * (two anchor endpoints + one `connection` edge) instead of a node — the
+	 * same construct as detaching both ends of a connection, so it's styled
+	 * via ConnectionStylePanel and rigid-moves as one object. Given the drop
+	 * point (flow coords), returns both endpoint positions and the edge's
+	 * initial `data` (bendPoints / markers / …). Needs no `component`.
+	 */
+	edgePreset?: (center: { x: number; y: number }) => {
+		source: { x: number; y: number };
+		target: { x: number; y: number };
+		data: Record<string, unknown>;
+	};
 }

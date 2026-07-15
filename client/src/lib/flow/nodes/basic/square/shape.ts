@@ -12,6 +12,6 @@ export const squareShape: NodeShape = {
 	defaultWidth: 120,
 	defaultHeight: 120,
 	defaultData: () => ({
-		label: 'Square'
+		label: ''
 	})
 };

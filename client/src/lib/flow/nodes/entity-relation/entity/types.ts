@@ -21,8 +21,14 @@ export interface EntityField {
 	name: string;
 	/** Free-text data type. Use ENTITY_FIELD_TYPES for the suggested presets. */
 	type?: string;
-	/** Single-select key designation. Absent / undefined means "None". */
+	/** Primary/main key designation (LEFT badge). Absent / undefined means "None". */
 	key?: FieldKey;
+	/**
+	 * Optional secondary key/identifier (RIGHT badge). Independent of `key`, so
+	 * a field can carry two designations at once (e.g. PK + PI). Absent means
+	 * "None". Uses the same FieldKey set + dropdown as the main key.
+	 */
+	optionalKey?: FieldKey;
 }
 
 /** Legacy shape — older saves used two booleans instead of a single enum. */

@@ -9,6 +9,6 @@ export const textShape: NodeShape = {
 	component: Component,
 	icon: Icon,
 	defaultData: () => ({
-		label: 'Text'
+		label: ''
 	})
 };

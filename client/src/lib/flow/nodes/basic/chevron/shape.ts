@@ -11,6 +11,6 @@ export const chevronShape: NodeShape = {
 	defaultWidth: 180,
 	defaultHeight: 100,
 	defaultData: () => ({
-		label: 'Chevron'
+		label: ''
 	})
 };

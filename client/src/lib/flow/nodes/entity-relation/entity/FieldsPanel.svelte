@@ -25,10 +25,10 @@
 	const fields = $derived((entity.fields ?? []) as EntityField[]);
 	const showDataTypes = $derived(entity.showDataTypes ?? false);
 
-	// Only one dropdown (of either kind) can be open at a time; tracked by
-	// index. The two never coexist on the same field — opening one closes
-	// the other.
-	let openKeyIndex: number | null = $state(null);
+	// Each field now has TWO key selectors — main (left) and optional (right).
+	// A dropdown is identified by its field index AND which selector. Only one
+	// (of either kind) is open at a time; opening one closes the others.
+	let openKey = $state<{ index: number; which: 'main' | 'optional' } | null>(null);
 	let openTypeIndex: number | null = $state(null);
 	let rootEl: HTMLDivElement | undefined = $state();
 
@@ -36,13 +36,13 @@
 		const onPointer = (event: PointerEvent) => {
 			const target = event.target as Node | null;
 			if (rootEl && target && !rootEl.contains(target)) {
-				openKeyIndex = null;
+				openKey = null;
 				openTypeIndex = null;
 			}
 		};
 		const onKey = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') {
-				openKeyIndex = null;
+				openKey = null;
 				openTypeIndex = null;
 			}
 		};
@@ -80,28 +80,33 @@
 	}
 
 	/**
-	 * Sets a field's key. Also strips the legacy isPK / isFK booleans from
-	 * the persisted shape so old data doesn't outlive the single-select
-	 * model on the next save.
+	 * Sets a field's main OR optional key. The main key also strips the legacy
+	 * isPK / isFK booleans so old data doesn't outlive the single-select model
+	 * on the next save; the optional key is a clean enum with no legacy form.
 	 */
-	function setFieldKey(index: number, key: FieldKey | undefined) {
+	function setFieldKey(index: number, which: 'main' | 'optional', key: FieldKey | undefined) {
 		commitFields(
 			fields.map((f, i) => {
 				if (i !== index) return f;
 				const next = { ...f } as EntityField & { isPK?: boolean; isFK?: boolean };
-				if (key) next.key = key;
-				else delete next.key;
-				delete next.isPK;
-				delete next.isFK;
+				if (which === 'main') {
+					if (key) next.key = key;
+					else delete next.key;
+					delete next.isPK;
+					delete next.isFK;
+				} else {
+					if (key) next.optionalKey = key;
+					else delete next.optionalKey;
+				}
 				return next;
 			})
 		);
-		openKeyIndex = null;
+		openKey = null;
 	}
 
 	function removeField(index: number) {
 		commitFields(fields.filter((_, i) => i !== index));
-		if (openKeyIndex === index) openKeyIndex = null;
+		if (openKey?.index === index) openKey = null;
 		if (openTypeIndex === index) openTypeIndex = null;
 	}
 
@@ -109,14 +114,14 @@
 		commitFields([...fields, { name: 'field' }]);
 	}
 
-	function toggleKey(index: number) {
-		openKeyIndex = openKeyIndex === index ? null : index;
+	function toggleKey(index: number, which: 'main' | 'optional') {
+		openKey = openKey && openKey.index === index && openKey.which === which ? null : { index, which };
 		openTypeIndex = null;
 	}
 
 	function toggleType(index: number) {
 		openTypeIndex = openTypeIndex === index ? null : index;
-		openKeyIndex = null;
+		openKey = null;
 	}
 
 	function selectType(index: number, value: string) {
@@ -186,6 +191,123 @@
 	</svg>
 {/snippet}
 
+<!--
+	One key selector (button + dropdown). Used TWICE per field: the main key
+	(left) and the optional key (right). The dropdown is IDENTICAL for both;
+	only the unset button look differs — the optional slot shows a dashed
+	outline to read as "add a second designation".
+-->
+{#snippet keySelector(
+	index: number,
+	which: 'main' | 'optional',
+	currentKey: FieldKey | undefined,
+	isOpen: boolean
+)}
+	<div class="relative flex-shrink-0">
+		<button
+			type="button"
+			class="inline-flex h-[30px] cursor-pointer items-center gap-1 rounded-md border px-2
+				text-[0.75rem] font-bold transition-colors duration-[120ms]
+				{which === 'main' ? 'min-w-[52px]' : 'min-w-[46px]'} {currentKey
+				? KEY_BUTTON_CLASS[currentKey]
+				: isOpen
+					? 'border-mq-red bg-white text-ink-muted'
+					: which === 'optional'
+						? 'border-dashed border-[#c4c1b8] bg-white text-ink-muted hover:border-mq-red'
+						: 'border-line bg-white text-ink-muted hover:border-[#c4c1b8]'}"
+			aria-haspopup="listbox"
+			aria-expanded={isOpen}
+			aria-label={currentKey
+				? FIELD_KEY_INFO[currentKey].long
+				: which === 'optional'
+					? 'Set optional key'
+					: 'Set key'}
+			onclick={() => toggleKey(index, which)}
+		>
+			{#if currentKey}
+				<span class="leading-none">{FIELD_KEY_INFO[currentKey].short}</span>
+			{:else}
+				<svg
+					viewBox="0 0 24 24"
+					width="14"
+					height="14"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.7"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="opacity-[0.85]"
+				>
+					<circle cx="9" cy="14" r="4" />
+					<path d="M12 11l9 -9" />
+					<path d="M18 5l2 2" />
+					<path d="M16 7l2 2" />
+				</svg>
+			{/if}
+			{@render chevron(isOpen)}
+		</button>
+
+		{#if isOpen}
+			<ul
+				class="absolute top-[calc(100%+4px)] left-0 z-[200] m-0 min-w-[200px] list-none
+					rounded-lg border border-line bg-white p-1 shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
+				role="listbox"
+			>
+				{#each FIELD_KEY_ORDER as option (option)}
+					{@const info = FIELD_KEY_INFO[option]}
+					{@const isSelected = currentKey === option}
+					<li>
+						<button
+							type="button"
+							role="option"
+							aria-selected={isSelected}
+							class="flex w-full cursor-pointer items-center gap-2.5 rounded border-none
+								bg-transparent px-2.5 py-2 text-left text-[0.82rem] text-ink-soft
+								transition-colors duration-100 {isSelected
+								? KEY_OPTION_SELECTED_BG[option]
+								: 'hover:bg-panel'}"
+							onclick={() => setFieldKey(index, which, option)}
+						>
+							{@render keyBadge(option)}
+							<span class="flex-1 font-medium">{info.long}</span>
+							{#if isSelected}
+								<svg
+									viewBox="0 0 24 24"
+									width="14"
+									height="14"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2.4"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									class="flex-shrink-0 text-mq-maroon"
+								>
+									<polyline points="5 12 10 17 19 8" />
+								</svg>
+							{/if}
+						</button>
+					</li>
+				{/each}
+				<li class="mx-1 my-1 h-px list-none bg-[#e8e5de]" role="separator"></li>
+				<li>
+					<button
+						type="button"
+						role="option"
+						aria-selected={!currentKey}
+						class="flex w-full cursor-pointer items-center gap-2.5 rounded border-none
+							bg-transparent px-2.5 py-2 text-left text-[0.82rem] text-ink-soft
+							transition-colors duration-100 hover:bg-panel"
+						onclick={() => setFieldKey(index, which, undefined)}
+					>
+						{@render keyBadge(undefined)}
+						<span class="flex-1 font-normal text-ink-muted">None</span>
+					</button>
+				</li>
+			</ul>
+		{/if}
+	</div>
+{/snippet}
+
 <div class="flex flex-col gap-2.5" bind:this={rootEl}>
 	<div class="flex items-center justify-between">
 		<h3 class="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">FIELDS</h3>
@@ -194,7 +316,7 @@
 
 	{#each fields as field, i}
 		{@const key = resolveFieldKey(field)}
-		{@const keyOpen = openKeyIndex === i}
+		{@const keyOpen = openKey?.index === i}
 		{@const typeOpen = openTypeIndex === i}
 		<div
 			class="flex flex-col gap-2 rounded-lg border bg-white p-2.5 transition-[border-color,box-shadow]
@@ -203,103 +325,14 @@
 				: 'border-line'}"
 		>
 			<div class="flex items-center gap-1.5">
-				<!-- Key button: colored badge for set keys, key icon for None. -->
-				<div class="relative flex-shrink-0">
-					<button
-						type="button"
-						class="inline-flex h-[30px] min-w-[52px] cursor-pointer items-center gap-1 rounded-md
-							border px-2 text-[0.75rem] font-bold transition-colors duration-[120ms] {key
-							? KEY_BUTTON_CLASS[key]
-							: keyOpen
-								? 'border-mq-red bg-white text-ink-muted'
-								: 'border-line bg-white text-ink-muted hover:border-[#c4c1b8]'}"
-						aria-haspopup="listbox"
-						aria-expanded={keyOpen}
-						aria-label={key ? FIELD_KEY_INFO[key].long : 'Set key'}
-						onclick={() => toggleKey(i)}
-					>
-						{#if key}
-							<span class="leading-none">{FIELD_KEY_INFO[key].short}</span>
-						{:else}
-							<svg
-								viewBox="0 0 24 24"
-								width="14"
-								height="14"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="1.7"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="opacity-[0.85]"
-							>
-								<circle cx="9" cy="14" r="4" />
-								<path d="M12 11l9 -9" />
-								<path d="M18 5l2 2" />
-								<path d="M16 7l2 2" />
-							</svg>
-						{/if}
-						{@render chevron(keyOpen)}
-					</button>
-
-					{#if keyOpen}
-						<ul
-							class="absolute top-[calc(100%+4px)] left-0 z-[200] m-0 min-w-[200px] list-none
-								rounded-lg border border-line bg-white p-1 shadow-[0_12px_24px_rgba(0,0,0,0.12)]"
-							role="listbox"
-						>
-							{#each FIELD_KEY_ORDER as option (option)}
-								{@const info = FIELD_KEY_INFO[option]}
-								{@const isSelected = key === option}
-								<li>
-									<button
-										type="button"
-										role="option"
-										aria-selected={isSelected}
-										class="flex w-full cursor-pointer items-center gap-2.5 rounded border-none
-											bg-transparent px-2.5 py-2 text-left text-[0.82rem] text-ink-soft
-											transition-colors duration-100 {isSelected
-											? KEY_OPTION_SELECTED_BG[option]
-											: 'hover:bg-panel'}"
-										onclick={() => setFieldKey(i, option)}
-									>
-										{@render keyBadge(option)}
-										<span class="flex-1 font-medium">{info.long}</span>
-										{#if isSelected}
-											<svg
-												viewBox="0 0 24 24"
-												width="14"
-												height="14"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="2.4"
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												class="flex-shrink-0 text-mq-maroon"
-											>
-												<polyline points="5 12 10 17 19 8" />
-											</svg>
-										{/if}
-									</button>
-								</li>
-							{/each}
-							<li class="mx-1 my-1 h-px list-none bg-[#e8e5de]" role="separator"></li>
-							<li>
-								<button
-									type="button"
-									role="option"
-									aria-selected={!key}
-									class="flex w-full cursor-pointer items-center gap-2.5 rounded border-none
-										bg-transparent px-2.5 py-2 text-left text-[0.82rem] text-ink-soft
-										transition-colors duration-100 hover:bg-panel"
-									onclick={() => setFieldKey(i, undefined)}
-								>
-									{@render keyBadge(undefined)}
-									<span class="flex-1 font-normal text-ink-muted">None</span>
-								</button>
-							</li>
-						</ul>
-					{/if}
-				</div>
+				<!-- Main key (left) + optional key (right) — identical dropdown. -->
+				{@render keySelector(i, 'main', key, keyOpen && openKey?.which === 'main')}
+				{@render keySelector(
+					i,
+					'optional',
+					field.optionalKey,
+					keyOpen && openKey?.which === 'optional'
+				)}
 
 				<input
 					type="text"

@@ -11,6 +11,6 @@ export const arrowDownShape: NodeShape = {
 	defaultWidth: 100,
 	defaultHeight: 150,
 	defaultData: () => ({
-		label: 'Arrow Down'
+		label: ''
 	})
 };

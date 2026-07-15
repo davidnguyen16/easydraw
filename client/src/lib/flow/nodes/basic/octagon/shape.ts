@@ -12,6 +12,6 @@ export const octagonShape: NodeShape = {
 	defaultWidth: 120,
 	defaultHeight: 120,
 	defaultData: () => ({
-		label: 'Octagon'
+		label: ''
 	})
 };

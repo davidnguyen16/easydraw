@@ -110,6 +110,7 @@ export interface ConnectionEdgeData {
 	markerStart?: MarkerKind;
 	markerEnd?: MarkerKind;
 	lineStyle?: EdgeLineStyle;
+	lineCap?: 'round' | 'butt';
 	routing?: EdgeRouting;
 	strokeWidth?: number;
 	strokeColor?: string;

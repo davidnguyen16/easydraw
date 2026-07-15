@@ -11,6 +11,6 @@ export const twoWayArrowShape: NodeShape = {
 	defaultWidth: 200,
 	defaultHeight: 100,
 	defaultData: () => ({
-		label: 'Two Way Arrow'
+		label: ''
 	})
 };

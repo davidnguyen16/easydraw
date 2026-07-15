@@ -14,6 +14,6 @@ export const cubeShape: NodeShape = {
 	defaultWidth: 165,
 	defaultHeight: 165,
 	defaultData: () => ({
-		label: 'Node'
+		label: ''
 	})
 };

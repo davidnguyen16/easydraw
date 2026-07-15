@@ -12,6 +12,6 @@ export const quadArrowShape: NodeShape = {
 	defaultWidth: 150,
 	defaultHeight: 150,
 	defaultData: () => ({
-		label: 'Quad Arrow'
+		label: ''
 	})
 };

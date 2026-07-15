@@ -12,6 +12,6 @@ export const roundedRectangleShape: NodeShape = {
 	defaultWidth: 180,
 	defaultHeight: 100,
 	defaultData: () => ({
-		label: 'Rounded'
+		label: ''
 	})
 };

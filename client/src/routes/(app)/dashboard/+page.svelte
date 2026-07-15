@@ -21,6 +21,7 @@
 	import { API_URL } from '$lib/api';
 	import NewDiagramDialog from '$lib/components/NewDiagramDialog.svelte';
 	import DeleteDiagramDialog from '$lib/components/DeleteDiagramDialog.svelte';
+	import RenameDiagramDialog from '$lib/components/RenameDiagramDialog.svelte';
 	import { DIAGRAM_TYPE_MAP, type DiagramType } from '$lib/diagram-types';
 
 	type Diagram = { id: string; title: string; type: string; updatedAt: string };
@@ -38,6 +39,8 @@
 	let menuFor = $state<string | null>(null);
 	let deleteOpen = $state(false);
 	let deleteTarget = $state<Diagram | null>(null);
+	let renameOpen = $state(false);
+	let renameTarget = $state<Diagram | null>(null);
 
 	const sortOptions: { value: SortKey; label: string }[] = [
 		{ value: 'recent', label: 'Recently updated' },
@@ -104,10 +107,15 @@
 		goto(`/editor/${d.id}`);
 	}
 
-	async function renameDiagram(d: Diagram) {
+	function askRename(d: Diagram) {
 		menuFor = null;
-		const name = prompt('Rename diagram', d.title)?.trim();
-		if (!name || name === d.title) return;
+		renameTarget = d;
+		renameOpen = true;
+	}
+
+	async function confirmRename(name: string) {
+		const d = renameTarget;
+		if (!d) return;
 		const res = await fetch(`${API_URL}/diagrams/${d.id}`, {
 			method: 'PATCH',
 			credentials: 'include',
@@ -375,7 +383,7 @@
 										<FolderOpen size={16} /> Open
 									</button>
 									<button
-										onclick={() => renameDiagram(d)}
+										onclick={() => askRename(d)}
 										class="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-hover"
 									>
 										<Pencil size={16} /> Rename
@@ -407,5 +415,11 @@
 		bind:open={deleteOpen}
 		name={deleteTarget?.title ?? ''}
 		onConfirm={confirmDelete}
+	/>
+
+	<RenameDiagramDialog
+		bind:open={renameOpen}
+		currentName={renameTarget?.title ?? ''}
+		onSave={confirmRename}
 	/>
 </div>

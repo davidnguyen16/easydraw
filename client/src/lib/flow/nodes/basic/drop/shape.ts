@@ -12,6 +12,6 @@ export const dropShape: NodeShape = {
 	defaultWidth: 120,
 	defaultHeight: 150,
 	defaultData: () => ({
-		label: 'Drop'
+		label: ''
 	})
 };

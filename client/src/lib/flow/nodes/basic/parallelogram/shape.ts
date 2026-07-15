@@ -14,6 +14,6 @@ export const parallelogramShape: NodeShape = {
 	defaultWidth: 200,
 	defaultHeight: 100,
 	defaultData: () => ({
-		label: 'Input / Output'
+		label: ''
 	})
 };

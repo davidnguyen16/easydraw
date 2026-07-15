@@ -11,6 +11,6 @@ export const uTurnArrowShape: NodeShape = {
 	defaultWidth: 140,
 	defaultHeight: 140,
 	defaultData: () => ({
-		label: 'U-Turn Arrow'
+		label: ''
 	})
 };

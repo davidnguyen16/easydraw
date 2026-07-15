@@ -13,6 +13,6 @@ export const ellipseShape: NodeShape = {
 	defaultWidth: 180,
 	defaultHeight: 100,
 	defaultData: () => ({
-		label: 'Ellipse'
+		label: ''
 	})
 };

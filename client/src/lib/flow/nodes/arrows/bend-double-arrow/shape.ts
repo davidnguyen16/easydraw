@@ -11,6 +11,6 @@ export const bendDoubleArrowShape: NodeShape = {
 	defaultWidth: 140,
 	defaultHeight: 140,
 	defaultData: () => ({
-		label: 'Bend Double Arrow'
+		label: ''
 	})
 };

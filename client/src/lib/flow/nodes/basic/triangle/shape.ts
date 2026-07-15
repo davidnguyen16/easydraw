@@ -15,6 +15,6 @@ export const triangleShape: NodeShape = {
 	defaultWidth: 140,
 	defaultHeight: 120,
 	defaultData: () => ({
-		label: 'Triangle'
+		label: ''
 	})
 };

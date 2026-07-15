@@ -19,14 +19,19 @@
 		y: number;
 		/** True when this end is a free/floating wire end (not pinned to a node). */
 		floating?: boolean;
+		/**
+		 * Transparent grab radius. Fully-floating edges pass a larger one so the
+		 * endpoint wins the overlap with the line's own whole-move grab strip —
+		 * the 4-way cursor zone and the "this drag reshapes" zone stay identical.
+		 */
+		hit?: number;
 		onpointerdown?: (event: PointerEvent) => void;
 	}
 
-	let { x, y, floating = false, onpointerdown }: Props = $props();
+	let { x, y, floating = false, hit = 10, onpointerdown }: Props = $props();
 
 	const COLOR = '#a6192e';
 	const R = 5; // visible dot radius
-	const HIT = 10; // transparent grab radius
 </script>
 
 <!-- `cursor-move` + `pointer-events:all` forced on the group AND every child so the
@@ -37,7 +42,7 @@
 	onpointerdown={(e) => onpointerdown?.(e)}
 	role="presentation"
 >
-	<circle cx={x} cy={y} r={HIT} fill="transparent" />
+	<circle cx={x} cy={y} r={hit} fill="transparent" />
 	<circle
 		cx={x}
 		cy={y}

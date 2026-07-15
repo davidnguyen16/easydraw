@@ -12,6 +12,6 @@ export const starShape: NodeShape = {
 	defaultWidth: 130,
 	defaultHeight: 125,
 	defaultData: () => ({
-		label: 'Star'
+		label: ''
 	})
 };

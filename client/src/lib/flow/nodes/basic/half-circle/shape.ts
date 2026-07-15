@@ -12,6 +12,6 @@ export const halfCircleShape: NodeShape = {
 	defaultWidth: 160,
 	defaultHeight: 90,
 	defaultData: () => ({
-		label: 'Half Circle'
+		label: ''
 	})
 };

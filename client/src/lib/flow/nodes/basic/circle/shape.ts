@@ -14,6 +14,6 @@ export const circleShape: NodeShape = {
 	defaultWidth: 120,
 	defaultHeight: 120,
 	defaultData: () => ({
-		label: 'Circle'
+		label: ''
 	})
 };

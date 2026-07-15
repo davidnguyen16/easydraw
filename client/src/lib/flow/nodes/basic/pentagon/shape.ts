@@ -12,6 +12,6 @@ export const pentagonShape: NodeShape = {
 	defaultWidth: 130,
 	defaultHeight: 125,
 	defaultData: () => ({
-		label: 'Pentagon'
+		label: ''
 	})
 };

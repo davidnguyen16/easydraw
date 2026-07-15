@@ -11,6 +11,6 @@ export const notchedArrowShape: NodeShape = {
 	defaultWidth: 180,
 	defaultHeight: 100,
 	defaultData: () => ({
-		label: 'Notched Arrow'
+		label: ''
 	})
 };

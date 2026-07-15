@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -7,6 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard, type JwtPayload } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
 import { Throttle } from '@nestjs/throttler';
+import { userInfo } from 'node:os';
 
 @Controller('auth')
 export class AuthController {
@@ -49,6 +50,19 @@ export class AuthController {
     me(@CurrentUser() user: JwtPayload) {
         return this.authService.me(user.sub);
     }
+    
+    @Throttle({ default: { limit: 3, ttl: 60000 } })
+    @UseGuards(JwtAuthGuard)
+    @Delete('account')
+    async deleteAccount(
+        @CurrentUser() user: JwtPayload,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        await this.authService.deleteAccount(user.sub);
+        res.clearCookie('access_token');
+        return { deleted: true};
+    }
+    
     // ROUTE 1 - kick off the flow. Guard redirects to Google; body never runs.
     @Get('google')
     @UseGuards(AuthGuard('google'))

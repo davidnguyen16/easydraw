@@ -10,15 +10,23 @@ export class AuthService {
     private jwtService: JwtService
 ) {}
 
-    private issueToken(user: { id: string; email: string; name: string | null}) {
-        const payload = { sub: user.id, email: user.email};
+    private issueToken(user: { 
+        id: string; 
+        email: string; 
+        name: string | null
+        createdAt: Date;
+    }) {
+        const payload = { 
+            sub: user.id, 
+            email: user.email};
         return {
             access_token: this.jwtService.sign(payload),
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name
-            }
+                name: user.name,
+                createdAt: user.createdAt,
+            },
         };
     }
 
@@ -92,12 +100,40 @@ export class AuthService {
     }
 
     async me(userId: string) {
-        const user = await this.prisma.user.findUnique({ where: { id: userId }});
+        const user = await this.prisma.user.findUnique({ 
+            where: { id: userId }
+        });
         
         if (!user) {
             throw new UnauthorizedException('User not found');
         }
 
-        return { id: user.id, email: user.email, name: user.name };
+        return { 
+            id: user.id, 
+            email: user.email, 
+            name: user.name,
+            createdAt: user.createdAt,
+        };
+    }
+
+    async deleteAccount(userId: string) {
+        await this.prisma.$transaction(async (tx) => {
+            const user = await tx.user.findUnique({
+                where: { id: userId },
+                select: { id: true },
+            });
+
+            if (!user) {
+                throw new UnauthorizedException('User not found');
+            }
+
+            await tx.diagram.deleteMany({
+                where: { ownerId: userId},
+            });
+
+            await tx.user.delete({
+                where: { id: userId },
+            });
+        });
     }
 }

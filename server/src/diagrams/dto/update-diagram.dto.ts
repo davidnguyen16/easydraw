@@ -1,4 +1,4 @@
-import { IsObject, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsIn, IsObject, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateDiagramDto {
     @IsOptional()
@@ -6,6 +6,10 @@ export class UpdateDiagramDto {
     @MinLength(1)
     title?: string;
 
+    @IsOptional()
+    @IsIn(['draft', 'complete', 'archived'])
+    status?: string;
+    
     @IsOptional()
     @IsObject()
     data?: Record<string, any>;

@@ -24,8 +24,36 @@
 	import DeleteDiagramDialog from '$lib/components/DeleteDiagramDialog.svelte';
 	import RenameDiagramDialog from '$lib/components/RenameDiagramDialog.svelte';
 	import { DIAGRAM_TYPE_MAP, type DiagramType } from '$lib/diagram-types';
+	import type { DiagramStatus } from '$lib/stores/editor.store.svelte';
 
-	type Diagram = { id: string; title: string; type: string; updatedAt: string };
+	type Diagram = {
+		id: string;
+		title: string;
+		type: string;
+		updatedAt: string;
+		status?: DiagramStatus;
+	};
+
+	const STATUS_META: Record<
+		DiagramStatus,
+		{ label: string; badgeClass: string; dotClass: string }
+	> = {
+		draft: {
+			label: 'Draft',
+			badgeClass: 'bg-orange-50 text-orange-700',
+			dotClass: 'bg-orange-500'
+		},
+		complete: {
+			label: 'Complete',
+			badgeClass: 'bg-green-50 text-green-700',
+			dotClass: 'bg-green-500'
+		},
+		archived: {
+			label: 'Archived',
+			badgeClass: 'bg-gray-100 text-gray-600',
+			dotClass: 'bg-gray-400'
+		}
+	};
 
 	let menuOpen = $state(false);
 	let dialogOpen = $state(false);
@@ -91,6 +119,10 @@
 		return DIAGRAM_TYPE_MAP[type as DiagramType] ?? DIAGRAM_TYPE_MAP.erd;
 	}
 
+	function normalizeStatus(status: unknown): DiagramStatus {
+		return status === 'complete' || status === 'archived' ? status : 'draft';
+	}
+
 	async function handleCreateDiagram({ name, type }: { name: string; type: string }) {
 		const res = await fetch(`${API_URL}/diagrams`, {
 			method: 'POST',
@@ -145,7 +177,8 @@
 				id: created.id,
 				title: created.title,
 				type: created.type,
-				updatedAt: created.updatedAt
+				updatedAt: created.updatedAt,
+				status: normalizeStatus(full.data?.status)
 			},
 			...diagrams
 		];
@@ -181,7 +214,13 @@
 	onMount(async () => {
 		try {
 			const res = await fetch(`${API_URL}/diagrams`, { credentials: 'include' });
-			if (res.ok) diagrams = await res.json();
+			if (res.ok) {
+				const result = (await res.json()) as Diagram[];
+				diagrams = result.map((diagram) => ({
+					...diagram,
+					status: normalizeStatus(diagram.status)
+				}));
+			}
 		} finally {
 			loading = false;
 		}
@@ -358,6 +397,7 @@
 				>
 					{#each filtered as d (d.id)}
 						{@const meta = typeMeta(d.type)}
+						{@const status = STATUS_META[normalizeStatus(d.status)]}
 						{@const Icon = meta.icon}
 						<div
 							class="group relative overflow-hidden rounded-2xl border border-line-soft bg-white shadow-sm transition hover:border-mq-red hover:shadow-md"
@@ -377,9 +417,19 @@
 								</div>
 								<div class="border-t border-line-soft px-4 py-3">
 									<p class="truncate text-sm font-medium text-ink">{d.title}</p>
-									<p class="mt-0.5 text-xs text-ink-muted">
-										Edited {formatDate(d.updatedAt)}
-									</p>
+									<div class="mt-1 flex items-center justify-between gap-2">
+										<p class="min-w-0 truncate text-xs text-ink-muted">
+											Edited {formatDate(d.updatedAt)}
+										</p>
+										<span
+											class="{status.badgeClass} inline-flex flex-shrink-0 items-center gap-1.5
+												rounded-full px-2 py-0.5 text-[11px] font-medium"
+										>
+											<span class="{status.dotClass} size-1.5 rounded-full"
+											></span>
+											{status.label}
+										</span>
+									</div>
 								</div>
 							</a>
 

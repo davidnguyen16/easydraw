@@ -8,7 +8,14 @@ export class DiagramsService {
   findAll(userId: string) {
     return this.prisma.diagram.findMany({
       where: { ownerId: userId },
-      select: { id: true, title: true, type: true, createdAt: true, updatedAt: true },
+      select: { 
+        id: true, 
+        title: true, 
+        type: true, 
+        status: true,
+        createdAt: true, 
+        updatedAt: true 
+      },
       orderBy: { updatedAt: 'desc' },
     });
   }
@@ -34,7 +41,7 @@ export class DiagramsService {
     return diagram;
   }
 
-  async update(userId: string, id: string, patch: { title?: string; data?: any }) {
+  async update(userId: string, id: string, patch: { title?: string; status?: string; data?: any }) {
     await this.findOne(userId, id);
     return this.prisma.diagram.update({
       where: { id },

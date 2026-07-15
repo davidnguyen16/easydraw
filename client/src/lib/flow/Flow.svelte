@@ -505,7 +505,11 @@
 				method: 'PATCH',
 				credentials: 'include',
 				headers: { 'Content-type': 'application/json' },
-				body: JSON.stringify({ data, title: editorMetaData.fileName })
+				body: JSON.stringify({ 
+					data, 
+					title: editorMetaData.fileName, 
+					status: editorMetaData.status
+				})
 			});
 		} catch (e) {
 			console.error('Save failed', e);

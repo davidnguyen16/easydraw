@@ -27,6 +27,7 @@ model Diagram {
   id        String   @id @default(uuid())
   title     String
   type      String   @default("erd")
+  status    String   @default("draft")
   data      Json
   owner     User     @relation(fields: [ownerId], references: [id])
   ownerId   String

@@ -6,12 +6,13 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard, type JwtPayload } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
-
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
     constructor (private readonly authService: AuthService) {}
 
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
     @Post('register')
     async register(@Body() body: RegisterDto, @Res({ passthrough: true }) res: Response) {
             const result = await this.authService.register(body.email, body.password, body.name);
@@ -29,6 +30,7 @@ export class AuthController {
         });
     }
 
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
     @Post('login')
     async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
         const result = await this.authService.login(body.email, body.password);

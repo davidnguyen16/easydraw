@@ -4,6 +4,7 @@
 	import {
 		Plus,
 		ChevronDown,
+		Settings,
 		LogOut,
 		FilePlus,
 		FileText,
@@ -140,7 +141,12 @@
 		if (!res.ok) return;
 		const created = await res.json();
 		diagrams = [
-			{ id: created.id, title: created.title, type: created.type, updatedAt: created.updatedAt },
+			{
+				id: created.id,
+				title: created.title,
+				type: created.type,
+				updatedAt: created.updatedAt
+			},
 			...diagrams
 		];
 	}
@@ -165,6 +171,11 @@
 		menuOpen = false;
 		await logout();
 		goto('/login');
+	}
+
+	function openSettings() {
+		menuOpen = false;
+		goto('/settings');
 	}
 
 	onMount(async () => {
@@ -227,6 +238,13 @@
 								</p>
 							</div>
 							<button
+								onclick={openSettings}
+								class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-ink hover:bg-surface-hover"
+							>
+								<Settings size={16} />
+								Settings
+							</button>
+							<button
 								onclick={handleLogout}
 								class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-ink hover:bg-surface-hover"
 							>
@@ -258,7 +276,8 @@
 				</div>
 				<h2 class="mt-7 text-2xl font-semibold tracking-tight text-ink">No diagrams yet</h2>
 				<p class="mt-2 max-w-md text-base leading-7 text-ink-muted">
-					Create your first diagram to get started. Choose from ERD, UML, flowcharts, and more.
+					Create your first diagram to get started. Choose from ERD, UML, flowcharts, and
+					more.
 				</p>
 				<button
 					onclick={() => (dialogOpen = true)}
@@ -292,7 +311,9 @@
 						{currentSortLabel}
 						<ChevronDown
 							size={16}
-							class="text-ink-muted transition-transform {sortMenuOpen ? 'rotate-180' : ''}"
+							class="text-ink-muted transition-transform {sortMenuOpen
+								? 'rotate-180'
+								: ''}"
 						/>
 					</button>
 
@@ -332,7 +353,9 @@
 			{#if filtered.length === 0}
 				<p class="mt-12 text-center text-ink-muted">No diagrams match “{search}”.</p>
 			{:else}
-				<div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+				<div
+					class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+				>
 					{#each filtered as d (d.id)}
 						{@const meta = typeMeta(d.type)}
 						{@const Icon = meta.icon}
@@ -340,17 +363,23 @@
 							class="group relative overflow-hidden rounded-2xl border border-line-soft bg-white shadow-sm transition hover:border-mq-red hover:shadow-md"
 						>
 							<a href={`/editor/${d.id}`} class="block">
-								<div class="flex aspect-[4/3] flex-col items-center justify-center gap-2 bg-panel/50">
+								<div
+									class="flex aspect-[4/3] flex-col items-center justify-center gap-2 bg-panel/50"
+								>
 									<Icon
 										size={40}
 										strokeWidth={1.4}
 										class="text-mq-red/70 transition-transform group-hover:scale-105"
 									/>
-									<span class="text-xs font-semibold tracking-wide text-mq-red/70">{meta.label}</span>
+									<span class="text-xs font-semibold tracking-wide text-mq-red/70"
+										>{meta.label}</span
+									>
 								</div>
 								<div class="border-t border-line-soft px-4 py-3">
 									<p class="truncate text-sm font-medium text-ink">{d.title}</p>
-									<p class="mt-0.5 text-xs text-ink-muted">Edited {formatDate(d.updatedAt)}</p>
+									<p class="mt-0.5 text-xs text-ink-muted">
+										Edited {formatDate(d.updatedAt)}
+									</p>
 								</div>
 							</a>
 

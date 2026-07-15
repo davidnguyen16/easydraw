@@ -7,7 +7,13 @@
  * route guards tell "still checking" apart from "checked, not logged in".
  */
 import { API_URL } from '$lib/api';
-export type AuthUser = { id: string; email: string; name: string | null };
+export type AuthUser = {
+	id: string;
+	email: string;
+	name: string | null;
+	/** ISO timestamp returned by GET /auth/me once the backend exposes it. */
+	createdAt?: string;
+};
 
 let user = $state<AuthUser | null>(null);
 let ready = $state(false);
@@ -31,7 +37,7 @@ export const authStore = {
 export async function fetchMe(): Promise<void> {
 	try {
 		const res = await fetch(`${API_URL}/auth/me`, { credentials: 'include' });
-		user = res.ok ? await res.json(): null;
+		user = res.ok ? await res.json() : null;
 	} catch {
 		user = null;
 	} finally {
@@ -45,5 +51,44 @@ export async function logout(): Promise<void> {
 		await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
 	} finally {
 		user = null;
+	}
+}
+
+async function apiErrorMessage(response: Response, fallback: string): Promise<string> {
+	try {
+		const body = (await response.json()) as { message?: string | string[] };
+		if (Array.isArray(body.message)) return body.message.join(', ');
+		if (typeof body.message === 'string' && body.message.trim()) return body.message;
+	} catch {
+		// The server may return an empty/non-JSON body. Use the stable fallback.
+	}
+	return fallback;
+}
+
+/**
+ * Permanently delete the authenticated account.
+ *
+ * Backend contract: DELETE /auth/account, authenticated through the existing
+ * httpOnly cookie. The endpoint must derive the user id from the JWT rather
+ * than accepting an id from the browser.
+ */
+export async function deleteAccount(): Promise<void> {
+	const response = await fetch(`${API_URL}/auth/account`, {
+		method: 'DELETE',
+		credentials: 'include'
+	});
+
+	if (!response.ok) {
+		throw new Error(
+			await apiErrorMessage(response, 'Could not delete account. Please try again.')
+		);
+	}
+
+	// Clear both the server cookie (also harmless if DELETE already cleared it)
+	// and the local auth state before the settings page redirects to login.
+	try {
+		await logout();
+	} catch {
+		// logout() clears local state in finally; deletion has already succeeded.
 	}
 }

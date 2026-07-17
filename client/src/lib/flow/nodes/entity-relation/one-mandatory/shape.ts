@@ -4,7 +4,7 @@ import Icon from './icon.svelte';
 /** One-and-only-one (mandatory) cardinality at the target end. */
 export const oneMandatoryShape: NodeShape = {
 	id: 'OneMandatoryConnection',
-	label: 'One Mandatory',
+	label: '1 Mandatory',
 	category: 'entity-relation',
 	icon: Icon,
 	defaultData: () => ({}),

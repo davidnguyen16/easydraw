@@ -37,7 +37,29 @@ const OUTLINE_INSET: Record<string, OutlineInset> = {
 		[Position.Left]: 0.48,
 		[Position.Right]: 0.24,
 		[Position.Bottom]: 0.14
-	}
+	},
+	UpDownArrowNode: { [Position.Left]: 0.29, [Position.Right]: 0.29 },
+	SplitArrowNode: {
+		[Position.Top]: 0.31,
+		[Position.Right]: 0.4,
+		[Position.Bottom]: 0.31
+	},
+	MergeArrowNode: {
+		[Position.Top]: 0.32,
+		[Position.Bottom]: 0.32,
+		[Position.Left]: 0.29
+	},
+	CurvedRightArrowNode: { [Position.Right]: 0.74, [Position.Bottom]: 0.74 },
+	CurvedLeftArrowNode: { [Position.Left]: 0.74, [Position.Bottom]: 0.74 },
+	CurvedUpArrowNode: { [Position.Top]: 0.74, [Position.Right]: 0.74 },
+	CurvedDownArrowNode: { [Position.Bottom]: 0.74, [Position.Left]: 0.74 },
+	// ── flowchart (additional) — shapes whose outline is inset from the bbox
+	//    at a handle side (sloped/curved edges). Rectangular ones need nothing.
+	ManualInputNode: { [Position.Top]: 0.135 },
+	ManualOperationNode: { [Position.Left]: 0.085, [Position.Right]: 0.085 },
+	StoredDataNode: { [Position.Left]: 0.075, [Position.Right]: 0.065 },
+	MergeNode: { [Position.Left]: 0.245, [Position.Right]: 0.245 },
+	MultipleDocumentsNode: { [Position.Bottom]: 0.13 }
 };
 
 const NO_TOUCH_TYPES = new Set(['ActorNode', 'TextNode']);

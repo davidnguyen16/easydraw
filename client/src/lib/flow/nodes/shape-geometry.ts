@@ -1,3 +1,12 @@
+import {
+	ADDITIONAL_ARROW_GEOMETRY,
+	ADDITIONAL_ARROW_VARIANTS
+} from './arrows/additional/definitions';
+import {
+	ADDITIONAL_FLOWCHART_GEOMETRY,
+	ADDITIONAL_FLOWCHART_VARIANTS
+} from './flowchart/additional/definitions';
+
 /**
  * Per-shape declarative config — the single place that says "what does
  * this shape look like, and where does its label go". Adding a new shape
@@ -135,6 +144,9 @@ export const VARIANTS: Record<string, Variant> = {
 	DropNode: { kind: 'svg' },
 	DonutNode: { kind: 'svg' },
 	CubeNode: { kind: 'svg' },
+	// ── entity relation ────────────────────────────────────────────────
+	// Outer entity rectangle with an inscribed relationship diamond.
+	AssociativeEntityNode: { kind: 'svg' },
 	// ── uml ────────────────────────────────────────────────────────────
 	DocumentNode: { kind: 'svg' },
 	ActorNode: { kind: 'svg' },
@@ -149,6 +161,7 @@ export const VARIANTS: Record<string, Variant> = {
 	UTurnArrowNode: { kind: 'svg' },
 	BendArrowNode: { kind: 'svg' },
 	BendDoubleArrowNode: { kind: 'svg' },
+	...ADDITIONAL_ARROW_VARIANTS,
 	// ── flowchart: aliases of basic geometries under flowchart names ───
 	ProcessNode: { kind: 'boxed', boxRadius: '6px', geometry: 'RectangleNode' },
 	DecisionNode: { kind: 'svg', geometry: 'DiamondNode' },
@@ -157,7 +170,8 @@ export const VARIANTS: Record<string, Variant> = {
 	// Database cylinder. Default 4 cardinal handles land on the bbox edge
 	// midpoints: top → cap apex, bottom → base apex, left/right → the
 	// vertical sides. Default NodeResizer.
-	DatabaseNode: { kind: 'svg' }
+	DatabaseNode: { kind: 'svg' },
+	...ADDITIONAL_FLOWCHART_VARIANTS
 };
 
 /**
@@ -231,6 +245,13 @@ export const SHAPE_GEOMETRY: Record<string, ShapeGeometry> = {
 		kind: 'polygons',
 		items: ['1,27 50,1 99,27 50,54', '1,27 1,80 50,99 50,54', '99,27 99,80 50,99 50,54']
 	},
+	// ── entity relation ────────────────────────────────────────────────
+	// The diamond shares the outer rectangle's four edge midpoints, so both
+	// outlines stay joined at every aspect ratio when the node is resized.
+	AssociativeEntityNode: {
+		kind: 'paths',
+		items: [{ d: 'M1,1 H99 V99 H1 Z' }, { d: 'M50,1 L99,50 L50,99 L1,50 Z', filled: false }]
+	},
 	// ── uml ────────────────────────────────────────────────────────────
 	// Asymmetric S-curve bottom: `Q75,98 50,82` dips the right half down
 	// (apex ≈ y=90); `T1,82` reflects the control about (50,82) to (25,66),
@@ -259,8 +280,7 @@ export const SHAPE_GEOMETRY: Record<string, ShapeGeometry> = {
 	// flaring to 35..65, tips on the bbox edge midpoints (= the 4 handles).
 	QuadArrowNode: {
 		kind: 'polygon',
-		points:
-			'50,1 65,25 57,25 57,43 75,43 75,35 99,50 75,65 75,57 57,57 57,75 65,75 50,99 35,75 43,75 43,57 25,57 25,65 1,50 25,35 25,43 43,43 43,25 35,25'
+		points: '50,1 65,25 57,25 57,43 75,43 75,35 99,50 75,65 75,57 57,57 57,75 65,75 50,99 35,75 43,75 43,57 25,57 25,65 1,50 25,35 25,43 43,43 43,25 35,25'
 	},
 	// Block U: outer bend R=37 centred (38,38) — outer top touches y=1, left
 	// leg spans x=1..25, inner bend R=13, right leg x=51..75 ending in a
@@ -278,6 +298,9 @@ export const SHAPE_GEOMETRY: Record<string, ShapeGeometry> = {
 		kind: 'polygon',
 		points: '1,27 25,1 25,14 75,14 75,70 87,70 62,99 37,70 49,70 49,40 25,40 25,53'
 	},
+	// Additional arrows share these exact normalized silhouettes with their
+	// sidebar icons (see arrows/additional/definitions.ts).
+	...ADDITIONAL_ARROW_GEOMETRY,
 	// ── flowchart ──────────────────────────────────────────────────────
 	// Database cylinder. Silhouette: vertical sides at x=1/99, top cap (back
 	// rim arcs UP through 50,1) and a front-bulging base (arcs DOWN through
@@ -289,5 +312,8 @@ export const SHAPE_GEOMETRY: Record<string, ShapeGeometry> = {
 			{ d: 'M1,13 A49,12 0 0 1 99,13 L99,87 A49,12 0 0 1 1,87 Z' },
 			{ d: 'M1,13 A49,12 0 0 0 99,13', filled: false }
 		]
-	}
+	},
+	// Additional flowchart symbols share these exact silhouettes with their
+	// sidebar icons (see flowchart/additional/definitions.ts).
+	...ADDITIONAL_FLOWCHART_GEOMETRY
 };

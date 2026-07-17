@@ -5,7 +5,7 @@ import Icon from './icon.svelte';
 // Ellipse (oval) geometry reused under the flowchart name — start/end block.
 export const terminatorShape: NodeShape = {
 	id: 'TerminatorNode',
-	label: 'Terminator',
+	label: 'Start / End',
 	category: 'flowchart',
 	component: Component,
 	icon: Icon,

@@ -5,7 +5,9 @@ import Icon from './icon.svelte';
 export const documentShape: NodeShape = {
 	id: 'DocumentNode',
 	label: 'Document',
-	category: 'uml',
+	// Flowchart Document symbol (rect + wavy bottom). Lives in this uml/ folder
+	// for history, but belongs to the flowchart sidebar section.
+	category: 'flowchart',
 	component: Component,
 	icon: Icon,
 	// Drop at the same footprint as the Rectangle (180×100) so basic shapes

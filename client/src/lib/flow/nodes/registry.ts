@@ -45,6 +45,7 @@ import { arrowDownShape } from './arrows/arrow-down/shape';
 import { arrowLeftShape } from './arrows/arrow-left/shape';
 import { arrowRightShape } from './arrows/arrow-right/shape';
 import { arrowUpShape } from './arrows/arrow-up/shape';
+import { additionalArrowShapes } from './arrows/additional/shape';
 import { bendArrowShape } from './arrows/bend-arrow/shape';
 import { bendDoubleArrowShape } from './arrows/bend-double-arrow/shape';
 import { notchedArrowShape } from './arrows/notched-arrow/shape';
@@ -57,13 +58,16 @@ import { decisionShape } from './flowchart/decision/shape';
 import { processShape } from './flowchart/process/shape';
 import { terminatorShape } from './flowchart/terminator/shape';
 import { databaseShape } from './flowchart/database/shape';
+import { additionalFlowchartShapes } from './flowchart/additional/shape';
 // ── entity relation ──────────────────────────────────────────────────
 import { entityShape } from './entity-relation/entity/shape';
 import { weakEntityShape } from './entity-relation/weak-entity/shape';
+import { associativeEntityShape } from './entity-relation/associative-entity/shape';
 import { zeroToManyShape } from './entity-relation/zero-to-many/shape';
 import { oneToManyShape } from './entity-relation/one-to-many/shape';
 import { oneMandatoryShape } from './entity-relation/one-mandatory/shape';
 import { oneToOneShape } from './entity-relation/one-to-one/shape';
+import { additionalCardinalityShapes } from './entity-relation/cardinality-presets/shape';
 // ── uml ──────────────────────────────────────────────────────────────
 import { actorShape } from './uml/actor/shape';
 import { documentShape } from './uml/document/shape';
@@ -93,16 +97,17 @@ export const SHAPES: readonly NodeShape[] = [
 	dropShape,
 	donutShape,
 	pillShape,
-	documentShape,
 	actorShape,
 	cubeShape,
 	textShape,
 	entityShape,
 	weakEntityShape,
+	associativeEntityShape,
 	zeroToManyShape,
 	oneToManyShape,
 	oneMandatoryShape,
 	oneToOneShape,
+	...additionalCardinalityShapes,
 	arrowRightShape,
 	arrowLeftShape,
 	arrowUpShape,
@@ -113,11 +118,16 @@ export const SHAPES: readonly NodeShape[] = [
 	uTurnArrowShape,
 	bendArrowShape,
 	bendDoubleArrowShape,
+	...additionalArrowShapes,
 	terminatorShape,
 	processShape,
 	decisionShape,
 	dataShape,
-	databaseShape
+	databaseShape,
+	// Document (rect with wavy bottom) is a flowchart symbol — moved here from
+	// UML, keeping its DocumentNode id so old diagrams still render.
+	documentShape,
+	...additionalFlowchartShapes
 ] as const;
 
 export function getShape(id: string): NodeShape | undefined {

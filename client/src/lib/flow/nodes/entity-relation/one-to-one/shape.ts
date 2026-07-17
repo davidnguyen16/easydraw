@@ -4,7 +4,7 @@ import Icon from './icon.svelte';
 /** One-and-only-one cardinality at both ends of the relationship. */
 export const oneToOneShape: NodeShape = {
 	id: 'OneToOneConnection',
-	label: 'One to One',
+	label: '1 to 1',
 	category: 'entity-relation',
 	icon: Icon,
 	defaultData: () => ({}),

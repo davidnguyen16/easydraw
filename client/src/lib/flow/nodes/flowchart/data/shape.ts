@@ -5,7 +5,7 @@ import Icon from './icon.svelte';
 // Parallelogram geometry reused under the flowchart name (input/output).
 export const dataShape: NodeShape = {
 	id: 'DataNode',
-	label: 'Data',
+	label: 'Input / Output',
 	category: 'flowchart',
 	component: Component,
 	icon: Icon,

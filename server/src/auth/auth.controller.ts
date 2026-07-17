@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -33,6 +33,7 @@ export class AuthController {
 
     @Throttle({ default: { limit: 10, ttl: 60000 } })
     @Post('login')
+    @HttpCode(HttpStatus.OK)
     async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
         const result = await this.authService.login(body.email, body.password);
         this.setTokenCookie(res, result.access_token);
@@ -62,7 +63,7 @@ export class AuthController {
         res.clearCookie('access_token');
         return { deleted: true};
     }
-    
+
     // ROUTE 1 - kick off the flow. Guard redirects to Google; body never runs.
     @Get('google')
     @UseGuards(AuthGuard('google'))

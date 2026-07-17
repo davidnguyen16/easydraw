@@ -22,7 +22,12 @@
 	}
 
 	interface EditorContext {
-		state: { zoomPercent: number; showGrid: boolean; snapToGrid: boolean };
+		state: {
+			zoomPercent: number;
+			showGrid: boolean;
+			snapToGrid: boolean;
+			saveStatus: 'saved' | 'saving' | 'error';
+		};
 		history: { canUndo: boolean; canRedo: boolean };
 		save: () => void;
 		newFile: () => void;
@@ -60,12 +65,16 @@
 		{ id: 'archived', label: 'Archived', color: '#9ca3af' }
 	];
 
-	// Save status for the top-right indicator. Interim: any unsaved page ⇒ show
-	// the spinning "saving" icon; otherwise the "saved" check. Wire this to the
-	// real auto-save request status later.
-	const saving = $derived($visibleUnsavedPageIdsStore.length > 0);
+	// Canvas dirtiness gives immediate feedback before the debounce effect runs;
+	// saveStatus then keeps the spinner alive through both the debounce and the
+	// real PATCH request. Metadata-only edits drive saveStatus directly.
+	const saving = $derived(
+		editor.state.saveStatus === 'saving' || $visibleUnsavedPageIdsStore.length > 0
+	);
+	const saveFailed = $derived(editor.state.saveStatus === 'error');
 	const currentDocumentStatus = $derived(
-		DOCUMENT_STATUSES.find((status) => status.id === editorMetaData.status) ?? DOCUMENT_STATUSES[0]
+		DOCUMENT_STATUSES.find((status) => status.id === editorMetaData.status) ??
+			DOCUMENT_STATUSES[0]
 	);
 
 	let openMenu: string | null = $state(null);
@@ -143,7 +152,12 @@
 			{ icon: 'new', label: 'New', shortcut: 'Ctrl+N', onClick: editor.newFile },
 			{ icon: 'open', label: 'Open…', shortcut: 'Ctrl+O', onClick: editor.open },
 			{ icon: 'save', label: 'Save', shortcut: 'Ctrl+S', onClick: editor.save },
-			{ icon: 'save-as', label: 'Save As…', shortcut: 'Ctrl+Shift+S', onClick: editor.saveAs },
+			{
+				icon: 'save-as',
+				label: 'Save As…',
+				shortcut: 'Ctrl+Shift+S',
+				onClick: editor.saveAs
+			},
 			{ type: 'divider' },
 			{ icon: 'export', label: 'Export as', submenu: exportSubmenu }
 		],
@@ -408,7 +422,8 @@
 													group-[.active:not(:disabled)]:text-mq-red">{item.shortcut}</span
 											>
 										{:else if item.submenu}
-											<span class="inline-flex h-3.5 w-3.5 text-ink-muted [&_svg]:size-3.5"
+											<span
+												class="inline-flex h-3.5 w-3.5 text-ink-muted [&_svg]:size-3.5"
 												>{@render menuIcon('chevron-right')}</span
 											>
 										{/if}
@@ -432,13 +447,14 @@
 													disabled={sub.disabled}
 													onclick={() => runItem(sub)}
 												>
-													<span class="inline-flex h-[18px] w-[18px] flex-shrink-0"></span>
+													<span
+														class="inline-flex h-[18px] w-[18px] flex-shrink-0"
+													></span>
 													<span class="flex-1">{sub.label}</span>
 													{#if sub.shortcut}
 														<span
 															class="text-[0.78rem] tabular-nums text-ink-muted
-																group-[:hover:not(:disabled)]:text-mq-red"
-															>{sub.shortcut}</span
+																group-[:hover:not(:disabled)]:text-mq-red">{sub.shortcut}</span
 														>
 													{/if}
 												</button>
@@ -457,14 +473,14 @@
 	<div class="flex-auto"></div>
 
 	<div class="flex flex-shrink-0 items-center gap-2">
-		<!-- Save status: spins while there are unsaved changes, shows a check when
-		     saved. Click to force a save. (Interim behaviour → auto-save later.) -->
+		<!-- Save status follows the real debounced PATCH lifecycle. Click to force
+		     a save or retry after an error. -->
 		<button
 			type="button"
 			class="mb-tip relative inline-flex h-8 w-8 cursor-pointer items-center justify-center
 				rounded-[7px] border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
 				hover:bg-white/[0.16]"
-			aria-label={saving ? 'Saving…' : 'Saved'}
+			aria-label={saving ? 'Saving…' : saveFailed ? 'Save failed. Click to retry' : 'Saved'}
 			onclick={editor.save}
 		>
 			{#if saving}
@@ -481,6 +497,21 @@
 					<path d="M1 20v-6h6" />
 					<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
 					<path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+				</svg>
+			{:else if saveFailed}
+				<!-- Failed: cloud with an X; clicking retries through editor.save. -->
+				<svg
+					viewBox="0 0 24 24"
+					class="h-[18px] w-[18px] text-red-200"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.7"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M17.5 19a4.5 4.5 0 1 0 0-9h-1.8A7 7 0 1 0 4 15.3" />
+					<path d="m9.5 12 5 5" />
+					<path d="m14.5 12-5 5" />
 				</svg>
 			{:else}
 				<!-- Saved: cloud with a check (image 2). -->
@@ -567,7 +598,10 @@
 		transform: translateX(-50%);
 		background: #373a36;
 		color: #fff;
-		font-family: system-ui, -apple-system, sans-serif;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
 		font-size: 0.72rem;
 		font-weight: 500;
 		padding: 4px 8px;

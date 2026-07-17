@@ -1,0 +1,24 @@
+name: easydraw-test
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    restart: "no"
+
+    environment:
+      POSTGRES_DB: easydraw_test
+      POSTGRES_USER: easydraw_test
+      POSTGRES_PASSWORD: easydraw_test
+
+    ports:
+      - "127.0.0.1:5433:5432"
+    
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U easydraw_test -d easydraw_test"
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 20

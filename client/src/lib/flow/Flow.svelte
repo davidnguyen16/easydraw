@@ -125,8 +125,10 @@
 			bendPoints: { x: number; y: number }[];
 		}) => {
 			nodes = nodes.map((node) => {
-				if (node.id === update.sourceId) return { ...node, position: update.sourcePosition };
-				if (node.id === update.targetId) return { ...node, position: update.targetPosition };
+				if (node.id === update.sourceId)
+					return { ...node, position: update.sourcePosition };
+				if (node.id === update.targetId)
+					return { ...node, position: update.targetPosition };
 				return node;
 			});
 			edges = edges.map((edge) =>
@@ -215,6 +217,9 @@
 	let canvasPageId: string | null = $state(initialPage?.id ?? null);
 	let baselineCanvasSignature = $state(createCanvasSignature(initialNodes, initialEdges));
 	let isHydratingCanvas = $state(false);
+	let autosaveTimer: ReturnType<typeof setTimeout> | undefined;
+	let savedMetaSignature: string | null = null;
+	let saveGeneration = 0;
 
 	// Set true while undo/redo is restoring a snapshot, so the resulting
 	// nodes/edges change does NOT push another snapshot onto the history stack.
@@ -232,6 +237,7 @@
 		snapToGrid: false,
 		locked: false,
 		showStylePanel: true,
+		saveStatus: 'saved' as 'saved' | 'saving' | 'error',
 		// Present mode: hides all editor chrome (menubar/toolbar/sidebar/panels/
 		// footer) and shows just the canvas, read-only. Toggled by the menubar's
 		// Present button; Esc exits.
@@ -495,25 +501,47 @@
 	// Editor action handlers (consumed by MenuBar / ToolBar via context).
 	// =========================================================================
 
-	async function handleSave() {
+	async function performSave(generation: number, metaSignature: string) {
 		persistCanvasToStore();
 		saveActivePageToStorage();
 
 		try {
 			const data = JSON.parse(exportEditorStateAsJSON());
-			await fetch(`${API_URL}/diagrams/${page.params.id}`, {
+			const response = await fetch(`${API_URL}/diagrams/${page.params.id}`, {
 				method: 'PATCH',
 				credentials: 'include',
 				headers: { 'Content-type': 'application/json' },
-				body: JSON.stringify({ 
-					data, 
-					title: editorMetaData.fileName, 
+				body: JSON.stringify({
+					data,
+					title: editorMetaData.fileName,
 					status: editorMetaData.status
 				})
 			});
+			if (!response.ok) throw new Error(`Save failed with status ${response.status}`);
+
+			// A newer edit/save may have started while this request was in flight.
+			// Only the newest request is allowed to mark the document as saved.
+			if (generation === saveGeneration) {
+				savedMetaSignature = metaSignature;
+				editorMetaData.lastSaved = Date.now();
+				editorActionsState.saveStatus = 'saved';
+			}
 		} catch (e) {
 			console.error('Save failed', e);
+			if (generation === saveGeneration) {
+				editorActionsState.saveStatus = 'error';
+			}
 		}
+	}
+
+	async function handleSave() {
+		// A manual save supersedes a pending debounced autosave.
+		if (autosaveTimer) clearTimeout(autosaveTimer);
+		autosaveTimer = undefined;
+
+		const generation = ++saveGeneration;
+		editorActionsState.saveStatus = 'saving';
+		await performSave(generation, createMetaSignature());
 	}
 
 	function handleNewFile() {
@@ -679,7 +707,13 @@
 	function handlePaste() {
 		if (!clipboardSnapshot) return;
 		pasteCount += 1;
-		const next = pasteSnapshot(nodes, edges, clipboardSnapshot, pasteCount, createNodeEditHandler);
+		const next = pasteSnapshot(
+			nodes,
+			edges,
+			clipboardSnapshot,
+			pasteCount,
+			createNodeEditHandler
+		);
 		nodes = next.nodes;
 		edges = next.edges;
 	}
@@ -960,19 +994,48 @@
 		}
 	});
 
-	// Autosave: Automatically save to server ~1s after last changes on canvas
-	let autosaveTimer: ReturnType<typeof setTimeout> | undefined;
+	// Autosave: canvas and document metadata are deliberately tracked by
+	// separate effects. A title/status edit must save even when nodes/edges are
+	// untouched; both paths share one debounce timer so simultaneous edits still
+	// produce a single request.
+	function createMetaSignature() {
+		return `${editorMetaData.fileName}\u0000${editorMetaData.status}`;
+	}
+
+	function scheduleAutosave(metaSignature: string) {
+		if (autosaveTimer) clearTimeout(autosaveTimer);
+		const generation = ++saveGeneration;
+		editorActionsState.saveStatus = 'saving';
+		autosaveTimer = setTimeout(() => {
+			autosaveTimer = undefined;
+			void performSave(generation, metaSignature);
+		}, 1000);
+	}
+
+	// Metadata-only autosave: these two property reads are the reactive
+	// dependencies, independent of any canvas mutation.
 	$effect(() => {
-		nodes;
-		edges;
+		const metaSignature = createMetaSignature();
 
 		if (isHydratingCanvas || !canvasPageId) return;
-		// Not anything changes compare to last modification -> Not autosave (avoid performance when just open)
-		if (createCanvasSignature(nodes, edges) === baselineCanvasSignature) return;
+		if (savedMetaSignature === null) {
+			savedMetaSignature = metaSignature;
+			return;
+		}
+		if (metaSignature === savedMetaSignature) return;
 
-		if (autosaveTimer) clearTimeout(autosaveTimer);
-		autosaveTimer = setTimeout(() => handleSave(), 1000);
-	})
+		scheduleAutosave(metaSignature);
+	});
+
+	// Canvas autosave retains the existing signature/baseline behaviour.
+	$effect(() => {
+		const canvasSignature = createCanvasSignature(nodes, edges);
+
+		if (isHydratingCanvas || !canvasPageId) return;
+		if (canvasSignature === baselineCanvasSignature) return;
+
+		scheduleAutosave(createMetaSignature());
+	});
 
 	// Loads editor store from localStorage once and hydrates canvas from it.
 	onMount(() => {
@@ -1106,9 +1169,7 @@
 	// Merge a data patch into a specific edge (e.g. label text style). Mirrors
 	// updateNodeData — edges is $state.raw, so reassign the whole array.
 	function updateEdgeData(edgeId: string, newData: any) {
-		edges = edges.map((e) =>
-			e.id === edgeId ? { ...e, data: { ...e.data, ...newData } } : e
-		);
+		edges = edges.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, ...newData } } : e));
 	}
 
 	// New connections use the orthogonal `connection` edge by default.

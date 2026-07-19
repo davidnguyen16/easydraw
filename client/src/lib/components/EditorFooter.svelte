@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { Plus, X, Layers, Menu, Check } from '@lucide/svelte';
 	import {
 		createPage,
 		deletePage,
@@ -8,172 +8,267 @@
 		switchPage,
 		visibleUnsavedPageIdsStore
 	} from '$lib/stores/editor.store.svelte';
+	import PageTabContextMenu from './PageTabContextMenu.svelte';
 
 	let {
+		nodeCount = 0,
 		onSwitchPage,
 		onCreatePage,
-		onDeletePage
+		onDeletePage,
+		onDuplicatePage,
+		onDeleteAllPages
 	}: {
+		nodeCount?: number;
 		onSwitchPage?: (pageId: string) => void;
 		onCreatePage?: () => void;
 		onDeletePage?: (pageId: string) => void;
+		onDuplicatePage?: (pageId: string) => void;
+		onDeleteAllPages?: () => void;
 	} = $props();
 
-	let openMenuPageId: string | null = $state(null);
+	let editingPageId = $state<string | null>(null);
+	let editValue = $state('');
+	let menuOpen = $state(false); // hamburger dropdown
+	let contextMenu = $state<{ pageId: string; x: number; anchorTop: number } | null>(null);
+	let hamburgerEl = $state<HTMLDivElement | null>(null);
 
-	// Closes any open page dropdown when the user clicks outside the footer.
-	onMount(() => {
-		const closeMenu = () => {
-			openMenuPageId = null;
+	// Close the hamburger dropdown on a click outside it. (Footer-internal
+	// actions close it explicitly; the footer stops its own pointerdowns, so
+	// this only fires for clicks elsewhere on the page.)
+	$effect(() => {
+		if (!menuOpen) return;
+		const onPointer = (event: PointerEvent) => {
+			if (hamburgerEl && !hamburgerEl.contains(event.target as Node)) menuOpen = false;
 		};
-
-		window.addEventListener('pointerdown', closeMenu);
-		return () => {
-			window.removeEventListener('pointerdown', closeMenu);
-		};
+		window.addEventListener('pointerdown', onPointer);
+		return () => window.removeEventListener('pointerdown', onPointer);
 	});
 
-	// Creates a blank page and immediately activates it.
-	function handleCreatePage() {
-		if (onCreatePage) {
-			onCreatePage();
-		} else {
-			createPage();
+	// Focus + select the rename input the moment it appears.
+	function autofocus(node: HTMLInputElement) {
+		node.focus();
+		node.select();
+	}
+
+	function switchTo(pageId: string) {
+		menuOpen = false;
+		contextMenu = null;
+		if (onSwitchPage) onSwitchPage(pageId);
+		else switchPage(pageId);
+	}
+
+	function addPage() {
+		menuOpen = false;
+		contextMenu = null;
+		if (onCreatePage) onCreatePage();
+		else createPage();
+	}
+
+	function removePage(pageId: string) {
+		contextMenu = null;
+		if (onDeletePage) onDeletePage(pageId);
+		else deletePage(pageId);
+	}
+
+	function deleteAll() {
+		menuOpen = false;
+		onDeleteAllPages?.();
+	}
+
+	function startRename(pageId: string, currentName: string) {
+		menuOpen = false;
+		contextMenu = null;
+		editValue = currentName;
+		editingPageId = pageId;
+	}
+
+	function commitRename() {
+		if (editingPageId) {
+			renamePage(editingPageId, editValue.trim() || 'Page');
 		}
-		openMenuPageId = null;
+		editingPageId = null;
 	}
 
-	// Switches the current page when a tab is clicked.
-	function handleSwitchPage(pageId: string) {
-		if (onSwitchPage) {
-			onSwitchPage(pageId);
-		} else {
-			switchPage(pageId);
-		}
-		openMenuPageId = null;
-	}
-
-	// Toggles the dropdown menu for a specific page tab.
-	function handleTogglePageMenu(pageId: string) {
-		openMenuPageId = openMenuPageId === pageId ? null : pageId;
-	}
-
-	// Updates page name in store whenever the inline input changes.
-	function handlePageNameInput(pageId: string, event: Event) {
-		const input = event.target as HTMLInputElement;
-		renamePage(pageId, input.value);
-	}
-
-	// Focuses the inline page-name input for quick renaming.
-	function handleRenamePage(pageId: string) {
-		switchPage(pageId);
-		openMenuPageId = null;
-
-		queueMicrotask(() => {
-			const input = document.querySelector<HTMLInputElement>(
-				`input[data-page-input-id="${pageId}"]`
-			);
-			input?.focus();
-			input?.select();
-		});
-	}
-
-	// Deletes the selected page.
-	function handleDeletePage(pageId: string) {
-		if (onDeletePage) {
-			onDeletePage(pageId);
-		} else {
-			deletePage(pageId);
-		}
-		openMenuPageId = null;
+	function openContextMenu(event: MouseEvent, pageId: string) {
+		event.preventDefault();
+		event.stopPropagation();
+		menuOpen = false;
+		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+		contextMenu = { pageId, x: rect.left, anchorTop: rect.top };
 	}
 </script>
 
 <footer
-	class="relative z-[1] flex items-center justify-between gap-3 border-t border-line bg-white px-4
-		py-2.5 shadow-[0_-3px_10px_rgba(0,0,0,0.04)] max-[900px]:flex-col max-[900px]:items-stretch"
+	class="flex h-9 flex-shrink-0 items-stretch justify-between border-t border-[#E0E0E0] bg-[#FAFAFA]
+		select-none"
 	onpointerdown={(event) => event.stopPropagation()}
 >
-	<!-- Keep dropdowns visible above tabs instead of clipping in a scroll container. -->
-	<div
-		class="flex flex-auto flex-wrap items-center gap-2 overflow-visible"
-		aria-label="Editor pages"
-	>
-		{#each $editorStoreSvelte.pages as page}
-			<div class="relative inline-flex items-stretch" role="presentation">
-				<input
-					type="text"
-					class="min-w-[50px] max-w-[90px] appearance-none rounded-l-lg border border-r-0 border-line
-						bg-panel px-2.5 py-1.5 text-[0.9rem] leading-none text-ink-soft outline-none
-						hover:bg-[#edebe5] focus:bg-white {$editorStoreSvelte.activePageId === page.id
-						? 'border-mq-red bg-mq-pink text-mq-maroon'
-						: ''}"
-					value={page.name}
-					data-page-input-id={page.id}
-					onfocus={() => handleSwitchPage(page.id)}
-					oninput={(event) => handlePageNameInput(page.id, event)}
-				/>
-				{#if $visibleUnsavedPageIdsStore.includes(page.id)}
-					<span
-						class="pointer-events-none absolute -top-1 -right-1 size-[9px] rounded-full border-2
-							border-white bg-[#d6001c]"
-						aria-label="Unsaved changes"
-						title="Unsaved changes"
-					></span>
-				{/if}
-				<button
-					type="button"
-					class="min-w-[32px] cursor-pointer whitespace-nowrap rounded-r-lg border border-line
-						bg-panel px-2 py-1.5 text-[0.9rem] text-ink-soft hover:bg-[#edebe5]
-						{$editorStoreSvelte.activePageId === page.id
-						? 'border-mq-red bg-mq-pink text-mq-maroon'
-						: ''}"
-					aria-label="Open page options"
-					aria-haspopup="menu"
-					aria-expanded={openMenuPageId === page.id}
-					onclick={() => handleTogglePageMenu(page.id)}
+	<!-- Hamburger menu + page tabs (left) -->
+	<div class="flex min-w-0 flex-1 items-stretch">
+		<!-- Hamburger menu -->
+		<div class="relative flex flex-shrink-0 items-center" bind:this={hamburgerEl}>
+			<button
+				type="button"
+				class="flex h-full w-9 items-center justify-center border-r border-[#E0E0E0] text-[#404040]
+					transition-colors hover:bg-[#F0F0F0]"
+				title="Page menu"
+				aria-haspopup="menu"
+				aria-expanded={menuOpen}
+				onclick={() => (menuOpen = !menuOpen)}
+			>
+				<Menu class="h-4 w-4" />
+			</button>
+			{#if menuOpen}
+				<div
+					class="absolute bottom-full left-0 z-50 mb-1 w-44 rounded border border-[#D4D4D4]
+						bg-[#F4F4F4] py-1 shadow-lg"
+					role="menu"
 				>
-					▾
-				</button>
-
-				{#if openMenuPageId === page.id}
-					<div
-						class="absolute right-0 bottom-[calc(100%+6px)] z-30 flex min-w-[112px] flex-col
-							overflow-hidden rounded-lg border border-line bg-white
-							shadow-[0_6px_20px_rgba(0,0,0,0.1)]"
-						role="menu"
+					<button
+						type="button"
+						role="menuitem"
+						class="flex w-full items-center px-3 py-1.5 text-left text-xs text-[#333333]
+							hover:bg-[#E0E0E0]"
+						onclick={addPage}
 					>
-						<button
-							type="button"
-							role="menuitem"
-							class="cursor-pointer whitespace-nowrap bg-white px-2.5 py-1.5 text-left text-[0.9rem]
-								text-ink-soft hover:bg-[#edebe5]"
-							onclick={() => handleRenamePage(page.id)}
-						>
-							Rename
-						</button>
-						<button
-							type="button"
-							role="menuitem"
-							class="cursor-pointer whitespace-nowrap bg-white px-2.5 py-1.5 text-left text-[0.9rem]
-								text-[#b42318] hover:bg-[#edebe5] disabled:cursor-not-allowed disabled:opacity-50"
-							onclick={() => handleDeletePage(page.id)}
-							disabled={$editorStoreSvelte.pages.length <= 1}
-						>
-							Delete
-						</button>
+						Insert Page
+					</button>
+					<div class="my-1 h-px bg-[#D4D4D4]"></div>
+					<div class="max-h-56 overflow-y-auto">
+						{#each $editorStoreSvelte.pages as page (page.id)}
+							<button
+								type="button"
+								role="menuitem"
+								class="flex w-full items-center px-3 py-1.5 text-left text-xs text-[#333333]
+									hover:bg-[#E0E0E0]"
+								onclick={() => switchTo(page.id)}
+							>
+								<span class="flex w-4 flex-shrink-0 items-center">
+									{#if $editorStoreSvelte.activePageId === page.id}
+										<Check class="h-3.5 w-3.5 text-[#1A1A1A]" />
+									{/if}
+								</span>
+								<span class="truncate">{page.name}</span>
+							</button>
+						{/each}
 					</div>
-				{/if}
-			</div>
-		{/each}
+					<div class="my-1 h-px bg-[#D4D4D4]"></div>
+					<button
+						type="button"
+						role="menuitem"
+						class="flex w-full items-center px-3 py-1.5 text-left text-xs text-[#333333]
+							hover:bg-[#E0E0E0]"
+						onclick={deleteAll}
+					>
+						Delete All
+					</button>
+				</div>
+			{/if}
+		</div>
+
+		<!-- Page tabs -->
+		<div class="flex h-full min-w-0 flex-1 items-stretch overflow-x-auto">
+			{#each $editorStoreSvelte.pages as page (page.id)}
+				{@const isActive = $editorStoreSvelte.activePageId === page.id}
+				{@const isEditing = editingPageId === page.id}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div
+					class="group relative flex min-w-[104px] flex-shrink-0 cursor-pointer items-center
+						justify-center border-r border-[#E0E0E0] px-7 transition-colors
+						{isActive ? 'bg-white' : 'hover:bg-[#F0F0F0]'}"
+					role="tab"
+					tabindex="-1"
+					aria-selected={isActive}
+					onclick={() => !isEditing && switchTo(page.id)}
+					ondblclick={(event) => {
+						event.stopPropagation();
+						startRename(page.id, page.name);
+					}}
+					oncontextmenu={(event) => openContextMenu(event, page.id)}
+				>
+					{#if isActive}
+						<div class="absolute top-0 right-0 left-0 h-[2px] bg-mq-red"></div>
+					{/if}
+
+					{#if isEditing}
+						<input
+							class="h-full w-24 bg-white px-3 text-center text-xs outline-none"
+							value={editValue}
+							use:autofocus
+							oninput={(event) => (editValue = event.currentTarget.value)}
+							onblur={commitRename}
+							onkeydown={(event) => {
+								if (event.key === 'Enter') commitRename();
+								if (event.key === 'Escape') editingPageId = null;
+							}}
+							onclick={(event) => event.stopPropagation()}
+						/>
+					{:else}
+						<span
+							class="max-w-[120px] truncate text-center text-xs font-medium text-[#2C2C2A]"
+						>
+							{page.name}
+						</span>
+						{#if $editorStoreSvelte.pages.length > 1}
+							<button
+								type="button"
+								class="absolute right-1.5 rounded p-0.5 opacity-0 transition-all
+									hover:bg-mq-red/15 group-hover:opacity-100"
+								aria-label="Delete page"
+								onclick={(event) => {
+									event.stopPropagation();
+									removePage(page.id);
+								}}
+							>
+								<X class="h-3 w-3 text-[#6B6B6B]" />
+							</button>
+						{/if}
+						<!-- Unsaved indicator (kept from this project; React had none). -->
+						{#if $visibleUnsavedPageIdsStore.includes(page.id)}
+							<span
+								class="pointer-events-none absolute top-1 right-1 size-[7px] rounded-full bg-[#d6001c]"
+								title="Unsaved changes"
+							></span>
+						{/if}
+					{/if}
+				</div>
+			{/each}
+
+			<button
+				type="button"
+				class="mx-1.5 flex w-7 flex-shrink-0 items-center justify-center rounded text-[#6B6B6B]
+					transition-colors hover:bg-[#F0F0F0] hover:text-mq-red"
+				title="Add page"
+				aria-label="Add page"
+				onclick={addPage}
+			>
+				<Plus class="h-4 w-4" />
+			</button>
+		</div>
 	</div>
 
-	<button
-		type="button"
-		class="flex-none cursor-pointer whitespace-nowrap rounded-lg border border-line bg-white px-2.5
-			py-1.5 text-[0.9rem] font-semibold text-ink-soft hover:bg-[#edebe5]"
-		onclick={handleCreatePage}
-	>
-		+ New Page
-	</button>
+	<!-- Shape count (right) -->
+	<div class="flex items-center gap-1.5 border-l border-[#E0E0E0] bg-white px-3">
+		<Layers class="h-3.5 w-3.5 text-mq-red" />
+		<span class="text-xs font-semibold text-[#2C2C2A] tabular-nums">{nodeCount}</span>
+		<span class="text-xs text-[#6B6B6B]">shapes</span>
+	</div>
+
+	{#if contextMenu}
+		<PageTabContextMenu
+			x={contextMenu.x}
+			anchorTop={contextMenu.anchorTop}
+			canDelete={$editorStoreSvelte.pages.length > 1}
+			onInsert={addPage}
+			onDelete={() => removePage(contextMenu!.pageId)}
+			onRename={() =>
+				startRename(
+					contextMenu!.pageId,
+					$editorStoreSvelte.pages.find((p) => p.id === contextMenu!.pageId)?.name ?? ''
+				)}
+			onDuplicate={() => onDuplicatePage?.(contextMenu!.pageId)}
+			onClose={() => (contextMenu = null)}
+		/>
+	{/if}
 </footer>

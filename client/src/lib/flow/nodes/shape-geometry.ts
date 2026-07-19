@@ -6,6 +6,7 @@ import {
 	ADDITIONAL_FLOWCHART_GEOMETRY,
 	ADDITIONAL_FLOWCHART_VARIANTS
 } from './flowchart/additional/definitions';
+import { ADDITIONAL_UML_GEOMETRY, ADDITIONAL_UML_VARIANTS } from './uml/additional/definitions';
 
 /**
  * Per-shape declarative config — the single place that says "what does
@@ -68,6 +69,8 @@ type ResizeAnchorSpec = {
 export interface Variant {
 	kind: ShapeKind;
 	boxRadius?: string;
+	/** Where the editable label sits relative to the SVG silhouette. */
+	labelPlacement?: 'center' | 'header' | 'below';
 	/** Custom handle placements. When omitted the default 4 cardinal
 	 *  bbox-edge handles are rendered. */
 	handles?: HandleSpec[];
@@ -148,8 +151,8 @@ export const VARIANTS: Record<string, Variant> = {
 	// Outer entity rectangle with an inscribed relationship diamond.
 	AssociativeEntityNode: { kind: 'svg' },
 	// ── uml ────────────────────────────────────────────────────────────
-	DocumentNode: { kind: 'svg' },
 	ActorNode: { kind: 'svg' },
+	...ADDITIONAL_UML_VARIANTS,
 	// ── arrows ─────────────────────────────────────────────────────────
 	ArrowRightNode: { kind: 'svg' },
 	ArrowLeftNode: { kind: 'svg' },
@@ -171,6 +174,7 @@ export const VARIANTS: Record<string, Variant> = {
 	// midpoints: top → cap apex, bottom → base apex, left/right → the
 	// vertical sides. Default NodeResizer.
 	DatabaseNode: { kind: 'svg' },
+	DocumentNode: { kind: 'svg' },
 	...ADDITIONAL_FLOWCHART_VARIANTS
 };
 
@@ -196,6 +200,7 @@ export type ShapeGeometry =
 	| { kind: 'polygons'; items: string[] }
 	| { kind: 'path'; d: string; fillRule?: 'evenodd' }
 	| { kind: 'paths'; items: { d: string; filled?: boolean }[] }
+	| { kind: 'bullseye' }
 	| { kind: 'actor' };
 
 export const SHAPE_GEOMETRY: Record<string, ShapeGeometry> = {
@@ -259,6 +264,7 @@ export const SHAPE_GEOMETRY: Record<string, ShapeGeometry> = {
 	// viewBox so the curve never clips.
 	DocumentNode: { kind: 'path', d: 'M1,1 L99,1 L99,82 Q75,98 50,82 T1,82 Z' },
 	ActorNode: { kind: 'actor' },
+	...ADDITIONAL_UML_GEOMETRY,
 	// ── arrows ─────────────────────────────────────────────────────────
 	// Block arrow →: shaft between y=30..70, head from x=60 to the tip.
 	ArrowRightNode: { kind: 'polygon', points: '1,30 60,30 60,1 99,50 60,99 60,70 1,70' },

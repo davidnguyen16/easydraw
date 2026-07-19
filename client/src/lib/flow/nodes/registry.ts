@@ -70,6 +70,7 @@ import { oneToOneShape } from './entity-relation/one-to-one/shape';
 import { additionalCardinalityShapes } from './entity-relation/cardinality-presets/shape';
 // ── uml ──────────────────────────────────────────────────────────────
 import { actorShape } from './uml/actor/shape';
+import { additionalUmlShapes } from './uml/additional/shape';
 import { documentShape } from './uml/document/shape';
 import type { NodeCategory, NodeShape } from './types';
 
@@ -98,6 +99,7 @@ export const SHAPES: readonly NodeShape[] = [
 	donutShape,
 	pillShape,
 	actorShape,
+	...additionalUmlShapes,
 	cubeShape,
 	textShape,
 	entityShape,

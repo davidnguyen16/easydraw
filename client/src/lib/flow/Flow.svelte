@@ -57,7 +57,9 @@
 	import {
 		clearCanvasDirtyPage,
 		createPage,
+		deleteAllPages,
 		deletePage,
+		duplicatePage,
 		editorMetaData,
 		editorStoreSvelte,
 		exportEditorStateAsJSON,
@@ -497,6 +499,30 @@
 		handlePaneClick();
 	}
 
+	// Duplicates a page: persist the current canvas first so a copy of the
+	// active page reflects unsaved edits, clone + activate the copy in the
+	// store, hydrate it onto the canvas, then persist the new page list.
+	function handleDuplicatePage(pageId: string) {
+		persistCanvasToStore();
+		duplicatePage(pageId);
+		hydrateCanvasFromStore();
+		saveFullStateToStorage();
+		handlePaneClick();
+	}
+
+	// Wipes every page back to one blank page. Nothing to persist first (we're
+	// discarding), so just reset the store, hydrate the fresh page, and save.
+	function handleDeleteAllPages() {
+		deleteAllPages();
+		hydrateCanvasFromStore();
+		saveFullStateToStorage();
+		handlePaneClick();
+	}
+
+	// Footer "shapes" counter — real diagram nodes only (connection anchors are
+	// an internal edge-endpoint host, not a user shape).
+	const shapeCount = $derived(nodes.filter((node) => node.type !== ANCHOR_NODE_TYPE).length);
+
 	// =========================================================================
 	// Editor action handlers (consumed by MenuBar / ToolBar via context).
 	// =========================================================================
@@ -798,6 +824,50 @@
 	}
 
 	// ─── Present mode ───────────────────────────────────────────────────
+	const presentPageIndex = $derived(
+		Math.max(
+			0,
+			$editorStoreSvelte.pages.findIndex(
+				(page) => page.id === $editorStoreSvelte.activePageId
+			)
+		)
+	);
+
+	let presentFitFrame: number | null = null;
+
+	// Wait two paint frames: one for Svelte to render the hydrated page and one
+	// for xyflow to measure its nodes. Replacing a pending frame prevents rapid
+	// page clicks from fitting an older page after a newer one is already shown.
+	function schedulePresentFit() {
+		if (presentFitFrame !== null) cancelAnimationFrame(presentFitFrame);
+		presentFitFrame = requestAnimationFrame(() => {
+			presentFitFrame = requestAnimationFrame(() => {
+				presentFitFrame = null;
+				handleFitView();
+			});
+		});
+	}
+
+	// Reuse the normal switch pipeline so the page being left is synced before
+	// the next one is hydrated. Every page is fitted independently because its
+	// graph can occupy a different area of the canvas.
+	function navigateToPresentPage(index: number) {
+		const state = get(editorStoreSvelte);
+		const targetPage = state.pages[index];
+		if (!targetPage || targetPage.id === state.activePageId) return;
+
+		handleSwitchPage(targetPage.id);
+		schedulePresentFit();
+	}
+
+	function navigatePresentPage(direction: -1 | 1) {
+		const state = get(editorStoreSvelte);
+		const currentIndex = state.pages.findIndex((page) => page.id === state.activePageId);
+		if (currentIndex < 0) return;
+
+		navigateToPresentPage(currentIndex + direction);
+	}
+
 	// Enter a clean, read-only fullscreen-ish view of the current page.
 	function handlePresent() {
 		// Clear selection so no red ring / style panel lingers over the canvas.
@@ -805,10 +875,12 @@
 		edges = edges.map((e) => ({ ...e, selected: false }));
 		editorActionsState.presenting = true;
 		// Re-fit after the chrome is hidden (the canvas grows to fill the screen).
-		requestAnimationFrame(() => handleFitView());
+		schedulePresentFit();
 	}
 
 	function handleExitPresent() {
+		if (presentFitFrame !== null) cancelAnimationFrame(presentFitFrame);
+		presentFitFrame = null;
 		editorActionsState.presenting = false;
 	}
 
@@ -844,7 +916,26 @@
 			}
 		};
 		const onKey = (e: KeyboardEvent) => {
-			if (e.key === 'Escape') handleExitPresent();
+			if (e.key === 'Escape') {
+				handleExitPresent();
+				return;
+			}
+
+			if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+
+			if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+				e.preventDefault();
+				navigatePresentPage(-1);
+			} else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+				e.preventDefault();
+				navigatePresentPage(1);
+			} else if (e.key === 'Home') {
+				e.preventDefault();
+				navigateToPresentPage(0);
+			} else if (e.key === 'End') {
+				e.preventDefault();
+				navigateToPresentPage(get(editorStoreSvelte).pages.length - 1);
+			}
 		};
 
 		window.addEventListener('mousemove', onMove);
@@ -1078,9 +1169,14 @@
 			hasSelection: () => nodes.some((n) => n.selected) || edges.some((e) => e.selected),
 			hasStyleSelection: () => !!selectedNode || !!selectedEdge
 		});
-		window.addEventListener('keydown', handleKeyboard);
+		const handleEditorKeyboard = (event: KeyboardEvent) => {
+			// Present mode is read-only and owns its own navigation shortcuts.
+			if (editorActionsState.presenting) return;
+			handleKeyboard(event);
+		};
+		window.addEventListener('keydown', handleEditorKeyboard);
 		return () => {
-			window.removeEventListener('keydown', handleKeyboard);
+			window.removeEventListener('keydown', handleEditorKeyboard);
 		};
 	});
 
@@ -1258,13 +1354,14 @@
 		     (out of flow) so the canvas fills the whole screen, and slides up when
 		     `presentBarVisible` is false (2s after the cursor leaves the top). -->
 		<header
-			class="fixed inset-x-0 top-0 z-50 flex h-[52px] items-center justify-between border-b
-				border-line-soft bg-white px-4 shadow-sm transition-transform duration-300 ease-out
+			class="fixed inset-x-0 top-0 z-50 grid h-[52px]
+				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b border-line-soft
+				bg-white px-4 shadow-sm transition-transform duration-300 ease-out
 				{presentBarVisible ? 'translate-y-0' : '-translate-y-full'}"
 		>
 			<button
 				type="button"
-				class="inline-flex cursor-pointer items-center gap-2 rounded-md border-none bg-transparent
+				class="inline-flex cursor-pointer items-center gap-2 justify-self-start rounded-md border-none bg-transparent
 					px-2 py-1.5 text-[0.95rem] text-ink-soft hover:bg-surface-hover"
 				onclick={handleExitPresent}
 			>
@@ -1280,35 +1377,86 @@
 					<polyline points="15 18 9 12 15 6" />
 				</svg>
 				Back
-				<span class="text-[0.8rem] text-ink-muted">ESC</span>
+				<span class="hidden text-[0.8rem] text-ink-muted sm:inline">ESC</span>
 			</button>
 
-			<span class="text-[0.95rem] font-medium text-ink">
+			<span
+				class="max-w-[40vw] truncate px-4 text-center text-[0.95rem] font-medium text-ink"
+			>
 				{editorMetaData.fileName || 'Untitled'}
 			</span>
 
-			<button
-				type="button"
-				class="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border-none
-					bg-transparent text-ink-soft hover:bg-surface-hover"
-				aria-label="Toggle grid"
-				onclick={handleToggleShowGrid}
-			>
-				<svg
-					viewBox="0 0 24 24"
-					class="h-5 w-5"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.7"
-					stroke-linecap="round"
-					stroke-linejoin="round"
+			<div class="min-w-0 justify-self-end">
+				<div
+					class="inline-flex h-8 max-w-[240px] items-center overflow-hidden rounded-lg border
+							border-line bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+					role="group"
+					aria-label="Presentation page navigation"
 				>
-					<rect x="3" y="3" width="7" height="7" rx="1" />
-					<rect x="14" y="3" width="7" height="7" rx="1" />
-					<rect x="3" y="14" width="7" height="7" rx="1" />
-					<rect x="14" y="14" width="7" height="7" rx="1" />
-				</svg>
-			</button>
+					<button
+						type="button"
+						class="inline-flex h-full w-8 flex-shrink-0 cursor-pointer items-center justify-center
+								border-none bg-transparent text-ink-soft transition-colors hover:bg-surface-hover
+								disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+						aria-label="Previous page"
+						title="Previous page (Left arrow)"
+						disabled={presentPageIndex === 0}
+						onclick={() => navigatePresentPage(-1)}
+					>
+						<svg
+							viewBox="0 0 24 24"
+							class="h-4 w-4"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.8"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<polyline points="15 18 9 12 15 6" />
+						</svg>
+					</button>
+
+					<div
+						class="flex min-w-0 items-center justify-center gap-2 border-x border-line-soft px-2.5"
+						aria-live="polite"
+					>
+						<span
+							class="hidden max-w-[116px] truncate text-[0.8rem] font-medium text-ink md:block"
+							title={$editorStoreSvelte.pages[presentPageIndex]?.name ?? 'Page'}
+						>
+							{$editorStoreSvelte.pages[presentPageIndex]?.name ?? 'Page'}
+						</span>
+						<span class="whitespace-nowrap text-[0.72rem] tabular-nums text-ink-muted">
+							{presentPageIndex + 1} / {$editorStoreSvelte.pages.length}
+						</span>
+					</div>
+
+					<button
+						type="button"
+						class="inline-flex h-full w-8 flex-shrink-0 cursor-pointer items-center justify-center
+								border-none bg-transparent text-ink-soft transition-colors hover:bg-surface-hover
+								disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+						aria-label="Next page"
+						title="Next page (Right arrow)"
+						disabled={presentPageIndex === $editorStoreSvelte.pages.length - 1}
+						onclick={() => navigatePresentPage(1)}
+					>
+						<svg
+							viewBox="0 0 24 24"
+							class="h-4 w-4"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.8"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<polyline points="9 18 15 12 9 6" />
+						</svg>
+					</button>
+				</div>
+			</div>
 		</header>
 	{:else}
 		<MenuBar />
@@ -1406,9 +1554,12 @@
 
 	{#if !editorActionsState.presenting}
 		<EditorFooter
+			nodeCount={shapeCount}
 			onSwitchPage={handleSwitchPage}
 			onCreatePage={handleCreatePage}
 			onDeletePage={handleDeletePage}
+			onDuplicatePage={handleDuplicatePage}
+			onDeleteAllPages={handleDeleteAllPages}
 		/>
 	{/if}
 </main>

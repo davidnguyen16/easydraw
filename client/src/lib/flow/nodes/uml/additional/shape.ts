@@ -1,0 +1,57 @@
+import type { NodeShape } from '../../types';
+import Component from '../../ShapeNode.svelte';
+import AbstractClassIcon from './abstract-class-icon.svelte';
+import ActionActivityIcon from './action-activity-icon.svelte';
+import ArtifactIcon from './artifact-icon.svelte';
+import ClassIcon from './class-icon.svelte';
+import ComponentIcon from './component-icon.svelte';
+import ConstraintIcon from './constraint-icon.svelte';
+import DataTypeIcon from './data-type-icon.svelte';
+import DecisionMergeIcon from './decision-merge-icon.svelte';
+import DeploymentNodeIcon from './deployment-node-icon.svelte';
+import EnumerationIcon from './enumeration-icon.svelte';
+import FinalNodeIcon from './final-node-icon.svelte';
+import ForkJoinIcon from './fork-join-icon.svelte';
+import InitialNodeIcon from './initial-node-icon.svelte';
+import InterfaceIcon from './interface-icon.svelte';
+import NoteCommentIcon from './note-comment-icon.svelte';
+import ObjectInstanceIcon from './object-instance-icon.svelte';
+import PackageIcon from './package-icon.svelte';
+import StateIcon from './state-icon.svelte';
+import UseCaseIcon from './use-case-icon.svelte';
+import { ADDITIONAL_UML_DEFINITIONS, type AdditionalUmlId } from './definitions';
+
+const ICON_BY_ID: Record<AdditionalUmlId, NodeShape['icon']> = {
+	UmlClassNode: ClassIcon,
+	UmlAbstractClassNode: AbstractClassIcon,
+	UmlInterfaceNode: InterfaceIcon,
+	UmlEnumerationNode: EnumerationIcon,
+	UmlDataTypeNode: DataTypeIcon,
+	UmlObjectInstanceNode: ObjectInstanceIcon,
+	UmlPackageNode: PackageIcon,
+	UmlComponentNode: ComponentIcon,
+	UmlDeploymentNode: DeploymentNodeIcon,
+	UmlArtifactNode: ArtifactIcon,
+	UmlNoteCommentNode: NoteCommentIcon,
+	UmlConstraintNode: ConstraintIcon,
+	UmlUseCaseNode: UseCaseIcon,
+	UmlActionActivityNode: ActionActivityIcon,
+	UmlStateNode: StateIcon,
+	UmlInitialNode: InitialNodeIcon,
+	UmlFinalNode: FinalNodeIcon,
+	UmlDecisionMergeNode: DecisionMergeIcon,
+	UmlForkJoinNode: ForkJoinIcon
+};
+
+export const additionalUmlShapes: readonly NodeShape[] = ADDITIONAL_UML_DEFINITIONS.map(
+	({ id, label, defaultWidth, defaultHeight, defaultData }) => ({
+		id,
+		label,
+		category: 'uml',
+		component: Component,
+		icon: ICON_BY_ID[id],
+		defaultWidth,
+		defaultHeight,
+		defaultData: () => ({ ...defaultData })
+	})
+);

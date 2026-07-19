@@ -36,6 +36,13 @@
 	// same as the old switch's fallthrough).
 	const geometry = $derived(SHAPE_GEOMETRY[shapeType] ?? null);
 
+	// UML classifiers use the top compartment for their name; activity symbols
+	// and Actor put an optional name below the silhouette. Existing shapes keep
+	// their centred label unless their declarative variant says otherwise.
+	const labelPlacement = $derived(
+		variant.labelPlacement ?? (geometry?.kind === 'actor' ? 'below' : 'center')
+	);
+
 	// Style fields populated by StylePanel. Defaults match the design ref:
 	// white fill, black 1.5px border, dark text. Selected state always
 	// overrides the user's border colour with the MQ-red selection accent so
@@ -48,6 +55,11 @@
 	const opacity = $derived(Math.max(0, Math.min(100, Number(data.opacity ?? 100))));
 	const visualOpacity = $derived(Number.isFinite(opacity) ? opacity / 100 : 1);
 	const rotation = $derived(toFiniteRotation(data.rotation));
+
+	// The whole node (containerStyle) rotates, which would tip the label too.
+	// Counter-rotate the label by the same angle so text always stays upright
+	// and readable, no matter how the shape is rotated.
+	const labelTransform = $derived(rotation ? `rotate(${-rotation}deg)` : undefined);
 
 	// Border always reflects the user's colour/width — even while selected — so
 	// StylePanel edits show live (like the entity node). Selection is indicated
@@ -301,6 +313,18 @@
 						vector-effect="non-scaling-stroke"
 					/>
 				{/each}
+			{:else if geometry?.kind === 'bullseye'}
+				<!-- UML activity final node: outlined ring with a solid centre. -->
+				<circle
+					cx="50"
+					cy="50"
+					r="48"
+					fill={fillColor}
+					stroke={strokeColor}
+					stroke-width={strokeWidth}
+					vector-effect="non-scaling-stroke"
+				/>
+				<circle cx="50" cy="50" r="22" fill={strokeColor} />
 			{:else if geometry?.kind === 'actor'}
 				<!-- Stick figure: head, torso, arms, two legs. -->
 				<circle
@@ -415,8 +439,13 @@
 
 	<div
 		bind:this={labelBoxEl}
-		class="pointer-events-auto relative w-full px-3 py-2 select-none"
+		class="pointer-events-auto select-none {labelPlacement === 'below'
+			? 'absolute top-full left-0 mt-1 w-full px-1 text-center'
+			: labelPlacement === 'header'
+				? 'absolute top-[1%] left-0 flex h-[33%] w-full items-center px-3 py-1 text-center'
+				: 'relative w-full px-3 py-2'}"
 		style:opacity={visualOpacity}
+		style:transform={labelTransform}
 	>
 		<textarea
 			bind:this={inputEl}
@@ -431,9 +460,7 @@
 			aria-label="Node label"
 			class="nodrag m-0 block w-full resize-none appearance-none overflow-hidden border-none
 				bg-transparent p-0 whitespace-pre-wrap outline-none break-words [overflow-wrap:anywhere]
-				{editing
-				? 'pointer-events-auto cursor-text select-text'
-				: 'pointer-events-none cursor-[inherit]'}"
+				{editing ? 'pointer-events-auto cursor-text select-text' : 'pointer-events-none cursor-[inherit]'}"
 			style={labelStyle}
 		></textarea>
 	</div>

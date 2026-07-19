@@ -7,6 +7,9 @@
 		visibleUnsavedPageIdsStore
 	} from '$lib/stores/editor.store.svelte';
 	import type { Exporter } from '$lib/exporters';
+	import { goto } from '$app/navigation';
+	import { authStore, logout } from '$lib/stores/auth.store.svelte';
+	import { LayoutGrid, Settings as SettingsIcon, LogOut } from '@lucide/svelte';
 
 	interface MenuItem {
 		type?: 'divider';
@@ -58,7 +61,20 @@
 
 	const editor = getContext<EditorContext>('editor');
 
-	const USER_INITIALS = 'MD';
+	// Account for the avatar dropdown. The editor is behind the (app) auth guard
+	// so authStore.user is populated; the fallbacks are just defensive.
+	const accountName = $derived(authStore.user?.name ?? authStore.user?.email ?? 'Account');
+	const accountEmail = $derived(authStore.user?.email ?? '');
+	const hasNameAndEmail = $derived(!!(authStore.user?.name && authStore.user?.email));
+	const userInitials = $derived(
+		(authStore.user?.name ?? authStore.user?.email ?? 'U')
+			.trim()
+			.split(/\s+/)
+			.map((part) => part[0])
+			.slice(0, 2)
+			.join('')
+			.toUpperCase()
+	);
 	const DOCUMENT_STATUSES: { id: DiagramStatus; label: string; color: string }[] = [
 		{ id: 'draft', label: 'Draft', color: '#f97316' },
 		{ id: 'complete', label: 'Complete', color: '#22c55e' },
@@ -80,11 +96,13 @@
 	let openMenu: string | null = $state(null);
 	let openSubmenu: string | null = $state(null);
 	let statusMenuOpen = $state(false);
+	let userMenuOpen = $state(false);
 
 	function toggleMenu(label: string) {
 		openMenu = openMenu === label ? null : label;
 		openSubmenu = null;
 		statusMenuOpen = false;
+		userMenuOpen = false;
 	}
 
 	function toggleStatusMenu() {
@@ -92,6 +110,7 @@
 		openMenu = null;
 		openSubmenu = null;
 		statusMenuOpen = nextOpen;
+		userMenuOpen = false;
 	}
 
 	function selectStatus(status: DiagramStatus) {
@@ -103,6 +122,31 @@
 		openMenu = null;
 		openSubmenu = null;
 		statusMenuOpen = false;
+		userMenuOpen = false;
+	}
+
+	function toggleUserMenu() {
+		const nextOpen = !userMenuOpen;
+		openMenu = null;
+		openSubmenu = null;
+		statusMenuOpen = false;
+		userMenuOpen = nextOpen;
+	}
+
+	function goToDashboard() {
+		userMenuOpen = false;
+		goto('/dashboard');
+	}
+
+	function goToSettings() {
+		userMenuOpen = false;
+		goto('/settings');
+	}
+
+	async function signOut() {
+		userMenuOpen = false;
+		await logout();
+		goto('/login');
 	}
 
 	function runItem(item: MenuItem) {
@@ -123,7 +167,7 @@
 			// `data-menu-root` marks the <nav> that holds the triggers + dropdowns
 			// (a DOM hook that survives the Tailwind migration — don't key this on
 			// a styling class, those get renamed).
-			if (target?.closest('[data-menu-root], [data-status-root]')) return;
+			if (target?.closest('[data-menu-root], [data-status-root], [data-user-root]')) return;
 			closeMenus();
 		};
 		const onKey = (event: KeyboardEvent) => {
@@ -246,7 +290,9 @@
 			{
 				icon: 'info',
 				label: 'About EasyDraw',
-				onClick: () => alert('EasyDraw — a free diagram editor.')
+				// Open the public landing page. The user stays logged in, so the
+				// landing renders its authenticated state (Open dashboard + avatar).
+				onClick: () => goto('/')
 			},
 			{
 				icon: 'keyboard',
@@ -530,11 +576,74 @@
 			{/if}
 		</button>
 
-		<div
-			class="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full
-				bg-mq-red-hover text-[0.75rem] font-bold tracking-[0.02em] text-white"
-		>
-			{USER_INITIALS}
+		<div class="relative flex-shrink-0" data-user-root>
+			<button
+				type="button"
+				class="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full
+					border-none bg-mq-red-hover text-[0.75rem] font-bold tracking-[0.02em] text-white
+					transition-colors duration-[120ms] hover:bg-mq-maroon
+					focus-visible:outline-offset-1 focus-visible:[outline:2px_solid_rgba(255,255,255,0.6)]"
+				title={accountName}
+				aria-haspopup="menu"
+				aria-expanded={userMenuOpen}
+				onclick={toggleUserMenu}
+			>
+				{userInitials}
+			</button>
+
+			{#if userMenuOpen}
+				<div
+					class="absolute top-[calc(100%+8px)] right-0 z-50 flex w-56 flex-col rounded-[10px]
+						border border-line-dropdown bg-white p-1.5 text-[#2a2a2a]
+						shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+					role="menu"
+					aria-label="Account"
+				>
+					<div class="px-2.5 py-1.5">
+						<p class="text-[0.72rem] text-ink-muted">Signed in as</p>
+						<p class="truncate text-[0.875rem] font-medium text-[#2a2a2a]">{accountName}</p>
+						{#if hasNameAndEmail}
+							<p class="truncate text-[0.72rem] text-ink-muted">{accountEmail}</p>
+						{/if}
+					</div>
+
+					<div class="mx-1 my-1 h-px bg-[#e8e5de]" role="separator"></div>
+
+					<button
+						type="button"
+						role="menuitem"
+						class="group flex w-full cursor-pointer items-center gap-2.5 rounded-md border-none
+							bg-transparent px-2.5 py-2 text-left text-[0.875rem] text-[#2a2a2a]
+							transition-colors duration-100 enabled:hover:bg-mq-pink enabled:hover:text-mq-maroon"
+						onclick={goToDashboard}
+					>
+						<LayoutGrid size={15} class="flex-shrink-0 text-[#5a5c58] group-hover:text-mq-maroon" />
+						My diagrams
+					</button>
+					<button
+						type="button"
+						role="menuitem"
+						class="group flex w-full cursor-pointer items-center gap-2.5 rounded-md border-none
+							bg-transparent px-2.5 py-2 text-left text-[0.875rem] text-[#2a2a2a]
+							transition-colors duration-100 enabled:hover:bg-mq-pink enabled:hover:text-mq-maroon"
+						onclick={goToSettings}
+					>
+						<SettingsIcon size={15} class="flex-shrink-0 text-[#5a5c58] group-hover:text-mq-maroon" />
+						Settings
+					</button>
+					<button
+						type="button"
+						role="menuitem"
+						class="group flex w-full cursor-pointer items-center gap-2.5 rounded-md border-none
+							bg-transparent px-2.5 py-2 text-left text-[0.875rem] text-[#2a2a2a]
+							transition-colors duration-100 enabled:hover:bg-mq-pink enabled:hover:text-mq-maroon"
+						onclick={signOut}
+					>
+						<LogOut size={15} class="flex-shrink-0 text-[#5a5c58] group-hover:text-mq-maroon" />
+						Sign out
+					</button>
+				</div>
+			{/if}
 		</div>
 
 		<button

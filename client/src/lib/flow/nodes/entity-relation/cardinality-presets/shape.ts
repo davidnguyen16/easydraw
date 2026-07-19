@@ -7,6 +7,7 @@ import ManyToManyIcon from './many-to-many-icon.svelte';
 import OneOptionalToManyOptionalIcon from './one-optional-to-many-optional-icon.svelte';
 import OneMandatoryToManyOptionalIcon from './one-mandatory-to-many-optional-icon.svelte';
 import OneMandatoryToOneOptionalIcon from './one-mandatory-to-one-optional-icon.svelte';
+import OneOptionalToOneOptionalIcon from './one-optional-to-one-optional-icon.svelte';
 import OneMandatoryToManyMandatoryIcon from './one-mandatory-to-many-mandatory-icon.svelte';
 import OneOptionalToManyMandatoryIcon from './one-optional-to-many-mandatory-icon.svelte';
 import ManyMandatoryToManyMandatoryIcon from './many-mandatory-to-many-mandatory-icon.svelte';
@@ -58,6 +59,13 @@ const CARDINALITY_PRESETS = [
 		label: '1 Mandatory to 1 Optional',
 		icon: OneMandatoryToOneOptionalIcon,
 		markerStart: 'bar-double',
+		markerEnd: 'circle-bar'
+	},
+	{
+		id: 'OneOptionalToOneOptionalConnection',
+		label: '1 Optional to 1 Optional',
+		icon: OneOptionalToOneOptionalIcon,
+		markerStart: 'circle-bar',
 		markerEnd: 'circle-bar'
 	},
 	{

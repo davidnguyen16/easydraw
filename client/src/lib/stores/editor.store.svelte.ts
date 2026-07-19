@@ -356,6 +356,57 @@ export function deletePage(pageId: string) {
 	clearCanvasDirtyPage(pageId);
 }
 
+// Duplicates a page by id: deep-clones its graph, inserts the copy right AFTER
+// the source, names it "<name> (N)" (one past the highest existing suffix), and
+// makes the copy the active page. Returns the new id.
+export function duplicatePage(pageId: string) {
+	let newPageId: string | null = null;
+
+	editorStoreSvelte.update((state) => {
+		const index = state.pages.findIndex((page) => page.id === pageId);
+		if (index === -1) return state;
+		const source = state.pages[index];
+
+		// "<name> (2)", "<name> (3)", … — escape the base so regex chars in a page
+		// name can't break the suffix match.
+		const escaped = source.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const suffixPattern = new RegExp(`^${escaped} \\((\\d+)\\)$`);
+		let maxSuffix = 1;
+		for (const page of state.pages) {
+			const match = page.name.match(suffixPattern);
+			if (match) maxSuffix = Math.max(maxSuffix, Number.parseInt(match[1], 10));
+		}
+
+		// JSON clone (not structuredClone): node data may hold live function
+		// closures (e.g. onEdit) that structuredClone throws on — JSON drops them,
+		// and the canvas re-attaches them when it hydrates the new page.
+		const clone: EditorPage = {
+			id: nanoid(),
+			name: `${source.name} (${maxSuffix + 1})`,
+			nodes: JSON.parse(JSON.stringify(source.nodes ?? [])) as Node[],
+			edges: JSON.parse(JSON.stringify(source.edges ?? [])) as Edge[]
+		};
+		newPageId = clone.id;
+
+		const nextPages = [...state.pages];
+		nextPages.splice(index + 1, 0, clone);
+
+		return { ...state, pages: nextPages, activePageId: clone.id };
+	});
+
+	return newPageId;
+}
+
+// Removes every page and resets to a single blank "Page 1". Discards ALL
+// content — callers should hydrate the canvas from the fresh page afterwards.
+export function deleteAllPages() {
+	editorStoreSvelte.update((state) => {
+		const page: EditorPage = { id: nanoid(), name: 'Page 1', nodes: [], edges: [] };
+		return { ...state, pages: [page], activePageId: page.id };
+	});
+	clearAllCanvasDirtyPages();
+}
+
 // Persists the complete in-memory editor state to localStorage (full overwrite).
 // Use this after operations that restructure the page list — e.g. page deletion —
 // so that a page removed from the store also disappears from the persisted snapshot.

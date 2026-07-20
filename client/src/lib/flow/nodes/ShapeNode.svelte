@@ -36,9 +36,8 @@
 	// same as the old switch's fallthrough).
 	const geometry = $derived(SHAPE_GEOMETRY[shapeType] ?? null);
 
-	// UML classifiers use the top compartment for their name; activity symbols
-	// and Actor put an optional name below the silhouette. Existing shapes keep
-	// their centred label unless their declarative variant says otherwise.
+	// Activity symbols and Actor put an optional name below the silhouette.
+	// Existing shapes keep their centred label unless configured otherwise.
 	const labelPlacement = $derived(
 		variant.labelPlacement ?? (geometry?.kind === 'actor' ? 'below' : 'center')
 	);
@@ -309,6 +308,7 @@
 						fill={item.filled === false ? 'none' : fillColor}
 						stroke={strokeColor}
 						stroke-width={strokeWidth}
+						stroke-dasharray={item.dash}
 						stroke-linejoin="round"
 						vector-effect="non-scaling-stroke"
 					/>
@@ -440,10 +440,14 @@
 	<div
 		bind:this={labelBoxEl}
 		class="pointer-events-auto select-none {labelPlacement === 'below'
-			? 'absolute top-full left-0 mt-1 w-full px-1 text-center'
+			? 'absolute top-full left-1/2 mt-1 w-[max(100%,96px)] px-1 text-center [translate:-50%_0]'
 			: labelPlacement === 'header'
-				? 'absolute top-[1%] left-0 flex h-[33%] w-full items-center px-3 py-1 text-center'
-				: 'relative w-full px-3 py-2'}"
+				? 'absolute top-[1%] left-0 flex h-[20%] w-full items-center px-3 py-1 text-center'
+				: labelPlacement === 'top-left'
+					? 'absolute top-[3%] left-[3%] w-[94%] px-1 py-1 text-left'
+					: labelPlacement === 'tab'
+						? 'absolute top-[1%] left-[1%] flex h-[17%] w-[27%] items-center px-2 py-0.5 text-left'
+						: 'relative w-full px-3 py-2'}"
 		style:opacity={visualOpacity}
 		style:transform={labelTransform}
 	>

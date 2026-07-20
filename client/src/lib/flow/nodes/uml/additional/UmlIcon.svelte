@@ -74,6 +74,7 @@
 					fill={item.filled === false ? 'none' : bodyFill}
 					stroke="currentColor"
 					stroke-width="1.5"
+					stroke-dasharray={item.dash}
 					stroke-linejoin="round"
 					vector-effect="non-scaling-stroke"
 				/>

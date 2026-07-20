@@ -72,6 +72,9 @@ import { additionalCardinalityShapes } from './entity-relation/cardinality-prese
 import { actorShape } from './uml/actor/shape';
 import { additionalUmlShapes } from './uml/additional/shape';
 import { documentShape } from './uml/document/shape';
+// â”€â”€ network â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+import { networkConnectionShapes } from './network/connections';
+import { networkShapes } from './network/shapes';
 import type { NodeCategory, NodeShape } from './types';
 
 // Order drives left-to-right, top-to-bottom layout within each sidebar
@@ -129,7 +132,9 @@ export const SHAPES: readonly NodeShape[] = [
 	// Document (rect with wavy bottom) is a flowchart symbol — moved here from
 	// UML, keeping its DocumentNode id so old diagrams still render.
 	documentShape,
-	...additionalFlowchartShapes
+	...additionalFlowchartShapes,
+	...networkShapes,
+	...networkConnectionShapes
 ] as const;
 
 export function getShape(id: string): NodeShape | undefined {
@@ -169,5 +174,5 @@ export function buildNodeTypesMap(): Record<string, NonNullable<NodeShape['compo
 	return map;
 }
 
-export type { NodeShape, NodeCategory } from './types';
+export type { NodeShape, NodeCategory, PaletteGroupId } from './types';
 export type { NodePanel, NodePanelProps } from './types';

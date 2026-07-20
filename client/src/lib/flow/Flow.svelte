@@ -371,6 +371,7 @@
 				onEdit: (newData: any) => updateNodeData(newNodeId, newData)
 			},
 			origin: [0.5, 0.0],
+			...(shape.defaultZIndex !== undefined ? { zIndex: shape.defaultZIndex } : {}),
 			...(hasDefaultSize
 				? {
 						width: shape.defaultWidth,

@@ -18,7 +18,17 @@ import type { Component } from 'svelte';
 import type { Node, NodeProps } from '@xyflow/svelte';
 
 /** Sidebar palette grouping. Add new values here as new categories appear. */
-export type NodeCategory = 'basic' | 'arrows' | 'flowchart' | 'entity-relation' | 'uml';
+export type NodeCategory = 'basic' | 'arrows' | 'flowchart' | 'entity-relation' | 'uml' | 'network';
+
+/** Stable ids for nested palette groups. Display labels live in Sidebar. */
+export type PaletteGroupId =
+	| 'network-devices'
+	| 'security-traffic'
+	| 'end-devices'
+	| 'servers-storage'
+	| 'wan-cloud'
+	| 'zones-containers'
+	| 'connections';
 
 /**
  * Optional StylePanel surface that's only relevant to specific shapes.
@@ -49,6 +59,10 @@ export interface NodeShape {
 	label: string;
 	/** Sidebar palette grouping. */
 	category: NodeCategory;
+	/** Optional nested group within a sidebar category. Palette-only metadata. */
+	paletteGroup?: PaletteGroupId;
+	/** Extra palette search terms such as abbreviations and common aliases. */
+	searchAliases?: readonly string[];
 	/**
 	 * The Svelte component xyflow renders for this node. Omitted only for
 	 * connection-preset tiles (`edgePreset` set) — those never render a node,
@@ -56,7 +70,9 @@ export interface NodeShape {
 	 */
 	component?: Component<NodeProps>;
 	/** SVG icon component rendered inside the sidebar palette tile. */
-	icon: Component;
+	icon: Component<any>;
+	/** Optional props forwarded only to the sidebar palette icon. */
+	paletteIconProps?: Record<string, unknown>;
 	/** Returns the initial data payload when a tile of this shape is dropped. */
 	defaultData: () => Record<string, unknown>;
 	/**
@@ -68,6 +84,8 @@ export interface NodeShape {
 	 */
 	defaultWidth?: number;
 	defaultHeight?: number;
+	/** Optional initial canvas stacking order applied when the shape is dropped. */
+	defaultZIndex?: number;
 	/** Shape-specific editor surface added as a tab in StylePanel. Optional. */
 	panel?: NodePanel;
 	/**

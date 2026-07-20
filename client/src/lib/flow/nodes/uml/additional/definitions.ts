@@ -3,10 +3,10 @@ export type AdditionalUmlGeometry =
 	| { kind: 'polygon'; points: string }
 	| { kind: 'polygons'; items: string[] }
 	| { kind: 'path'; d: string; fillRule?: 'evenodd' }
-	| { kind: 'paths'; items: { d: string; filled?: boolean }[] }
+	| { kind: 'paths'; items: { d: string; filled?: boolean; dash?: string }[] }
 	| { kind: 'bullseye' };
 
-export type AdditionalUmlLabelPlacement = 'center' | 'header' | 'below';
+export type AdditionalUmlLabelPlacement = 'center' | 'below' | 'header' | 'top-left' | 'tab';
 
 interface AdditionalUmlDefinition {
 	id: string;
@@ -20,19 +20,15 @@ interface AdditionalUmlDefinition {
 	defaultData: Record<string, unknown>;
 }
 
-const THREE_COMPARTMENTS: AdditionalUmlGeometry = {
-	kind: 'paths',
-	items: [
-		{ d: 'M1,1 H99 V99 H1 Z' },
-		{ d: 'M1,34 H99', filled: false },
-		{ d: 'M1,68 H99', filled: false }
-	]
-};
-
-const TWO_COMPARTMENTS: AdditionalUmlGeometry = {
-	kind: 'paths',
-	items: [{ d: 'M1,1 H99 V99 H1 Z' }, { d: 'M1,38 H99', filled: false }]
-};
+// Shared silhouettes used by several UML symbols. Canvas rendering and the
+// sidebar icon both consume the same definition rows below, so a geometry fix
+// only needs to be made once.
+const RECTANGLE_PATH = 'M1,1 H99 V99 H1 Z';
+const ROUNDED_RECTANGLE_PATH =
+	'M13,1 H87 Q99,1 99,13 V87 Q99,99 87,99 H13 Q1,99 1,87 V13 Q1,1 13,1 Z';
+const FOLDED_CORNER_PATH = 'M1,1 H72 L99,28 V99 H1 Z';
+const FOLD_LINE_PATH = 'M72,1 V28 H99';
+const OUTLINED_RECTANGLE = { d: RECTANGLE_PATH, filled: false };
 
 /**
  * Core UML palette metadata and normalized geometry.
@@ -42,72 +38,6 @@ const TWO_COMPARTMENTS: AdditionalUmlGeometry = {
  * the palette preview from drifting away from the shape that is dropped.
  */
 export const ADDITIONAL_UML_DEFINITIONS = [
-	{
-		id: 'UmlClassNode',
-		label: 'Class',
-		defaultWidth: 220,
-		defaultHeight: 170,
-		geometry: THREE_COMPARTMENTS,
-		labelPlacement: 'header',
-		iconMark: 'C',
-		iconFill: 'surface',
-		defaultData: { label: 'Class', bold: true }
-	},
-	{
-		id: 'UmlAbstractClassNode',
-		label: 'Abstract Class',
-		defaultWidth: 220,
-		defaultHeight: 170,
-		geometry: THREE_COMPARTMENTS,
-		labelPlacement: 'header',
-		iconMark: 'A',
-		iconFill: 'surface',
-		defaultData: { label: 'Abstract Class', italic: true }
-	},
-	{
-		id: 'UmlInterfaceNode',
-		label: 'Interface',
-		defaultWidth: 220,
-		defaultHeight: 145,
-		geometry: THREE_COMPARTMENTS,
-		labelPlacement: 'header',
-		iconMark: 'I',
-		iconFill: 'surface',
-		defaultData: { label: '«interface»\nInterface', fontSize: 12 }
-	},
-	{
-		id: 'UmlEnumerationNode',
-		label: 'Enumeration',
-		defaultWidth: 220,
-		defaultHeight: 165,
-		geometry: THREE_COMPARTMENTS,
-		labelPlacement: 'header',
-		iconMark: 'E',
-		iconFill: 'surface',
-		defaultData: { label: '«enumeration»\nEnumeration', fontSize: 12 }
-	},
-	{
-		id: 'UmlDataTypeNode',
-		label: 'Data Type',
-		defaultWidth: 220,
-		defaultHeight: 145,
-		geometry: THREE_COMPARTMENTS,
-		labelPlacement: 'header',
-		iconMark: 'T',
-		iconFill: 'surface',
-		defaultData: { label: '«dataType»\nData Type', fontSize: 12 }
-	},
-	{
-		id: 'UmlObjectInstanceNode',
-		label: 'Object / Instance',
-		defaultWidth: 220,
-		defaultHeight: 140,
-		geometry: TWO_COMPARTMENTS,
-		labelPlacement: 'header',
-		iconMark: 'O',
-		iconFill: 'surface',
-		defaultData: { label: 'object : Class', underline: true }
-	},
 	{
 		id: 'UmlPackageNode',
 		label: 'Package',
@@ -127,7 +57,7 @@ export const ADDITIONAL_UML_DEFINITIONS = [
 		geometry: {
 			kind: 'paths',
 			items: [
-				{ d: 'M1,1 H99 V99 H1 Z' },
+				{ d: RECTANGLE_PATH },
 				{ d: 'M10,20 H28 V42 H10 Z', filled: false },
 				{ d: 'M5,24 H14 V30 H5 Z', filled: false },
 				{ d: 'M5,33 H14 V39 H5 Z', filled: false }
@@ -137,6 +67,17 @@ export const ADDITIONAL_UML_DEFINITIONS = [
 		iconMark: null,
 		iconFill: 'surface',
 		defaultData: { label: 'Component' }
+	},
+	{
+		id: 'UmlPortNode',
+		label: 'Port',
+		defaultWidth: 32,
+		defaultHeight: 32,
+		geometry: { kind: 'path', d: RECTANGLE_PATH },
+		labelPlacement: 'below',
+		iconMark: null,
+		iconFill: 'surface',
+		defaultData: { label: 'Port', fontSize: 12 }
 	},
 	{
 		id: 'UmlDeploymentNode',
@@ -160,8 +101,8 @@ export const ADDITIONAL_UML_DEFINITIONS = [
 		geometry: {
 			kind: 'paths',
 			items: [
-				{ d: 'M1,1 H72 L99,28 V99 H1 Z' },
-				{ d: 'M72,1 V28 H99', filled: false },
+				{ d: FOLDED_CORNER_PATH },
+				{ d: FOLD_LINE_PATH, filled: false },
 				{ d: 'M13,18 H31 V38 H13 Z', filled: false },
 				{ d: 'M9,22 H17 V28 H9 Z', filled: false },
 				{ d: 'M9,30 H17 V36 H9 Z', filled: false }
@@ -179,7 +120,7 @@ export const ADDITIONAL_UML_DEFINITIONS = [
 		defaultHeight: 110,
 		geometry: {
 			kind: 'paths',
-			items: [{ d: 'M1,1 H72 L99,28 V99 H1 Z' }, { d: 'M72,1 V28 H99', filled: false }]
+			items: [{ d: FOLDED_CORNER_PATH }, { d: FOLD_LINE_PATH, filled: false }]
 		},
 		labelPlacement: 'center',
 		iconMark: null,
@@ -215,13 +156,80 @@ export const ADDITIONAL_UML_DEFINITIONS = [
 		defaultData: { label: 'Use Case' }
 	},
 	{
+		id: 'UmlSystemBoundaryNode',
+		label: 'System Boundary',
+		defaultWidth: 340,
+		defaultHeight: 230,
+		geometry: {
+			kind: 'paths',
+			items: [OUTLINED_RECTANGLE]
+		},
+		labelPlacement: 'top-left',
+		iconMark: null,
+		iconFill: 'surface',
+		defaultData: { label: 'System Boundary', fontSize: 12, bold: true, textAlign: 'left' }
+	},
+	{
+		id: 'UmlLifelineNode',
+		label: 'Lifeline',
+		defaultWidth: 140,
+		defaultHeight: 260,
+		geometry: {
+			kind: 'paths',
+			items: [{ d: 'M10,1 H90 V22 H10 Z' }, { d: 'M50,22 V99', filled: false, dash: '6 5' }]
+		},
+		labelPlacement: 'header',
+		iconMark: null,
+		iconFill: 'surface',
+		defaultData: { label: 'Lifeline', fontSize: 12 }
+	},
+	{
+		id: 'UmlActivationNode',
+		label: 'Activation',
+		defaultWidth: 32,
+		defaultHeight: 150,
+		geometry: { kind: 'path', d: 'M28,1 H72 V99 H28 Z' },
+		labelPlacement: 'below',
+		iconMark: null,
+		iconFill: 'surface',
+		defaultData: { label: 'Activation', fontSize: 12 }
+	},
+	{
+		id: 'UmlCombinedFragmentNode',
+		label: 'Combined Fragment',
+		defaultWidth: 320,
+		defaultHeight: 210,
+		geometry: {
+			kind: 'paths',
+			items: [OUTLINED_RECTANGLE, { d: 'M1,1 H28 V12 L23,18 H1 Z', filled: false }]
+		},
+		labelPlacement: 'tab',
+		iconMark: null,
+		iconFill: 'surface',
+		defaultData: { label: 'alt', fontSize: 12, bold: true, textAlign: 'left' }
+	},
+	{
+		id: 'UmlActivityPartitionNode',
+		label: 'Activity Partition / Swimlane',
+		defaultWidth: 280,
+		defaultHeight: 180,
+		geometry: {
+			kind: 'paths',
+			items: [OUTLINED_RECTANGLE, { d: 'M1,20 H99', filled: false }]
+		},
+		labelPlacement: 'header',
+		iconMark: null,
+		iconFill: 'surface',
+		defaultData: { label: 'Activity Partition / Swimlane', fontSize: 12, bold: true }
+	},
+	{
 		id: 'UmlActionActivityNode',
 		label: 'Action / Activity',
 		defaultWidth: 160,
 		defaultHeight: 72,
 		geometry: {
 			kind: 'path',
-			d: 'M13,1 H87 Q99,1 99,13 V87 Q99,99 87,99 H13 Q1,99 1,87 V13 Q1,1 13,1 Z'
+			d: ROUNDED_RECTANGLE_PATH
 		},
 		labelPlacement: 'center',
 		iconMark: null,
@@ -235,12 +243,7 @@ export const ADDITIONAL_UML_DEFINITIONS = [
 		defaultHeight: 92,
 		geometry: {
 			kind: 'paths',
-			items: [
-				{
-					d: 'M13,1 H87 Q99,1 99,13 V87 Q99,99 87,99 H13 Q1,99 1,87 V13 Q1,1 13,1 Z'
-				},
-				{ d: 'M1,68 H99', filled: false }
-			]
+			items: [{ d: ROUNDED_RECTANGLE_PATH }, { d: 'M1,68 H99', filled: false }]
 		},
 		labelPlacement: 'center',
 		iconMark: null,
@@ -285,7 +288,7 @@ export const ADDITIONAL_UML_DEFINITIONS = [
 		label: 'Fork / Join',
 		defaultWidth: 160,
 		defaultHeight: 30,
-		geometry: { kind: 'path', d: 'M1,1 H99 V99 H1 Z' },
+		geometry: { kind: 'path', d: RECTANGLE_PATH },
 		labelPlacement: 'below',
 		iconMark: null,
 		iconFill: 'ink',

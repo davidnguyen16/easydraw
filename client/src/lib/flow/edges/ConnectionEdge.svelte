@@ -1010,6 +1010,7 @@
 	   shadow), NOT a bolder ring. The `conn-snap-target` class is set on the node
 	   wrapper during the drag. */
 	:global(.svelte-flow__node.conn-snap-target .shape-conn),
+	:global(.svelte-flow__node.conn-snap-target .network-conn),
 	:global(.svelte-flow__node.conn-snap-target .entity-handle) {
 		opacity: 1 !important;
 		pointer-events: all;

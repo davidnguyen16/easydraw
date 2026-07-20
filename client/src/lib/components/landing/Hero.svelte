@@ -24,7 +24,7 @@
 			Design technical diagrams with ease
 		</h1>
 		<p class="mx-auto mt-3 max-w-2xl text-lg text-ink-muted">
-			ERDs and flowcharts in a clean, intuitive canvas — with flexible shapes for UML and data-flow
+			ERDs and flowcharts in a clean, intuitive canvas with flexible shapes for UML and data-flow
 			diagrams.
 		</p>
 		<div class="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">

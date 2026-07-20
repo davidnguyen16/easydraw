@@ -7,61 +7,120 @@
 	import {
 		getShapesByCategory,
 		type NodeShape,
-		type NodeCategory
+		type NodeCategory,
+		type PaletteGroupId
 	} from '$lib/flow/nodes/registry';
 
 	let searchBar = $state('');
 
-	// Fixed display order — every palette category is always visible so the
-	// user can see the full taxonomy (BASIC / ARROWS / ENTITY RELATION / UML)
-	// even before shapes have been authored for each one.
-	const CATEGORY_ORDER: NodeCategory[] = ['basic', 'arrows', 'flowchart', 'entity-relation', 'uml'];
+	// Every configured category/group stays visible even before its shapes are
+	// authored; search temporarily removes empty branches.
+	interface PaletteGroupDefinition {
+		id: PaletteGroupId;
+		title: string;
+	}
 
-	// Stable display titles per category. Add new entries here when a new
-	// NodeCategory is introduced — kept beside the iteration so additions are
-	// one line, not a fan-out across the template.
-	const CATEGORY_TITLES: Record<NodeCategory, string> = {
-		basic: 'BASIC',
-		arrows: 'ARROWS',
-		flowchart: 'FLOWCHART',
-		'entity-relation': 'ENTITY RELATION',
-		uml: 'UML'
-	};
+	interface PaletteCategoryDefinition {
+		id: NodeCategory;
+		title: string;
+		groups?: readonly PaletteGroupDefinition[];
+	}
+
+	// Ordered palette taxonomy. Categories without groups keep the original
+	// flat grid; NETWORK opts into a second accordion level.
+	const PALETTE_CATEGORIES: readonly PaletteCategoryDefinition[] = [
+		{ id: 'basic', title: 'BASIC' },
+		{ id: 'arrows', title: 'ARROWS' },
+		{ id: 'flowchart', title: 'FLOWCHART' },
+		{ id: 'entity-relation', title: 'ENTITY RELATION' },
+		{ id: 'uml', title: 'UML' },
+		{
+			id: 'network',
+			title: 'NETWORK',
+			groups: [
+				{ id: 'network-devices', title: 'Network Devices' },
+				{ id: 'security-traffic', title: 'Security & Traffic' },
+				{ id: 'end-devices', title: 'End Devices' },
+				{ id: 'servers-storage', title: 'Servers & Storage' },
+				{ id: 'wan-cloud', title: 'WAN & Cloud' },
+				{ id: 'zones-containers', title: 'Zones & Containers' },
+				{ id: 'connections', title: 'Connections' }
+			]
+		}
+	];
 
 	// Per-category expand/collapse state. Default to all collapsed so the
 	// palette opens in the compact dropdown-list form.
-	let expandedCategories = $state<Record<NodeCategory, boolean>>({
-		basic: false,
-		arrows: false,
-		flowchart: false,
-		'entity-relation': false,
-		uml: false
-	});
+	let expandedCategories = $state(
+		Object.fromEntries(PALETTE_CATEGORIES.map(({ id }) => [id, false])) as Record<
+			NodeCategory,
+			boolean
+		>
+	);
+
+	type GroupExpansionKey = `${NodeCategory}:${PaletteGroupId}`;
+	let expandedGroups = $state<Partial<Record<GroupExpansionKey, boolean>>>({});
+
+	function groupExpansionKey(category: NodeCategory, group: PaletteGroupId): GroupExpansionKey {
+		return `${category}:${group}`;
+	}
 
 	function toggleCategory(category: NodeCategory) {
 		expandedCategories[category] = !expandedCategories[category];
 	}
 
-	function filterShapes(shapes: NodeShape[]): NodeShape[] {
-		const query = searchBar.trim().toLowerCase();
-		if (!query) return shapes;
-		return shapes.filter((s) => s.label.toLowerCase().includes(query));
+	function toggleGroup(category: NodeCategory, group: PaletteGroupId) {
+		const key = groupExpansionKey(category, group);
+		expandedGroups[key] = !expandedGroups[key];
 	}
 
-	const isSearching = $derived(searchBar.trim().length > 0);
+	const searchQuery = $derived(searchBar.trim().toLowerCase());
+	const isSearching = $derived(searchQuery.length > 0);
 
-	// Sections in fixed order. While searching, only sections with matches
-	// are shown and they auto-expand so results are immediately visible.
+	function filterShapes(shapes: readonly NodeShape[]): NodeShape[] {
+		if (!searchQuery) return [...shapes];
+		return shapes.filter((shape) =>
+			[shape.label, ...(shape.searchAliases ?? [])].some((term) =>
+				term.toLowerCase().includes(searchQuery)
+			)
+		);
+	}
+
+	// Search derives temporary open states without changing the user's saved
+	// category/group choices. Empty result groups and categories disappear.
 	const sections = $derived(
-		CATEGORY_ORDER.map((category) => {
-			const shapes = filterShapes(getShapesByCategory(category));
+		PALETTE_CATEGORIES.map((definition) => {
+			const categoryShapes = getShapesByCategory(definition.id);
+			const groups = (definition.groups ?? [])
+				.map((group) => {
+					const shapes = filterShapes(
+						categoryShapes.filter((shape) => shape.paletteGroup === group.id)
+					);
+
+					return {
+						id: group.id,
+						heading: group.title,
+						shapes,
+						expanded: isSearching
+							? shapes.length > 0
+							: (expandedGroups[groupExpansionKey(definition.id, group.id)] ?? false)
+					};
+				})
+				.filter((group) => (isSearching ? group.shapes.length > 0 : true));
+
+			const shapes = definition.groups ? [] : filterShapes(categoryShapes);
+			const hasVisibleContent = shapes.length > 0 || groups.length > 0;
+
 			return {
-				category,
-				title: CATEGORY_TITLES[category],
+				category: definition.id,
+				title: definition.title,
 				shapes,
-				expanded: isSearching ? shapes.length > 0 : expandedCategories[category]
+				groups,
+				expanded: isSearching ? hasVisibleContent : expandedCategories[definition.id]
 			};
-		}).filter((section) => (isSearching ? section.shapes.length > 0 : true))
+		}).filter((section) =>
+			isSearching ? section.shapes.length > 0 || section.groups.length > 0 : true
+		)
 	);
 
 	onMount(() => {
@@ -114,8 +173,10 @@
 			<NodeContainer
 				heading={section.title}
 				shapes={section.shapes}
+				groups={section.groups}
 				expanded={section.expanded}
 				onToggle={() => toggleCategory(section.category)}
+				onGroupToggle={(group) => toggleGroup(section.category, group)}
 			/>
 		{/each}
 	</div>

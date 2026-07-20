@@ -70,7 +70,7 @@ export interface Variant {
 	kind: ShapeKind;
 	boxRadius?: string;
 	/** Where the editable label sits relative to the SVG silhouette. */
-	labelPlacement?: 'center' | 'header' | 'below';
+	labelPlacement?: 'center' | 'below' | 'header' | 'top-left' | 'tab';
 	/** Custom handle placements. When omitted the default 4 cardinal
 	 *  bbox-edge handles are rendered. */
 	handles?: HandleSpec[];
@@ -199,7 +199,7 @@ export type ShapeGeometry =
 	| { kind: 'polygon'; points: string }
 	| { kind: 'polygons'; items: string[] }
 	| { kind: 'path'; d: string; fillRule?: 'evenodd' }
-	| { kind: 'paths'; items: { d: string; filled?: boolean }[] }
+	| { kind: 'paths'; items: { d: string; filled?: boolean; dash?: string }[] }
 	| { kind: 'bullseye' }
 	| { kind: 'actor' };
 

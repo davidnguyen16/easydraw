@@ -2,4 +2,4 @@
 	import UmlIcon from './UmlIcon.svelte';
 </script>
 
-<UmlIcon id="UmlDataTypeNode" />
+<UmlIcon id="UmlLifelineNode" />

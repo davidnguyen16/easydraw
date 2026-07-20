@@ -1,0 +1,1 @@
+A diagramming application made to be an easier to use free alternative to Lucidchart and Draw.io

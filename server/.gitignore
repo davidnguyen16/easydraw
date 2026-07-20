@@ -1,0 +1,23 @@
+# Dependencies & build output — machine-generated, never commit
+/node_modules
+/dist
+/build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Test coverage
+/coverage
+
+# SECRETS — environment files must never reach git
+.env
+.env.*
+
+# OS / IDE
+.DS_Store
+/.idea
+.vscode/
+
+/src/generated/prisma

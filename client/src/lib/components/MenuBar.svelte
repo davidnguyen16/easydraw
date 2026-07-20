@@ -8,7 +8,7 @@
 	} from '$lib/stores/editor.store.svelte';
 	import type { Exporter } from '$lib/exporters';
 	import { goto } from '$app/navigation';
-	import { authStore, logout } from '$lib/stores/auth.store.svelte';
+	import { accountInitials, authStore, logout } from '$lib/stores/auth.store.svelte';
 	import { LayoutGrid, Settings as SettingsIcon, LogOut } from '@lucide/svelte';
 
 	interface MenuItem {
@@ -66,15 +66,7 @@
 	const accountName = $derived(authStore.user?.name ?? authStore.user?.email ?? 'Account');
 	const accountEmail = $derived(authStore.user?.email ?? '');
 	const hasNameAndEmail = $derived(!!(authStore.user?.name && authStore.user?.email));
-	const userInitials = $derived(
-		(authStore.user?.name ?? authStore.user?.email ?? 'U')
-			.trim()
-			.split(/\s+/)
-			.map((part) => part[0])
-			.slice(0, 2)
-			.join('')
-			.toUpperCase()
-	);
+	const userInitials = $derived(accountInitials(authStore.user));
 	const DOCUMENT_STATUSES: { id: DiagramStatus; label: string; color: string }[] = [
 		{ id: 'draft', label: 'Draft', color: '#f97316' },
 		{ id: 'complete', label: 'Complete', color: '#22c55e' },

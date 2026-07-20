@@ -18,7 +18,7 @@
 		Trash2
 	} from '@lucide/svelte';
 	import Logo from '$lib/components/Logo.svelte';
-	import { authStore, logout } from '$lib/stores/auth.store.svelte';
+	import { accountInitials, authStore, logout } from '$lib/stores/auth.store.svelte';
 	import { API_URL } from '$lib/api';
 	import NewDiagramDialog from '$lib/components/NewDiagramDialog.svelte';
 	import DeleteDiagramDialog from '$lib/components/DeleteDiagramDialog.svelte';
@@ -80,15 +80,7 @@
 	const currentSortLabel = $derived(sortOptions.find((o) => o.value === sortBy)?.label ?? '');
 
 	const displayName = $derived(authStore.user?.name ?? authStore.user?.email ?? 'User');
-	const initials = $derived(
-		(authStore.user?.name ?? authStore.user?.email ?? 'U')
-			.trim()
-			.split(/\s+/)
-			.map((w) => w[0])
-			.slice(0, 2)
-			.join('')
-			.toUpperCase()
-	);
+	const initials = $derived(accountInitials(authStore.user));
 
 	const filtered = $derived(
 		diagrams

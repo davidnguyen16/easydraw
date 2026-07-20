@@ -15,6 +15,22 @@ export type AuthUser = {
 	createdAt?: string;
 };
 
+/**
+ * Avatar initials for a user — one source of truth so every avatar (editor
+ * MenuBar, dashboard, settings, landing nav) shows the same thing:
+ *   • a multi-word NAME → first letter of the first two words
+ *     ("Mạnh duy Nguyễn" → "MD");
+ *   • a single word, or a bare EMAIL → first two characters
+ *     ("manhduy…@gmail.com" → "MA");
+ *   • nothing → "U".
+ */
+export function accountInitials(user: AuthUser | null): string {
+	const source = (user?.name?.trim() || user?.email || '').trim();
+	const parts = source.split(/\s+/).filter(Boolean);
+	if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+	return source.slice(0, 2).toUpperCase() || 'U';
+}
+
 let user = $state<AuthUser | null>(null);
 let ready = $state(false);
 

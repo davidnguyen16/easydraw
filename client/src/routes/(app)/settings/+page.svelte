@@ -3,20 +3,13 @@
 	import { ArrowLeft, Calendar, LogOut, ShieldAlert, Trash2, User } from '@lucide/svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import DeleteAccountDialog from '$lib/components/DeleteAccountDialog.svelte';
-	import { authStore, deleteAccount, logout } from '$lib/stores/auth.store.svelte';
+	import { accountInitials, authStore, deleteAccount, logout } from '$lib/stores/auth.store.svelte';
 
 	let deleteDialogOpen = $state(false);
 
 	const displayName = $derived(authStore.user?.name?.trim() || 'Unnamed');
 	const email = $derived(authStore.user?.email ?? '');
-	const initials = $derived(
-		(authStore.user?.name?.trim() || authStore.user?.email || 'U')
-			.split(/\s+/)
-			.map((part) => part[0])
-			.slice(0, 2)
-			.join('')
-			.toUpperCase()
-	);
+	const initials = $derived(accountInitials(authStore.user));
 
 	function formatDate(value?: string) {
 		if (!value) return '—';

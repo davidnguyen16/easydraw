@@ -6,6 +6,9 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { DiagramsModule } from './diagrams/diagrams.module';
 import { AuthModule } from './auth/auth.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import { createKeyv } from '@keyv/redis';
+import { Keyv } from 'keyv';
 
 @Module({
   imports: [
@@ -17,6 +20,14 @@ import { AuthModule } from './auth/auth.module';
         limit: 100,
       },
     ]),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      useFactory: () => ({
+        stores: [
+          process.env.REDIS_URL ? createKeyv(process.env.REDIS_URL) : new Keyv(),
+        ],
+      }),
+    }),
     PrismaModule, 
     DiagramsModule, 
     AuthModule,

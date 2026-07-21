@@ -8,7 +8,9 @@ import { JwtAuthGuard, type JwtPayload } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
 import { Throttle } from '@nestjs/throttler';
 import { userInfo } from 'node:os';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
     constructor (private readonly authService: AuthService) {}

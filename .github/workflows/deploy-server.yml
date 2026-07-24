@@ -41,8 +41,8 @@ jobs:
             REGISTRY: ${{ steps.ecr.outputs.registry }}
           run: |
             IMAGE="$REGISTRY/$ECR_REPOSITORY"
-            docker build -t "IMAGE:lastest" -t "$IMAGE:${{ github.sha }}" ./server
-            docker push "$IMAGE:lastest"
+            docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" ./server
+            docker push "$IMAGE:latest"
             docker push "$IMAGE:${{ github.sha }}"
 
         - name: Force new ECS deployment

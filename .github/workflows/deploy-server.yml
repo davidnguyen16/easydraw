@@ -1,0 +1,50 @@
+name: Deploy server (ECS)
+
+on: 
+ push:
+    branches: [main]
+    paths:
+        - 'server/**'
+        - '.github/workflows/deploy-server.yml'
+ workflow_dispatch:
+
+permissions:
+    contents: read
+
+env:
+  AWS_REGION: ap-southeast-2
+  ECR_REPOSITORY: easydraw-api
+  ECS_CLUSTER: default 
+  ECS_SERVICE: easydraw-api
+
+jobs: 
+  deploy:
+    name: Build image and roll out ECS
+    runs-on: ubuntu-24.04
+    steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: ${{ env.AWS_REGION }}
+
+        - name: Log in to Amazon ECR
+          id: ecr
+          uses: aws-actions/amazon-ecr-login@v2
+
+        - name: Build and push image
+          env: 
+            REGISTRY: ${{ steps.ecr.outputs.registry }}
+          run: |
+            IMAGE="$REGISTRY/$ECR_REPOSITORY"
+            docker build -t "IMAGE:lastest" -t "$IMAGE:${{ github.sha }}" ./server
+            docker push "$IMAGE:lastest"
+            docker push "$IMAGE:${{ github.sha }}"
+
+        - name: Force new ECS deployment
+          run: |
+           aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" --force-new-deployment --region "$AWS_REGION"

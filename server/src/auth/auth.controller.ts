@@ -23,12 +23,19 @@ export class AuthController {
             return result;
     }
 
+    private get cookieOptions() {
+        const isProd = process.env.NODE_ENV === 'production';
+        return {
+            httpOnly: true,
+            sameSite: isProd ? ('none' as const) : ('lax' as const),
+            secure: isProd,
+        };
+    }
+
     // Apply token to cookie httpOnly - Browser keeps, JS cannot read
     private setTokenCookie(res: Response, token: string) {
         res.cookie('access_token', token, {
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: false,
+            ...this.cookieOptions,
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
     }
@@ -44,7 +51,7 @@ export class AuthController {
 
     @Post('logout') 
     logout(@Res({ passthrough: true }) res: Response) {
-        res.clearCookie('access_token');
+        res.clearCookie('access_token', this.cookieOptions);
         return { loggedOut: true };
     }
 
@@ -62,7 +69,7 @@ export class AuthController {
         @Res({ passthrough: true }) res: Response,
     ) {
         await this.authService.deleteAccount(user.sub);
-        res.clearCookie('access_token');
+        res.clearCookie('access_token', this.cookieOptions);
         return { deleted: true};
     }
 
@@ -78,6 +85,6 @@ export class AuthController {
         // validate() returned { access_token, user } -> Pasport put it on req.user
         const { access_token } = req.user as unknown as { access_token: string };
         this.setTokenCookie(res, access_token);
-        return res.redirect('http://localhost:5173/dashboard');
+        return res.redirect(`${process.env.CLIENT_URL ?? 'http://localhost:5173'}/dashboard`);
     }
 }

@@ -8,6 +8,11 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	// Build-time env vars (Vite inlines VITE_-prefixed values).
+	interface ImportMetaEnv {
+		readonly VITE_API_URL?: string;
+	}
 }
 
 export {};

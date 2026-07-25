@@ -10,6 +10,7 @@
 	import { goto } from '$app/navigation';
 	import { accountInitials, authStore, logout } from '$lib/stores/auth.store.svelte';
 	import { LayoutGrid, Settings as SettingsIcon, LogOut } from '@lucide/svelte';
+	import KeyboardShortcutsModal from '$lib/components/KeyboardShortcutsModal.svelte';
 
 	interface MenuItem {
 		type?: 'divider';
@@ -89,6 +90,7 @@
 	let openSubmenu: string | null = $state(null);
 	let statusMenuOpen = $state(false);
 	let userMenuOpen = $state(false);
+	let shortcutsOpen = $state(false);
 
 	function toggleMenu(label: string) {
 		openMenu = openMenu === label ? null : label;
@@ -289,10 +291,8 @@
 			{
 				icon: 'keyboard',
 				label: 'Keyboard shortcuts',
-				onClick: () =>
-					alert(
-						'Save: Ctrl+S\nSave As: Ctrl+Shift+S\nOpen: Ctrl+O\nNew: Ctrl+N\nUndo: Ctrl+Z\nRedo: Ctrl+Y\nCut: Ctrl+X\nCopy: Ctrl+C\nPaste: Ctrl+V\nDuplicate: Ctrl+D\nSelect All: Ctrl+A\nDelete: Del\nGroup: Ctrl+G\nUngroup: Ctrl+Shift+G\nBring to Front: Ctrl+Shift+F\nSend to Back: Ctrl+Shift+B\nZoom In: Ctrl+=\nZoom Out: Ctrl+-\nFit to Screen: Ctrl+Shift+H'
-					)
+				shortcut: 'Ctrl+/',
+				onClick: () => (shortcutsOpen = true)
 			}
 		]
 	});
@@ -682,6 +682,8 @@
 		</button>
 	</div>
 </header>
+
+<KeyboardShortcutsModal bind:open={shortcutsOpen} />
 
 <style>
 	/*

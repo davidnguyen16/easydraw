@@ -28,9 +28,9 @@
 <section id="diagram-types" class="border-t border-line-soft">
 	<div class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
 		<div class="mb-12 text-center">
-			<h2 class="text-3xl font-bold text-ink sm:text-4xl">One canvas, many diagrams</h2>
+			<h2 class="text-3xl font-bold text-ink sm:text-4xl">One Canvas, Many Diagrams</h2>
 			<p class="mx-auto mt-4 max-w-2xl text-ink-muted">
-				ERD and flowcharts, with flexible shapes for UML and data-flow diagrams.
+				ERD and Flowcharts, with flexible shapes for UML and data-flow diagrams.
 			</p>
 		</div>
 		<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

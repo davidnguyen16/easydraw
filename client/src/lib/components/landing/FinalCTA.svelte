@@ -7,7 +7,7 @@
 
 <section class="border-t border-line-soft bg-mq-red">
 	<div class="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-20">
-		<h2 class="text-3xl font-bold text-white sm:text-4xl">Ready to start diagramming?</h2>
+		<h2 class="text-3xl font-bold text-white sm:text-4xl">Ready To Start Diagramming?</h2>
 		<p class="mx-auto mt-4 max-w-xl text-white/80">
 			EasyDraw is free to use — no payment details, no trial limits.
 		</p>

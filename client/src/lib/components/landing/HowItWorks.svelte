@@ -26,7 +26,7 @@
 <section id="how-it-works" class="border-t border-line-soft">
 	<div class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
 		<div class="mb-12 text-center">
-			<h2 class="text-3xl font-bold text-ink sm:text-4xl">How it works</h2>
+			<h2 class="text-3xl font-bold text-ink sm:text-4xl">How It Works</h2>
 			<p class="mx-auto mt-4 max-w-2xl text-ink-muted">
 				From blank canvas to shareable diagram in three steps.
 			</p>

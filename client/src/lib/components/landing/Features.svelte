@@ -39,7 +39,7 @@
 <section id="features" class="border-t border-line-soft bg-white/50">
 	<div class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
 		<div class="mb-12 text-center">
-			<h2 class="text-3xl font-bold text-ink sm:text-4xl">Everything you need to diagram</h2>
+			<h2 class="text-3xl font-bold text-ink sm:text-4xl">Everything You Need To Diagram</h2>
 			<p class="mx-auto mt-4 max-w-2xl text-ink-muted">
 				A focused toolset for technical diagrams — no clutter, no learning curve.
 			</p>

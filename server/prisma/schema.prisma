@@ -20,6 +20,8 @@ model User {
   googleId     String?   @unique
   name         String?
   createdAt    DateTime  @default(now())
+  passwordResetTokenHash String?
+  passwordResetExpiresAt DateTime?
   diagrams     Diagram[]
 }
 

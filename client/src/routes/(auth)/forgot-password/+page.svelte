@@ -1,14 +1,30 @@
 <script lang="ts">
 	import { Mail } from '@lucide/svelte';
+	import { API_URL } from '$lib/api';
 
 	let email = $state('');
 	let sent = $state(false);
+	let loading = $state(false);
+	let error = $state('');
 
-	function handleSubmit(e: SubmitEvent) {
+	async function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();
-		// TODO: POST `${API_URL}/auth/forgot-password` to email a reset link.
-		console.log('forgot-password', { email });
-		sent = true;
+		error = '';
+		loading = true;
+		try {
+			await fetch(`${API_URL}/auth/forgot-password`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email })
+			});
+			// The server always responds the same way (anti-enumeration), so we
+			// show one confirmation regardless of whether the account exists.
+			sent = true;
+		} catch {
+			error = 'Something went wrong. Please try again.';
+		} finally {
+			loading = false;
+		}
 	}
 </script>
 
@@ -23,6 +39,10 @@
 		</div>
 	{:else}
 		<form onsubmit={handleSubmit} class="flex flex-col gap-5">
+			{#if error}
+				<p class="rounded-lg bg-mq-pink px-3 py-2 text-sm text-mq-red">{error}</p>
+			{/if}
+
 			<div class="flex flex-col gap-1.5">
 				<label for="email" class="text-sm font-medium text-ink">Email</label>
 				<div class="relative">
@@ -43,9 +63,10 @@
 
 			<button
 				type="submit"
-				class="w-full rounded-lg bg-mq-maroon py-2.5 font-semibold text-white hover:bg-mq-red"
+				disabled={loading}
+				class="w-full rounded-lg bg-mq-maroon py-2.5 font-semibold text-white hover:bg-mq-red disabled:opacity-60"
 			>
-				Send reset link
+				{loading ? 'Sending…' : 'Send reset link'}
 			</button>
 		</form>
 	{/if}

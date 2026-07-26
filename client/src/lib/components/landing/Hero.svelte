@@ -21,10 +21,10 @@
 			class="mx-auto max-w-[900px] text-4xl leading-tight font-bold tracking-tight text-ink
 				sm:text-5xl"
 		>
-			Design technical diagrams with ease
+			Design Technical Diagrams With Ease
 		</h1>
 		<p class="mx-auto mt-3 max-w-2xl text-lg text-ink-muted">
-			ERDs and flowcharts in a clean, intuitive canvas with flexible shapes for UML and data-flow
+			ERDs and Flowcharts in a clean, intuitive canvas with flexible shapes for UML and data-flow
 			diagrams.
 		</p>
 		<div class="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">

@@ -4,6 +4,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard, type JwtPayload } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
 import { Throttle } from '@nestjs/throttler';
@@ -47,6 +49,22 @@ export class AuthController {
         const result = await this.authService.login(body.email, body.password);
         this.setTokenCookie(res, result.access_token);
         return result;
+    }
+
+    @Throttle({ default: { limit: 3, ttl: 60000 } })
+    @Post('forgot-password')
+    @HttpCode(HttpStatus.OK)
+    async forgotPassword(@Body() body: ForgotPasswordDto) {
+        await this.authService.forgotPassword(body.email);
+        return { message: 'If an account exists for that email, a reset link has been sent.' };
+    }
+
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    @Post('reset-password')
+    @HttpCode(HttpStatus.OK)
+    async resetPassword(@Body() body: ResetPasswordDto) {
+        await this.authService.resetPassword(body.token, body.password);
+        return { message: 'Password has been reset. You can now sign in.' };
     }
 
     @Post('logout') 

@@ -9,7 +9,13 @@
 	import type { Exporter } from '$lib/exporters';
 	import { goto } from '$app/navigation';
 	import { accountInitials, authStore, logout } from '$lib/stores/auth.store.svelte';
-	import { LayoutGrid, Settings as SettingsIcon, LogOut } from '@lucide/svelte';
+	import {
+		ChevronDown,
+		Download,
+		LayoutGrid,
+		Settings as SettingsIcon,
+		LogOut
+	} from '@lucide/svelte';
 	import KeyboardShortcutsModal from '$lib/components/KeyboardShortcutsModal.svelte';
 
 	interface MenuItem {
@@ -57,7 +63,6 @@
 		present: () => void;
 		toggleShowGrid: () => void;
 		toggleSnapToGrid: () => void;
-		share: () => void;
 	}
 
 	const editor = getContext<EditorContext>('editor');
@@ -90,6 +95,7 @@
 	let openSubmenu: string | null = $state(null);
 	let statusMenuOpen = $state(false);
 	let userMenuOpen = $state(false);
+	let quickExportOpen = $state(false);
 	let shortcutsOpen = $state(false);
 
 	function toggleMenu(label: string) {
@@ -97,6 +103,7 @@
 		openSubmenu = null;
 		statusMenuOpen = false;
 		userMenuOpen = false;
+		quickExportOpen = false;
 	}
 
 	function toggleStatusMenu() {
@@ -105,6 +112,7 @@
 		openSubmenu = null;
 		statusMenuOpen = nextOpen;
 		userMenuOpen = false;
+		quickExportOpen = false;
 	}
 
 	function selectStatus(status: DiagramStatus) {
@@ -117,6 +125,7 @@
 		openSubmenu = null;
 		statusMenuOpen = false;
 		userMenuOpen = false;
+		quickExportOpen = false;
 	}
 
 	function toggleUserMenu() {
@@ -125,6 +134,21 @@
 		openSubmenu = null;
 		statusMenuOpen = false;
 		userMenuOpen = nextOpen;
+		quickExportOpen = false;
+	}
+
+	function toggleQuickExport() {
+		const nextOpen = !quickExportOpen;
+		openMenu = null;
+		openSubmenu = null;
+		statusMenuOpen = false;
+		userMenuOpen = false;
+		quickExportOpen = nextOpen;
+	}
+
+	function runQuickExport(formatId: string) {
+		quickExportOpen = false;
+		editor.exportAs(formatId);
 	}
 
 	function goToDashboard() {
@@ -161,7 +185,12 @@
 			// `data-menu-root` marks the <nav> that holds the triggers + dropdowns
 			// (a DOM hook that survives the Tailwind migration — don't key this on
 			// a styling class, those get renamed).
-			if (target?.closest('[data-menu-root], [data-status-root], [data-user-root]')) return;
+			if (
+				target?.closest(
+					'[data-menu-root], [data-status-root], [data-user-root], [data-quick-export-root]'
+				)
+			)
+				return;
 			closeMenus();
 		};
 		const onKey = (event: KeyboardEvent) => {
@@ -182,6 +211,15 @@
 			label: `${format.label} (${format.extension})`,
 			onClick: () => editor.exportAs(format.id)
 		}))
+	);
+
+	const QUICK_EXPORT_ORDER = ['png', 'jpeg', 'pdf', 'easydraw'];
+	const quickExportFormats = $derived(
+		editor.exportFormats
+			.filter((format) => QUICK_EXPORT_ORDER.includes(format.id))
+			.sort(
+				(a, b) => QUICK_EXPORT_ORDER.indexOf(a.id) - QUICK_EXPORT_ORDER.indexOf(b.id)
+			)
 	);
 
 	// Menus rebuild each render so disabled/checked state stays in sync with state/history.
@@ -659,27 +697,54 @@
 			Present
 		</button>
 
-		<button
-			type="button"
-			class="mb-tip relative inline-flex h-8 w-8 cursor-pointer items-center justify-center
-				rounded-[7px] border-none bg-transparent text-white/[0.92] transition-colors duration-[120ms]
-				hover:bg-white/[0.16]"
-			aria-label="Copy link"
-			onclick={editor.share}
-		>
-			<svg
-				viewBox="0 0 24 24"
-				class="h-[19px] w-[19px]"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="1.7"
-				stroke-linecap="round"
-				stroke-linejoin="round"
+		<div class="relative flex-shrink-0" data-quick-export-root>
+			<button
+				type="button"
+				class="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-[8px]
+					border border-white/25 bg-white/10 px-3 text-[0.9rem] font-semibold text-white
+					transition-colors duration-[120ms] hover:bg-white/[0.18]"
+				aria-label="Export diagram"
+				aria-haspopup="menu"
+				aria-expanded={quickExportOpen}
+				onclick={toggleQuickExport}
 			>
-				<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" />
-				<path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
-			</svg>
-		</button>
+				<Download size={17} />
+				Export
+				<ChevronDown
+					size={14}
+					class={`transition-transform duration-150 ${quickExportOpen ? 'rotate-180' : ''}`}
+				/>
+			</button>
+
+			{#if quickExportOpen}
+				<div
+					class="absolute top-[calc(100%+8px)] right-0 z-50 flex min-w-[180px] flex-col
+						gap-px rounded-[10px] border border-line-dropdown bg-white p-1.5 text-[#2a2a2a]
+						shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+					role="menu"
+					aria-label="Export diagram"
+				>
+					{#each quickExportFormats as format}
+						<button
+							type="button"
+							role="menuitem"
+							class="group flex w-full cursor-pointer items-center gap-3 rounded-md border-none
+								bg-transparent px-3 py-2 text-left text-[0.875rem] text-[#2a2a2a]
+								transition-colors duration-100 enabled:hover:bg-mq-pink
+								enabled:hover:text-mq-maroon"
+							onclick={() => runQuickExport(format.id)}
+						>
+							<Download
+								size={15}
+								class="flex-shrink-0 text-[#5a5c58] group-hover:text-mq-maroon"
+							/>
+							<span class="flex-1">{format.label}</span>
+							<span class="text-[0.75rem] text-ink-muted">{format.extension}</span>
+						</button>
+					{/each}
+				</div>
+			{/if}
+		</div>
 	</div>
 </header>
 

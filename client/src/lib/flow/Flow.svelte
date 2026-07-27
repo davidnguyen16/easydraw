@@ -729,18 +729,6 @@
 		nodes = next.nodes;
 		edges = next.edges;
 	}
-	async function handleShare() {
-		persistCanvasToStore();
-		const json = exportEditorStateAsJSON();
-		try {
-			await navigator.clipboard.writeText(json);
-			alert('Diagram JSON copied to clipboard. Paste it into a file to share.');
-		} catch {
-			// Clipboard blocked: fall back to a download.
-			handleSaveAs();
-		}
-	}
-
 	// =========================================================================
 	// Copy / Paste - uses an in-memory snapshot keyed by selection.
 	// =========================================================================
@@ -1008,7 +996,6 @@
 		duplicate: handleDuplicate,
 		deleteSelected: handleDeleteSelected,
 		selectAll: handleSelectAll,
-		share: handleShare,
 		bringToFront: handleBringToFront,
 		sendToBack: handleSendToBack,
 		bringForward: handleBringForward,

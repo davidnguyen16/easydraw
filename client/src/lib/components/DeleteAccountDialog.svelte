@@ -85,8 +85,8 @@
 					Delete account permanently?
 				</h2>
 				<p id="delete-account-description" class="mt-2 text-sm leading-6 text-ink-muted">
-					This will permanently delete your account and all associated diagrams. This
-					action cannot be undone.
+					This will delete your account and saved diagrams from EasyDraw, sign you out,
+					and clear EasyDraw data stored by this browser. This action cannot be undone.
 				</p>
 			</div>
 
@@ -94,7 +94,15 @@
 				<Download size={15} class="mt-0.5 flex-shrink-0" />
 				<span>
 					Need your data? Export your diagrams from the dashboard before deleting your
-					account.
+					account. Limited backup or security records may remain as described in our
+					<a
+						href="/privacy#retention"
+						target="_blank"
+						rel="noreferrer"
+						class="text-mq-red underline underline-offset-2"
+					>
+						Privacy Policy
+					</a>.
 				</span>
 			</div>
 

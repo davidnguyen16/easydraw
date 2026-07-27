@@ -25,6 +25,7 @@
 	import StyleTab from './StyleTab.svelte';
 	import TextTab from './TextTab.svelte';
 	import ArrangeTab from './ArrangeTab.svelte';
+	import { FLOATING_STYLE_PANEL_RIGHT_GAP_PX, FLOATING_STYLE_PANEL_WIDTH_PX } from './layout';
 
 	type StyleTabId = 'style' | 'text' | 'panel' | 'arrange';
 
@@ -82,8 +83,10 @@
 </script>
 
 <aside
-	class="absolute top-4 right-4 z-50 flex max-h-[calc(100%-32px)] w-[280px] flex-col overflow-hidden
+	class="absolute top-4 z-50 flex max-h-[calc(100%-32px)] flex-col overflow-hidden
 		rounded-xl border border-line bg-panel font-sans shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
+	style:right={`${FLOATING_STYLE_PANEL_RIGHT_GAP_PX}px`}
+	style:width={`${FLOATING_STYLE_PANEL_WIDTH_PX}px`}
 >
 	<div class="flex flex-shrink-0 border-b border-line" role="tablist" aria-label="Node styling tabs">
 		{#snippet tab(id: StyleTabId, label: string)}

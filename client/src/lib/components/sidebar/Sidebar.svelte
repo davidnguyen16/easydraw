@@ -12,6 +12,14 @@
 	} from '$lib/flow/nodes/registry';
 
 	let searchBar = $state('');
+	let renderedWidth = $state(sidebarState.isCollapsed ? 0 : sidebarState.width);
+
+	// Svelte's clientWidth binding is ResizeObserver-backed, so this follows
+	// every frame of the collapse/expand transition as well as direct resize.
+	// Canvas navigation reads the measured value from the shared state.
+	$effect(() => {
+		sidebarState.renderedWidth = renderedWidth;
+	});
 
 	// Every configured category/group stays visible even before its shapes are
 	// authored; search temporarily removes empty branches.
@@ -137,6 +145,7 @@
 		: 'transition-[width] duration-150'} {sidebarState.isCollapsed
 		? 'shadow-none'
 		: 'shadow-[0_0_10px_#c4c1b8]'}"
+	bind:clientWidth={renderedWidth}
 	style:width={sidebarState.isCollapsed ? '0px' : `${sidebarState.width}px`}
 >
 	<div

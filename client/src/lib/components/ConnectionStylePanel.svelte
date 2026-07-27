@@ -1,4 +1,8 @@
 <script lang="ts">
+	import {
+		FLOATING_STYLE_PANEL_RIGHT_GAP_PX,
+		FLOATING_STYLE_PANEL_WIDTH_PX
+	} from '$lib/components/style-panel/layout';
 	/**
 	 * Style panel for a selected CONNECTION edge — the edge counterpart of
 	 * StylePanel (which handles nodes). Shown by Flow.svelte when an edge is
@@ -197,9 +201,11 @@
 {/snippet}
 
 <aside
-	class="absolute top-4 right-4 z-50 flex max-h-[calc(100%-32px)] w-[280px] flex-col
+	class="absolute top-4 z-50 flex max-h-[calc(100%-32px)] flex-col
 		overflow-hidden rounded-xl border border-line bg-panel font-sans
 		shadow-[0_12px_28px_rgba(0,0,0,0.08)]"
+	style:right={`${FLOATING_STYLE_PANEL_RIGHT_GAP_PX}px`}
+	style:width={`${FLOATING_STYLE_PANEL_WIDTH_PX}px`}
 	aria-label="Connection style"
 >
 	<header class="flex flex-shrink-0 items-center gap-2 border-b border-line px-[18px] py-[14px] text-ink-soft">

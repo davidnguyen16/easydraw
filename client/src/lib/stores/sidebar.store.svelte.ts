@@ -11,10 +11,13 @@
  * - MAX_WIDTH: number          Maximum expanded width in px.
  * - DEFAULT_WIDTH: number      Width used when no persisted snapshot exists.
  * - COLLAPSE_THRESHOLD: number Drag-width below this auto-collapses the panel.
+ * - SIDEBAR_RESIZE_HANDLE_OVERHANG_PX: number
+ *   Extra hit area extending beyond the visible sidebar edge.
  *
  * State:
- * - sidebarState: { width: number, isCollapsed: boolean }
- *   Reactive $state proxy. Components read width/isCollapsed directly.
+ * - sidebarState: { width, isCollapsed, isResizing, renderedWidth }
+ *   Reactive $state proxy. `renderedWidth` follows the actual animated DOM
+ *   width and is intentionally not persisted.
  *
  * Mutators:
  * - setWidth(nextWidth: number): void
@@ -43,6 +46,8 @@ export const MAX_WIDTH = 600;
 // 220px opens the palette on 3 comfortable ~55px columns (Lucidchart-like).
 export const DEFAULT_WIDTH = 220;
 export const COLLAPSE_THRESHOLD = 80;
+/** Resize hit area extends this far beyond the visible sidebar edge. */
+export const SIDEBAR_RESIZE_HANDLE_OVERHANG_PX = 3;
 
 const STORAGE_KEY = 'easydraw.sidebar.v1';
 
@@ -55,16 +60,20 @@ interface SidebarSnapshot {
 // `isResizing` is true only while the user is dragging the resize handle:
 // Sidebar suppresses its width transition then, so the panel edge tracks
 // the cursor 1:1 (no rubber-band lag) — the animation only plays for
-// collapse/expand toggles. Never persisted.
+// collapse/expand toggles. `renderedWidth` follows those transition frames so
+// overlay-aware canvas navigation remains aligned. Neither field is persisted.
 interface SidebarState extends SidebarSnapshot {
 	isResizing: boolean;
+	/** Actual rendered width, including intermediate CSS-transition frames. */
+	renderedWidth: number;
 }
 
 // Reactive panel state shared by Sidebar.svelte and its children.
 export const sidebarState = $state<SidebarState>({
 	width: DEFAULT_WIDTH,
 	isCollapsed: false,
-	isResizing: false
+	isResizing: false,
+	renderedWidth: DEFAULT_WIDTH
 });
 
 // Validates a parsed localStorage payload before applying it.

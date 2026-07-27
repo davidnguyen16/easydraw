@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, setContext } from 'svelte';
+	import { onDestroy, onMount, setContext } from 'svelte';
 	import { beforeNavigate } from '$app/navigation';
 	import { nanoid } from 'nanoid';
 	import {
@@ -13,15 +13,18 @@
 		type NodeEventWithPointer,
 		ConnectionMode,
 		type Connection,
-		type OnConnectEnd
+		type OnConnectEnd,
+		type Viewport
 	} from '@xyflow/svelte';
 	import { get } from 'svelte/store';
 
 	import { useDnD } from '$lib/flow/DnDProvider.svelte';
+	import type { CanvasNavigationController } from '$lib/flow/canvas-navigation';
 	import Sidebar from '$lib/components/sidebar/Sidebar.svelte';
 
 	import ConnectionStylePanel from '$lib/components/ConnectionStylePanel.svelte';
 	import StylePanel, { type NodeStyleData } from '$lib/components/style-panel/StylePanel.svelte';
+	import { FLOATING_STYLE_PANEL_INSET_PX } from '$lib/components/style-panel/layout';
 	import { fontPreview } from '$lib/flow/font-preview.svelte';
 	import { EXPORTERS, getExporter } from '$lib/exporters';
 	import ConnectionEdge from '$lib/flow/edges/ConnectionEdge.svelte';
@@ -49,6 +52,14 @@
 		type ClipboardSnapshot
 	} from '$lib/flow/graph-actions';
 	import { createEditorKeyboardHandler } from '$lib/flow/keyboard-shortcuts';
+	import {
+		MAX_ZOOM,
+		MIN_ZOOM,
+		ZOOM_STEP,
+		ZOOM_TRANSITION_MS,
+		clampZoom,
+		zoomEaseOut
+	} from '$lib/flow/zoom';
 
 	import EditorFooter from '$lib/components/EditorFooter.svelte';
 	import MenuBar from '$lib/components/MenuBar.svelte';
@@ -80,6 +91,10 @@
 		undo as historyUndo,
 		redo as historyRedo
 	} from '$lib/stores/history.store.svelte';
+	import {
+		SIDEBAR_RESIZE_HANDLE_OVERHANG_PX,
+		sidebarState
+	} from '$lib/stores/sidebar.store.svelte';
 
 	import { API_URL } from '$lib/api';
 	import { page } from '$app/state';
@@ -621,8 +636,9 @@
 		// Manually-routed connections may bend outside every node. Include those
 		// control points so long detours are not clipped from the export.
 		for (const edge of edges) {
-			const bendPoints = (edge.data as { bendPoints?: { x: number; y: number }[] } | undefined)
-				?.bendPoints;
+			const bendPoints = (
+				edge.data as { bendPoints?: { x: number; y: number }[] } | undefined
+			)?.bendPoints;
 			for (const point of bendPoints ?? []) {
 				if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
 				minX = Math.min(minX, point.x);
@@ -693,20 +709,115 @@
 		if (snapshot) applyHistorySnapshot(snapshot);
 	}
 
-	// 15% step per click. We go through getZoom/setZoom rather than the
-	// hook's zoomIn/zoomOut (which xyflow returns as direct property captures
-	// — those silently no-op before panZoom mounts). setZoom is a lazy
-	// wrapper so it always resolves to the live store function.
-	const ZOOM_STEP = 1.15;
+	// Keep rapid clicks cumulative even when the previous short transition has
+	// not settled yet. After the deadline, a new gesture starts from xyflow's
+	// live viewport again.
+	let pendingZoomTarget: number | null = null;
+	let pendingZoomDeadline = 0;
+	let zoomAnimationFrame: number | null = null;
+	let canvasNavigation: CanvasNavigationController | null = null;
+
+	function stopZoomAnimation() {
+		if (zoomAnimationFrame !== null) {
+			cancelAnimationFrame(zoomAnimationFrame);
+			zoomAnimationFrame = null;
+		}
+	}
+
+	function clearZoomIntent() {
+		stopZoomAnimation();
+		pendingZoomTarget = null;
+		pendingZoomDeadline = 0;
+	}
+
+	function getUsableCanvasCenter() {
+		const navigationCenter = canvasNavigation?.getViewportCenter();
+		if (navigationCenter) return navigationCenter;
+
+		const width = Math.max(0, clientWidth);
+		const height = Math.max(0, clientHeight);
+		const left = Math.min(width, Math.max(0, leftCanvasInset));
+		const rightEdge = Math.min(width, Math.max(0, width - rightCanvasInset));
+
+		return {
+			x: rightEdge > left ? (left + rightEdge) / 2 : width / 2,
+			y: height / 2
+		};
+	}
+
+	function animateZoomTo(requestedZoom: number) {
+		if (!Number.isFinite(requestedZoom)) return;
+
+		stopZoomAnimation();
+		const current = flow.getViewport();
+		const targetZoom = clampZoom(requestedZoom);
+		pendingZoomTarget = targetZoom;
+		pendingZoomDeadline = performance.now() + ZOOM_TRANSITION_MS * 2;
+
+		if (Math.abs(targetZoom - current.zoom) < 0.0001) {
+			pendingZoomTarget = null;
+			return;
+		}
+
+		// Preserve the world point under the centre of the unobscured canvas.
+		// This avoids zooming towards space hidden below either side panel.
+		const center = getUsableCanvasCenter();
+		const worldX = (center.x - current.x) / current.zoom;
+		const worldY = (center.y - current.y) / current.zoom;
+		const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const duration = reduceMotion ? 0 : ZOOM_TRANSITION_MS;
+		const startedAt = performance.now();
+
+		const renderFrame = (timestamp: number) => {
+			const progress = duration === 0 ? 1 : Math.min(1, (timestamp - startedAt) / duration);
+			const easedProgress = zoomEaseOut(progress);
+			const zoom = current.zoom + (targetZoom - current.zoom) * easedProgress;
+			const requestedViewport = {
+				x: center.x - worldX * zoom,
+				y: center.y - worldY * zoom,
+				zoom
+			};
+			const viewport =
+				canvasNavigation?.constrainViewport(requestedViewport) ?? requestedViewport;
+
+			// Each frame is an immediate, already-constrained viewport update.
+			// A long d3 transition can be interrupted by the canvas bounds
+			// correction at an edge; frame ownership here avoids that race.
+			void flow.setViewport(viewport);
+
+			if (progress < 1) {
+				zoomAnimationFrame = requestAnimationFrame(renderFrame);
+			} else {
+				zoomAnimationFrame = null;
+			}
+		};
+
+		if (duration === 0) {
+			renderFrame(startedAt);
+		} else {
+			zoomAnimationFrame = requestAnimationFrame(renderFrame);
+		}
+	}
+
+	onDestroy(stopZoomAnimation);
+
+	function getZoomStepBase() {
+		if (pendingZoomTarget !== null && performance.now() <= pendingZoomDeadline) {
+			return pendingZoomTarget;
+		}
+		pendingZoomTarget = null;
+		return flow.getZoom();
+	}
 
 	function handleZoomIn() {
-		flow.setZoom(flow.getZoom() * ZOOM_STEP);
+		animateZoomTo(getZoomStepBase() * ZOOM_STEP);
 	}
 	function handleZoomOut() {
-		flow.setZoom(flow.getZoom() / ZOOM_STEP);
+		animateZoomTo(getZoomStepBase() / ZOOM_STEP);
 	}
 	function handleFitView() {
-		flow.fitView();
+		clearZoomIntent();
+		void flow.fitView({ padding: getCanvasFitPadding() });
 	}
 
 	function createNodeEditHandler(nodeId: string) {
@@ -815,20 +926,23 @@
 		editorActionsState.snapToGrid = !editorActionsState.snapToGrid;
 	}
 
-	// Sets absolute zoom (1.0 = 100%) while preserving the current pan.
+	// Sets absolute zoom (1.0 = 100%) around the usable canvas centre.
 	function handleSetZoom(percent: number) {
-		const { x, y } = flow.getViewport();
-		flow.setViewport({ x, y, zoom: percent / 100 });
+		animateZoomTo(percent / 100);
 	}
 
 	// Fits the viewport to selected nodes, or to all nodes if none selected.
 	function handleFitSelection() {
+		clearZoomIntent();
 		const selected = nodes.filter((n) => n.selected);
 		if (selected.length === 0) {
-			flow.fitView();
+			void flow.fitView({ padding: getCanvasFitPadding() });
 			return;
 		}
-		flow.fitView({ nodes: selected.map((n) => ({ id: n.id })) });
+		void flow.fitView({
+			nodes: selected.map((n) => ({ id: n.id })),
+			padding: getCanvasFitPadding()
+		});
 	}
 
 	// Locks/unlocks node interaction (drag + connect). Pan + zoom stay available.
@@ -966,13 +1080,15 @@
 		};
 	});
 
-	// Live viewport transform — drives the toolbar zoom % AND the canvas
-	// scrollbars (they need x/y to know which world region is visible).
-	let canvasViewport = $state({ x: 0, y: 0, zoom: 1 });
-
-	function handleViewportMove(_event: any, viewport: { x: number; y: number; zoom: number }) {
+	// Keep toolbar zoom in sync with every viewport path. CanvasScrollbars reads
+	// the live xyflow store directly, including the initial fitView transform.
+	function handleViewportMove(_event: unknown, viewport: Viewport) {
+		if (_event) clearZoomIntent();
 		editorActionsState.zoomPercent = Math.round(viewport.zoom * 100);
-		canvasViewport = viewport;
+	}
+
+	function handleFlowInit() {
+		editorActionsState.zoomPercent = Math.round(flow.getViewport().zoom * 100);
 	}
 
 	// Single context object exposed to MenuBar and ToolBar as 'editor'.
@@ -1207,6 +1323,37 @@
 	// Any selected edge — lets the toolbar text controls style connection labels
 	// when no node is selected.
 	let selectedEdge = $derived(edges.find((e) => e.selected));
+
+	// Both side panels overlay SvelteFlow instead of taking layout space.
+	// Expose their live footprint to canvas navigation so its horizontal
+	// viewport is the genuinely unobscured strip between the panels.
+	const leftCanvasInset = $derived(
+		editorActionsState.presenting
+			? 0
+			: sidebarState.renderedWidth +
+					(sidebarState.isCollapsed ? 0 : SIDEBAR_RESIZE_HANDLE_OVERHANG_PX)
+	);
+	const rightCanvasInset = $derived(
+		!editorActionsState.presenting &&
+			editorActionsState.showStylePanel &&
+			(selectedNode || selectedEdge)
+			? FLOATING_STYLE_PANEL_INSET_PX
+			: 0
+	);
+
+	const FIT_VIEW_MARGIN_PX = 40;
+
+	// xyflow fits against the full DOM box. Asymmetric pixel padding reserves
+	// the two overlay footprints so initial Fit/Fit Selection results are fully
+	// visible in the same usable viewport that scrolling uses.
+	function getCanvasFitPadding() {
+		return {
+			top: `${FIT_VIEW_MARGIN_PX}px`,
+			right: `${rightCanvasInset + FIT_VIEW_MARGIN_PX}px`,
+			bottom: `${FIT_VIEW_MARGIN_PX}px`,
+			left: `${leftCanvasInset + FIT_VIEW_MARGIN_PX}px`
+		} as const;
+	}
 
 	// Style edits land on node.data (or edge.data) so they ride existing
 	// persistence + history. A selected node takes priority; otherwise the patch
@@ -1516,12 +1663,20 @@
 		bind:clientHeight
 		bind:this={canvasShellEl}
 	>
+		<!-- Mouse wheel / trackpad SCROLLS the canvas (wheel up-down pans vertically,
+		     shift or horizontal trackpad pans sideways) instead of zooming — see the
+		     panOnScroll / zoomOnScroll props below. Zoom stays on Ctrl/⌘+scroll,
+		     pinch, and the toolbar zoom buttons. -->
 		<SvelteFlow
 			bind:nodes
 			bind:edges
 			{defaultEdgeOptions}
 			fitView
-			fitViewOptions={{ maxZoom: 1 }}
+			fitViewOptions={{ maxZoom: 1, padding: getCanvasFitPadding() }}
+			minZoom={MIN_ZOOM}
+			maxZoom={MAX_ZOOM}
+			panOnScroll
+			zoomOnScroll={false}
 			ondragover={onDragOver}
 			ondrop={onDrop}
 			onnodecontextmenu={handleContextMenu}
@@ -1529,6 +1684,8 @@
 			onpointerdown={handlePaneClick}
 			onconnect={onConnect}
 			onconnectend={onConnectEnd}
+			oninit={handleFlowInit}
+			onmovestart={handleViewportMove}
 			onmove={handleViewportMove}
 			snapGrid={editorActionsState.snapToGrid ? [20, 20] : undefined}
 			nodesDraggable={!editorActionsState.locked && !editorActionsState.presenting}
@@ -1553,16 +1710,21 @@
 					bottom={menu.bottom}
 				/>
 			{/if}
-		</SvelteFlow>
 
-		<!-- Draw.io-style scrollbars: only visible when a node is out of view
-		     on that axis; dragging a thumb pans the viewport to reach it. -->
-		<CanvasScrollbars
-			{nodes}
-			viewport={canvasViewport}
-			width={clientWidth}
-			height={clientHeight}
-		/>
+			<!-- The scrollbar component also owns the live finite translate
+			     extent, so wheel, trackpad, pane drag, and auto-pan all stop at
+			     the same draw.io-style content boundary. -->
+			<CanvasScrollbars
+				{nodes}
+				{edges}
+				width={clientWidth}
+				height={clientHeight}
+				leftInset={leftCanvasInset}
+				rightInset={rightCanvasInset}
+				onNavigationReady={(navigation) => (canvasNavigation = navigation)}
+				onNavigationStart={clearZoomIntent}
+			/>
+		</SvelteFlow>
 
 		{#if !editorActionsState.presenting}
 			<Sidebar />

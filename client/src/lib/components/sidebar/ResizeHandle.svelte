@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import { persistSidebarState, setWidth, sidebarState } from '$lib/stores/sidebar.store.svelte';
+	import {
+		persistSidebarState,
+		setWidth,
+		sidebarState,
+		SIDEBAR_RESIZE_HANDLE_OVERHANG_PX
+	} from '$lib/stores/sidebar.store.svelte';
 
 	const KEYBOARD_STEP_PX = 20;
 	let isDragging = $state(false);
@@ -65,9 +70,10 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-	class="absolute top-0 -right-[3px] z-10 h-full w-1.5 cursor-col-resize bg-transparent transition-colors duration-150 hover:bg-[rgba(166,25,46,0.35)] focus-visible:bg-[rgba(166,25,46,0.5)] focus-visible:shadow-[0_0_0_2px_rgba(166,25,46,0.4)] focus-visible:outline-none {isDragging
+	class="absolute top-0 z-10 h-full w-1.5 cursor-col-resize bg-transparent transition-colors duration-150 hover:bg-[rgba(166,25,46,0.35)] focus-visible:bg-[rgba(166,25,46,0.5)] focus-visible:shadow-[0_0_0_2px_rgba(166,25,46,0.4)] focus-visible:outline-none {isDragging
 		? 'bg-[rgba(166,25,46,0.35)]'
 		: ''}"
+	style:right={`-${SIDEBAR_RESIZE_HANDLE_OVERHANG_PX}px`}
 	role="separator"
 	tabindex="0"
 	aria-orientation="vertical"
@@ -76,4 +82,3 @@
 	onmousedown={handleMouseDown}
 	onkeydown={handleKeyDown}
 ></div>
-

@@ -1,17 +1,26 @@
 import { jsPDF } from 'jspdf';
-import { captureAsPng, getViewportSize } from './canvas-capture';
+import { captureAsPng, getExportSize } from './canvas-capture';
 import type { Exporter } from './types';
 
 const PDF_MARGIN_PT = 24;
+const MAX_PDF_PAGE_SIDE_PT = 14_000;
 
 export const pdfExporter: Exporter = {
 	id: 'pdf',
 	label: 'PDF',
 	extension: '.pdf',
 	mimeType: 'application/pdf',
-	async run({ fileName, canvasElement }) {
-		const dataUrl = await captureAsPng(canvasElement);
-		const { width, height } = getViewportSize(canvasElement);
+	async run({ fileName, canvasElement, diagramBounds }) {
+		const dataUrl = await captureAsPng(canvasElement, diagramBounds);
+		const exportSize = getExportSize(canvasElement, diagramBounds);
+		const availableSide = MAX_PDF_PAGE_SIDE_PT - PDF_MARGIN_PT * 2;
+		const scale = Math.min(
+			1,
+			availableSide / exportSize.width,
+			availableSide / exportSize.height
+		);
+		const width = exportSize.width * scale;
+		const height = exportSize.height * scale;
 
 		// Orient the page along the longer side so the diagram isn't cropped.
 		const orientation = width >= height ? 'landscape' : 'portrait';

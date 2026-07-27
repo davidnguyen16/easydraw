@@ -608,12 +608,39 @@
 	// Lazily resolved at call time so capture sees the current canvas DOM.
 	let canvasShellEl: HTMLElement | undefined = $state();
 
+	function getFullDiagramBounds() {
+		if (nodes.length === 0) return null;
+
+		const nodeBounds = flow.getNodesBounds(nodes);
+		let minX = nodeBounds.x;
+		let minY = nodeBounds.y;
+		let maxX = nodeBounds.x + nodeBounds.width;
+		let maxY = nodeBounds.y + nodeBounds.height;
+
+		// Manually-routed connections may bend outside every node. Include those
+		// control points so long detours are not clipped from the export.
+		for (const edge of edges) {
+			const bendPoints = (edge.data as { bendPoints?: { x: number; y: number }[] } | undefined)
+				?.bendPoints;
+			for (const point of bendPoints ?? []) {
+				if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+				minX = Math.min(minX, point.x);
+				minY = Math.min(minY, point.y);
+				maxX = Math.max(maxX, point.x);
+				maxY = Math.max(maxY, point.y);
+			}
+		}
+
+		return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+	}
+
 	function getExportContext() {
 		persistCanvasToStore();
 		return {
 			fileName: editorMetaData.fileName || 'easydraw',
 			serializedState: exportEditorStateAsJSON(),
-			canvasElement: canvasShellEl ?? null
+			canvasElement: canvasShellEl ?? null,
+			diagramBounds: getFullDiagramBounds()
 		};
 	}
 

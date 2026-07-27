@@ -16,6 +16,15 @@ export interface ExportContext {
 	serializedState: string;
 	/** The DOM element to rasterize for image/PDF formats. */
 	canvasElement: HTMLElement | null;
+	/** Full diagram bounds in flow coordinates, independent of the visible viewport. */
+	diagramBounds: ExportBounds | null;
+}
+
+export interface ExportBounds {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
 }
 
 export interface Exporter {

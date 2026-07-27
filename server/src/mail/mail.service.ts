@@ -17,6 +17,7 @@ export class MailService {
     async sendPasswordReset(to: string, resetUrl: string): Promise<void> {
         await this.transporter.sendMail({
             from: process.env.MAIL_FROM ?? 'EasyDraw <noreply@easydraw.net>',
+            replyTo: 'support@easydraw.net',
             to,
             subject: 'Reset your EasyDraw password',
             text: `Reset your password
@@ -26,6 +27,8 @@ We received a request to reset the password for your EasyDraw account. This link
 Reset it here: ${resetUrl}
 
 If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged. For your security, this link can only be used once.
+
+Need help? Contact us at support@easydraw.net
 
 The EasyDraw Team`,
             html: `
@@ -70,7 +73,9 @@ The EasyDraw Team`,
                                     <td style="padding:18px 40px;background:#faf9f6;border-top:1px solid #e3e0d6;
                                                font-family:system-ui,-apple-system,sans-serif">
                                         <p style="color:#b4b2a9;font-size:12px;line-height:1.6;margin:0">
-                                            © 2026 EasyDraw · This is an automated email, please do not reply.
+                                            Need help? Email us at
+                                            <a href="mailto:support@easydraw.net" style="color:#8a8b83;text-decoration:underline">support@easydraw.net</a><br />
+                                            © 2026 EasyDraw
                                         </p>
                                     </td>
                                 </tr>

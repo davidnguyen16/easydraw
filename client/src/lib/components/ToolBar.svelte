@@ -4,6 +4,7 @@
 	import { FolderOpen, Save } from '@lucide/svelte';
 	import { FONT_FAMILIES } from '$lib/fonts';
 	import type { NodeStyleData } from '$lib/components/style-panel/StylePanel.svelte';
+	import { MAX_ZOOM_PERCENT, MIN_ZOOM_PERCENT, ZOOM_PRESETS } from '$lib/flow/zoom';
 
 	interface NodeTextStyle {
 		fontFamily: string;
@@ -44,7 +45,6 @@
 
 	const editor = getContext<EditorContext>('editor');
 
-	const ZOOM_PRESETS = [25, 50, 75, 100, 125, 150, 200];
 	const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 24, 36, 48, 64];
 
 	// Single open-dropdown tracker for the three menus (zoom / font / size).
@@ -116,8 +116,6 @@
 	let zoomDraft = $state<string | null>(null);
 	let sizeDraft = $state<string | null>(null);
 
-	const ZOOM_MIN = 10;
-	const ZOOM_MAX = 400;
 	const SIZE_MIN = 1;
 	const SIZE_MAX = 96;
 
@@ -126,7 +124,9 @@
 	function commitZoom() {
 		if (zoomDraft !== null) {
 			const n = parseInt(zoomDraft, 10);
-			if (!Number.isNaN(n)) editor.setZoom(clamp(n, ZOOM_MIN, ZOOM_MAX));
+			if (!Number.isNaN(n)) {
+				editor.setZoom(clamp(n, MIN_ZOOM_PERCENT, MAX_ZOOM_PERCENT));
+			}
 		}
 		zoomDraft = null;
 	}

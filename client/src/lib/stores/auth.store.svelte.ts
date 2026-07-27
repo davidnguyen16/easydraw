@@ -7,6 +7,7 @@
  * route guards tell "still checking" apart from "checked, not logged in".
  */
 import { API_URL } from '$lib/api';
+import { clearEasyDrawBrowserData } from '$lib/privacy/browser-data';
 export type AuthUser = {
 	id: string;
 	email: string;
@@ -99,6 +100,11 @@ export async function deleteAccount(): Promise<void> {
 			await apiErrorMessage(response, 'Could not delete account. Please try again.')
 		);
 	}
+
+	// Saved editor snapshots may contain the user's full diagram. Once the
+	// server confirms deletion, remove every EasyDraw-owned browser storage key
+	// on this device as well.
+	clearEasyDrawBrowserData();
 
 	// Clear both the server cookie (also harmless if DELETE already cleared it)
 	// and the local auth state before the settings page redirects to login.

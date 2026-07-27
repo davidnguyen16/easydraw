@@ -3,7 +3,12 @@
 	import { ArrowLeft, Calendar, LogOut, ShieldAlert, Trash2, User } from '@lucide/svelte';
 	import Logo from '$lib/components/Logo.svelte';
 	import DeleteAccountDialog from '$lib/components/DeleteAccountDialog.svelte';
-	import { accountInitials, authStore, deleteAccount, logout } from '$lib/stores/auth.store.svelte';
+	import {
+		accountInitials,
+		authStore,
+		deleteAccount,
+		logout
+	} from '$lib/stores/auth.store.svelte';
 
 	let deleteDialogOpen = $state(false);
 
@@ -115,8 +120,8 @@
 				<div class="min-w-0">
 					<p class="text-sm font-medium text-ink">Delete account</p>
 					<p class="mt-0.5 text-xs leading-5 text-ink-muted">
-						Permanently delete your account and all your diagrams. This action cannot be
-						undone.
+						Delete your account, saved diagrams, and EasyDraw browser data on this
+						device. This action cannot be undone.
 					</p>
 				</div>
 

@@ -4,6 +4,8 @@ import * as bcrypt from 'bcryptjs';
 import type { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 import { UnauthorizedException } from '@nestjs/common';
+import type { MailService } from '../mail/mail.service';
+import type { Cache } from 'cache-manager';
 
 // Replace the real bcrypt function with Jest mock function.
 // This prevents the test from performing real password
@@ -38,6 +40,12 @@ describe('AuthService.login', () => {
 
     const jwtServiceMock = {
         sign: jest.fn(),
+    };
+
+    const mailServiceMock = {};
+
+    const cacheManagerMock = {
+        del: jest.fn(),
     };
 
     // Use a fixed date to keep the expected result predictable
@@ -83,6 +91,8 @@ describe('AuthService.login', () => {
         authService = new AuthService(
             prismaMock as unknown as PrismaService,
             jwtServiceMock as unknown as JwtService,
+            mailServiceMock as unknown as MailService,
+            cacheManagerMock as unknown as Cache,
         );
     });
 
@@ -176,4 +186,3 @@ describe('AuthService.login', () => {
         expect(signTokenMock).not.toHaveBeenCalled();
     });
 });
-

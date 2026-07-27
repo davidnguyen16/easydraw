@@ -18,12 +18,18 @@ import { LoggerModule } from 'nestjs-pino';
     LoggerModule.forRoot({
       pinoHttp: {
         transport:
-          process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test'
+          process.env.NODE_ENV !== 'production' &&
+          process.env.NODE_ENV !== 'test'
             ? { target: 'pino-pretty', options: { singleLine: true } }
             : undefined,
         level: process.env.LOG_LEVEL ?? 'info',
         serializers: {
-          req: (req) => ({ method: req.method, url: req.url }),
+          // Log the route, but never its query string. OAuth callbacks can
+          // contain short-lived authorisation codes in the URL.
+          req: (req) => ({
+            method: req.method,
+            url: typeof req.url === 'string' ? req.url.split('?')[0] : req.url,
+          }),
           res: (res) => ({ statusCode: res.statusCode }),
         },
       },
@@ -38,18 +44,17 @@ import { LoggerModule } from 'nestjs-pino';
       isGlobal: true,
       useFactory: () => ({
         stores: [
-          process.env.REDIS_URL ? createKeyv(process.env.REDIS_URL) : new Keyv(),
+          process.env.REDIS_URL
+            ? createKeyv(process.env.REDIS_URL)
+            : new Keyv(),
         ],
       }),
     }),
-    PrismaModule, 
-    DiagramsModule, 
+    PrismaModule,
+    DiagramsModule,
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-  ],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

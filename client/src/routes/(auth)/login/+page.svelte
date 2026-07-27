@@ -58,7 +58,9 @@
 		<div class="flex flex-col gap-1.5">
 			<div class="flex items-center justify-between">
 				<label for="password" class="text-sm font-medium text-ink">Password</label>
-				<a href="/forgot-password" class="text-sm text-mq-red hover:underline">Forgot password?</a>
+				<a href="/forgot-password" class="text-sm text-mq-red hover:underline"
+					>Forgot password?</a
+				>
 			</div>
 			<div class="relative">
 				<Lock
@@ -113,6 +115,12 @@
 		<GoogleIcon />
 		Continue with Google
 	</a>
+	<p class="mt-3 text-center text-xs leading-5 text-ink-muted">
+		If you are new, continuing with Google creates an account. By continuing, you agree to our
+		<a href="/terms" class="underline underline-offset-2 hover:text-ink">Terms</a> and
+		acknowledge our
+		<a href="/privacy" class="underline underline-offset-2 hover:text-ink">Privacy Policy</a>.
+	</p>
 </div>
 
 <p class="mt-6 text-center text-sm text-ink-muted">

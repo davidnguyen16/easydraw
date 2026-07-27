@@ -3,24 +3,24 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
-    private readonly logger = new Logger(MailService.name);
+  private readonly logger = new Logger(MailService.name);
 
-    private readonly transporter = nodemailer.createTransport({
-        host: process.env.MAIL_HOST,
-        port: Number(process.env.MAIL_PORT ?? 2525),
-        auth: {
-            user: process.env.MAIL_USER,
-            pass: process.env.MAIL_PASS,
-        },
-    });
+  private readonly transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.MAIL_PORT ?? 2525),
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
+    },
+  });
 
-    async sendPasswordReset(to: string, resetUrl: string): Promise<void> {
-        await this.transporter.sendMail({
-            from: process.env.MAIL_FROM ?? 'EasyDraw <noreply@easydraw.net>',
-            replyTo: 'support@easydraw.net',
-            to,
-            subject: 'Reset your EasyDraw password',
-            text: `Reset your password
+  async sendPasswordReset(to: string, resetUrl: string): Promise<void> {
+    await this.transporter.sendMail({
+      from: process.env.MAIL_FROM ?? 'EasyDraw <noreply@easydraw.net>',
+      replyTo: 'support@easydraw.net',
+      to,
+      subject: 'Reset your EasyDraw password',
+      text: `Reset your password
 
 We received a request to reset the password for your EasyDraw account. This link will expire in 30 minutes.
 
@@ -31,7 +31,7 @@ If you didn't request a password reset, you can safely ignore this email. Your p
 Need help? Contact us at support@easydraw.net
 
 The EasyDraw Team`,
-            html: `
+      html: `
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
                        style="background:#f5f3ef;margin:0;padding:0">
                     <tr>
@@ -83,7 +83,7 @@ The EasyDraw Team`,
                         </td>
                     </tr>
                 </table>`,
-            });
-            this.logger.log(`Password reset email sent to ${to}`);
-        }
-    }
+    });
+    this.logger.log('Password reset email accepted by the SMTP provider');
+  }
+}

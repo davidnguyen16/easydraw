@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Handle, Position, NodeResizer, useSvelteFlow, type NodeProps } from '@xyflow/svelte';
 	import { toFiniteRotation } from '$lib/flow/nodes/style-utils';
+	import { fontPreview } from '$lib/flow/font-preview.svelte';
 	import { resolveFieldKey, type EntityData } from './types';
 
 	let { id, data, selected }: NodeProps = $props();
@@ -71,11 +72,17 @@
 
 	const headerStyle = $derived(entity.fillColor ? `background-color: ${entity.fillColor}` : '');
 
+	// Live font/size preview (toolbar / Text-tab hover). Keyed by this node's id;
+	// never touches data — each field falls back to the committed value.
+	const preview = $derived(fontPreview.value?.targetId === id ? fontPreview.value : null);
+	const previewFontFamily = $derived(preview?.fontFamily ?? entity.fontFamily);
+	const previewFontSize = $derived(preview?.fontSize ?? entity.fontSize);
+
 	const titleStyle = $derived(
 		[
 			entity.textColor ? `color: ${entity.textColor}` : '',
-			entity.fontFamily ? `font-family: ${entity.fontFamily}` : '',
-			entity.fontSize ? `font-size: ${entity.fontSize}px` : '',
+			previewFontFamily ? `font-family: ${previewFontFamily}` : '',
+			previewFontSize ? `font-size: ${previewFontSize}px` : '',
 			entity.bold !== undefined ? `font-weight: ${entity.bold ? '700' : '500'}` : '',
 			entity.italic ? 'font-style: italic' : '',
 			entity.underline ? 'text-decoration: underline' : '',
@@ -89,7 +96,7 @@
 	const fieldNameStyle = $derived(
 		[
 			entity.textColor ? `color: ${entity.textColor}` : '',
-			entity.fontFamily ? `font-family: ${entity.fontFamily}` : ''
+			previewFontFamily ? `font-family: ${previewFontFamily}` : ''
 		]
 			.filter(Boolean)
 			.join('; ')

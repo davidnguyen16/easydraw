@@ -7,8 +7,8 @@ export const pngExporter: Exporter = {
 	label: 'PNG',
 	extension: '.png',
 	mimeType: 'image/png',
-	async run({ fileName, canvasElement }) {
-		const dataUrl = await captureAsPng(canvasElement);
+	async run({ fileName, canvasElement, diagramBounds }) {
+		const dataUrl = await captureAsPng(canvasElement, diagramBounds);
 		downloadDataUrl(dataUrl, `${fileName}.png`);
 	}
 };

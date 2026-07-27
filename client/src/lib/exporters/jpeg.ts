@@ -7,8 +7,8 @@ export const jpegExporter: Exporter = {
 	label: 'JPEG',
 	extension: '.jpeg',
 	mimeType: 'image/jpeg',
-	async run({ fileName, canvasElement }) {
-		const dataUrl = await captureAsJpeg(canvasElement);
+	async run({ fileName, canvasElement, diagramBounds }) {
+		const dataUrl = await captureAsJpeg(canvasElement, diagramBounds);
 		downloadDataUrl(dataUrl, `${fileName}.jpeg`);
 	}
 };

@@ -35,6 +35,11 @@
 		// Text formatting of the selected node (null when nothing is selected).
 		nodeStyle: NodeTextStyle | null;
 		applyStyle: (patch: NodeStyleData) => void;
+		// Live hover-preview of the font / size dropdowns on the selected node.
+		// previewStyle paints without committing; endPreview reverts. A click
+		// still commits through applyStyle.
+		previewStyle: (patch: { fontFamily?: string; fontSize?: number }) => void;
+		endPreview: () => void;
 	}
 
 	const editor = getContext<EditorContext>('editor');
@@ -47,6 +52,13 @@
 	const toggle = (name: 'zoom' | 'font' | 'size') =>
 		(openDropdown = openDropdown === name ? null : name);
 	const closeDropdowns = () => (openDropdown = null);
+
+	// While a font / size dropdown is open, hovering an option previews it on the
+	// selected node; the moment neither is open (pick, outside-click, Escape),
+	// drop the preview so the label snaps back to its committed value.
+	$effect(() => {
+		if (openDropdown !== 'font' && openDropdown !== 'size') editor.endPreview();
+	});
 
 	// Current text style (falls back to sensible defaults when no selection so
 	// the controls still read cleanly).
@@ -372,6 +384,8 @@
 						flex-col gap-px overflow-y-auto rounded-[10px] border border-line-dropdown bg-white p-1.5
 						shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
 					role="menu"
+					tabindex="-1"
+					onmouseleave={() => editor.endPreview()}
 				>
 					{#each FONT_FAMILIES as family}
 						<button
@@ -383,6 +397,7 @@
 								[&.checked]:text-mq-maroon"
 							class:checked={family === style.fontFamily}
 							onclick={() => pickFont(family)}
+							onmouseenter={() => editor.previewStyle({ fontFamily: family })}
 						>
 							<span
 								class="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center text-mq-maroon
@@ -437,6 +452,8 @@
 						gap-px overflow-y-auto rounded-[10px] border border-line-dropdown bg-white p-1.5
 						shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
 					role="menu"
+					tabindex="-1"
+					onmouseleave={() => editor.endPreview()}
 				>
 					{#each FONT_SIZES as size}
 						<button
@@ -448,6 +465,7 @@
 								[&.checked]:text-mq-maroon"
 							class:checked={size === style.fontSize}
 							onclick={() => pickSize(size)}
+							onmouseenter={() => editor.previewStyle({ fontSize: size })}
 						>
 							<span
 								class="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center text-mq-maroon

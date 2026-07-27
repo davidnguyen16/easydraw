@@ -3,6 +3,7 @@
 	import { toFiniteRotation } from '../style-utils';
 	import { getNetworkDefinition } from './definitions';
 	import NetworkGlyph from './NetworkGlyph.svelte';
+	import { fontPreview } from '$lib/flow/font-preview.svelte';
 
 	let { id, type, data, selected, isConnectable }: NodeProps = $props();
 	let { updateNodeData } = useSvelteFlow();
@@ -26,8 +27,11 @@
 	);
 
 	const textColor = $derived((data.textColor as string) ?? '#2c2c2a');
-	const fontFamily = $derived((data.fontFamily as string) ?? 'inherit');
-	const fontSize = $derived((data.fontSize as number) ?? 13);
+	// Live font/size preview (toolbar / Text-tab hover), keyed by node id; never
+	// touches data — each field falls back to its committed value.
+	const preview = $derived(fontPreview.value?.targetId === id ? fontPreview.value : null);
+	const fontFamily = $derived(preview?.fontFamily ?? ((data.fontFamily as string) ?? 'inherit'));
+	const fontSize = $derived(preview?.fontSize ?? ((data.fontSize as number) ?? 13));
 	const bold = $derived((data.bold as boolean) ?? false);
 	const italic = $derived((data.italic as boolean) ?? false);
 	const underline = $derived((data.underline as boolean) ?? false);

@@ -10,6 +10,7 @@
 	} from '@xyflow/svelte';
 	import { toFiniteRotation } from '$lib/flow/nodes/style-utils';
 	import { VARIANTS, SHAPE_GEOMETRY, type Variant } from './shape-geometry';
+	import { fontPreview } from '$lib/flow/font-preview.svelte';
 
 	// String → Position lookup so the VARIANTS config can stay as plain JSON-y
 	// values (no enum imports inside the shape-geometry data file).
@@ -68,8 +69,13 @@
 	const strokeWidth = $derived(userBorderWidth);
 
 	const textColor = $derived((data.textColor as string) ?? '#2c2c2a');
-	const fontFamily = $derived((data.fontFamily as string) ?? 'inherit');
-	const fontSize = $derived((data.fontSize as number) ?? 14);
+	// Hovering a font / size option (Text-tab panel or toolbar) previews it live
+	// here; the override is keyed by node id and never touches data (no history /
+	// save). Each field falls back to its committed value when the preview doesn't
+	// set it, so hovering a size keeps the real font family and vice-versa.
+	const preview = $derived(fontPreview.value?.targetId === id ? fontPreview.value : null);
+	const fontFamily = $derived(preview?.fontFamily ?? ((data.fontFamily as string) ?? 'inherit'));
+	const fontSize = $derived(preview?.fontSize ?? ((data.fontSize as number) ?? 14));
 	const bold = $derived((data.bold as boolean) ?? false);
 	const italic = $derived((data.italic as boolean) ?? false);
 	const underline = $derived((data.underline as boolean) ?? false);

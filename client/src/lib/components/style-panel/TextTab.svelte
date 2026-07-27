@@ -17,9 +17,11 @@
 	interface Props {
 		style: NodeStyleData;
 		onStyleChange: (patch: Partial<NodeStyleData>) => void;
+		onFontPreview: (family: string) => void;
+		onFontPreviewEnd: () => void;
 	}
 
-	let { style, onStyleChange }: Props = $props();
+	let { style, onStyleChange, onFontPreview, onFontPreviewEnd }: Props = $props();
 
 	const TEXT_COLORS = ['#2C2C2A', '#FFFFFF', '#A6192E', '#6B4DBA', '#0E7E63', '#9C6B1A'];
 	const TEXT_ALIGNMENTS: TextAlign[] = ['left', 'center', 'right'];
@@ -131,6 +133,12 @@
 			window.removeEventListener('scroll', onScroll, true);
 		};
 	});
+
+	// Whenever the menu closes — commit, outside click, Escape, scroll — drop any
+	// live preview so the label snaps back to its committed / just-picked font.
+	$effect(() => {
+		if (!fontMenuOpen) onFontPreviewEnd();
+	});
 </script>
 
 <section class={GROUP}>
@@ -199,9 +207,11 @@
 				class="fixed z-[120] flex flex-col gap-0.5 overflow-y-auto rounded-lg border border-line
 					bg-white p-1.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
 				role="listbox"
+				tabindex="-1"
 				aria-label="Font families"
 				bind:this={fontMenuEl}
 				style={fontMenuStyle}
+				onmouseleave={() => onFontPreviewEnd()}
 			>
 				{#each FONT_FAMILIES as family (family)}
 					<button
@@ -212,6 +222,7 @@
 							px-2.5 py-[7px] text-left text-[0.9rem] whitespace-nowrap text-ink-soft
 							hover:bg-[#f3f1ea]"
 						onclick={() => pickFont(family)}
+						onmouseenter={() => onFontPreview(family)}
 					>
 						<span class="inline-flex w-3.5 flex-shrink-0 text-mq-red">
 							{#if family === fontFamily}

@@ -36,6 +36,10 @@
 		 * Flow merges the patch into node.data either way.
 		 */
 		onStyleChange: (patch: Partial<NodeStyleData> & Record<string, unknown>) => void;
+		/** Live typeface preview for the Text tab's font dropdown (hover = preview,
+		 * click = commit via onStyleChange). No-ops for other tabs. */
+		onFontPreview: (family: string) => void;
+		onFontPreviewEnd: () => void;
 		onPositionChange: (x: number, y: number) => void;
 		onSizeChange: (width: number, height: number) => void;
 		onBringToFront: () => void;
@@ -47,6 +51,8 @@
 	let {
 		node,
 		onStyleChange,
+		onFontPreview,
+		onFontPreviewEnd,
 		onPositionChange,
 		onSizeChange,
 		onBringToFront,
@@ -109,7 +115,7 @@
 		{#if activeTab === 'style'}
 			<StyleTab {style} {onStyleChange} />
 		{:else if activeTab === 'text'}
-			<TextTab {style} {onStyleChange} />
+			<TextTab {style} {onStyleChange} {onFontPreview} {onFontPreviewEnd} />
 		{:else if activeTab === 'panel' && customPanel}
 			{@const PanelComponent = customPanel.component}
 			<PanelComponent {node} onDataChange={onStyleChange} />

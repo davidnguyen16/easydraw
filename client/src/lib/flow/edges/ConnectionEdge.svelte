@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
 	import { Position, useSvelteFlow, type EdgeProps } from '@xyflow/svelte';
+	import { fontPreview } from '$lib/flow/font-preview.svelte';
 	import ConnectionLabels from './ConnectionLabels.svelte';
 	import EndpointHandle from './EndpointHandle.svelte';
 	import Pill from './Pill.svelte';
@@ -126,8 +127,11 @@
 	// B / I / U / colour controls while the edge is selected (stored on
 	// edge.data). Defaults reproduce the original connection-label look
 	// (Inter, 13px, semibold, near-black) so unstyled edges are unchanged.
-	const labelFontFamily = $derived(connectionData.fontFamily ?? 'Inter');
-	const labelFontSize = $derived(connectionData.fontSize ?? 13);
+	// Live font/size preview (toolbar hover) while this edge is selected. Keyed by
+	// edge id; never touches data — each field falls back to the committed value.
+	const preview = $derived(fontPreview.value?.targetId === id ? fontPreview.value : null);
+	const labelFontFamily = $derived(preview?.fontFamily ?? connectionData.fontFamily ?? 'Inter');
+	const labelFontSize = $derived(preview?.fontSize ?? connectionData.fontSize ?? 13);
 	const labelBold = $derived(!!connectionData.bold);
 	const labelItalic = $derived(!!connectionData.italic);
 	const labelUnderline = $derived(!!connectionData.underline);

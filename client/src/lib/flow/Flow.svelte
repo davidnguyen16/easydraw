@@ -22,6 +22,7 @@
 
 	import ConnectionStylePanel from '$lib/components/ConnectionStylePanel.svelte';
 	import StylePanel, { type NodeStyleData } from '$lib/components/style-panel/StylePanel.svelte';
+	import { fontPreview } from '$lib/flow/font-preview.svelte';
 	import { EXPORTERS, getExporter } from '$lib/exporters';
 	import ConnectionEdge from '$lib/flow/edges/ConnectionEdge.svelte';
 	import ConnectionLinePreview from '$lib/flow/edges/ConnectionLinePreview.svelte';
@@ -1048,7 +1049,12 @@
 				textColor: defaultTextStyle.textColor
 			};
 		},
-		applyStyle: handleStyleChange
+		applyStyle: handleStyleChange,
+		// Live hover-preview for the toolbar font / size dropdowns (mirrors the
+		// Text-tab panel). previewStyle paints the selected node without touching
+		// data; endPreview reverts. Only a click (applyStyle) commits.
+		previewStyle,
+		endPreview: endFontPreview
 	});
 
 	// Centralized orphan-anchor cleanup. A connection anchor only ever exists
@@ -1205,6 +1211,25 @@
 	// Style edits land on node.data (or edge.data) so they ride existing
 	// persistence + history. A selected node takes priority; otherwise the patch
 	// applies to a selected edge's label style.
+	// Live font preview for the Text-tab dropdown: park the hovered typeface in a
+	// side channel the selected node reads for display. node.data is untouched,
+	// so hovering creates no undo history and no autosave — only a click (which
+	// goes through handleStyleChange) commits.
+	// Park hovered text-style value(s) on the selected target for live preview.
+	// Mirrors handleStyleChange's precedence (node wins, else edge) so hovering
+	// a font/size in the toolbar previews whichever the commit would land on.
+	// Only the passed field(s) override; the rest keep their committed values.
+	function previewStyle(patch: { fontFamily?: string; fontSize?: number }) {
+		const target = selectedNode ?? selectedEdge;
+		if (target) fontPreview.value = { targetId: target.id, ...patch };
+	}
+	function handleFontPreview(family: string) {
+		previewStyle({ fontFamily: family });
+	}
+	function endFontPreview() {
+		fontPreview.value = null;
+	}
+
 	function handleStyleChange(patch: NodeStyleData) {
 		if (selectedNode) {
 			updateNodeData(selectedNode.id, patch);
@@ -1548,6 +1573,8 @@
 					<StylePanel
 						node={activeNode}
 						onStyleChange={handleStyleChange}
+						onFontPreview={handleFontPreview}
+						onFontPreviewEnd={endFontPreview}
 						onPositionChange={handlePositionChange}
 						onSizeChange={handleSizeChange}
 						onBringToFront={handleBringToFront}

@@ -5,7 +5,7 @@
  * ends at the panel's left edge. Keep the visual panel and scrolling maths on
  * this single source of truth.
  */
-export const FLOATING_STYLE_PANEL_WIDTH_PX = 280;
+export const FLOATING_STYLE_PANEL_WIDTH_PX = 320;
 export const FLOATING_STYLE_PANEL_RIGHT_GAP_PX = 16;
 export const FLOATING_STYLE_PANEL_INSET_PX =
 	FLOATING_STYLE_PANEL_WIDTH_PX + FLOATING_STYLE_PANEL_RIGHT_GAP_PX;

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ColorField from '$lib/components/ColorField.svelte';
+	import { ChevronLeft, ChevronRight } from '@lucide/svelte';
 	import type { NodeStyleData } from '$lib/components/style-panel/StylePanel.svelte';
 	import {
 		GROUP,
@@ -9,7 +10,6 @@
 		STEPPER,
 		STEPPER_BTN,
 		SIZE_INPUT,
-		SWATCH,
 		TOGGLE,
 		TOGGLE_SLIDER
 	} from './ui';
@@ -21,9 +21,46 @@
 
 	let { style, onStyleChange }: Props = $props();
 
-	// White leads: it's the default fill of every shape (and the entity
-	// header), so the row starts on the swatch that's actually active.
-	const FILL_COLORS = ['#FFFFFF', '#76232F', '#A6192E', '#6B4DBA', '#0E7E63', '#9C6B1A'];
+	// FILL palette pages (draw.io-style ◀ ▶ pager). Page 0 is the brand default
+	// set the panel opens on — white leads because it's the actual default fill of
+	// every shape (and the entity header) — so the row starts on the swatch that's
+	// really active. The rest are ~24 classic colours, six per page to keep the
+	// single-row layout. Reordering/adding here just changes what the arrows page
+	// through; keep six per page so every page fills the row.
+	const FILL_SWATCH_PAGES: string[][] = [
+		['#FFFFFF', '#76232F', '#A6192E', '#6B4DBA', '#0E7E63', '#9C6B1A'], // defaults
+		['#E53935', '#FF6347', '#FF7F0E', '#FB8C00', '#FFC107', '#FFD700'], // reds & oranges
+		['#FFEB3B', '#CDDC39', '#8BC34A', '#4CAF50', '#2E7D32', '#009688'], // yellows & greens
+		['#00BCD4', '#4FC3F7', '#2196F3', '#1F77B4', '#1A237E', '#3F51B5'], // cyans & blues
+		['#673AB7', '#9C27B0', '#E91E63', '#795548', '#9E9E9E', '#2C2C2A'] // purples, pink & neutrals
+	];
+	const LAST_FILL_PAGE = FILL_SWATCH_PAGES.length - 1;
+
+	// Which palette page is showing. Component-local $state, so it resets to 0
+	// every time this tab (re)mounts — toggling the style panel off/on unmounts
+	// it (see Flow's `{#if showStylePanel}`) — meaning reopening always lands back
+	// on the default page, per spec.
+	let fillPage = $state(0);
+	const fillColors = $derived(FILL_SWATCH_PAGES[fillPage]);
+
+	// Arrow buttons flanking the swatch row. No fixed height — the row is
+	// items-stretch, so each arrow grows to exactly the swatch height and stays
+	// aligned with the squares. Disabled (dimmed) at the ends.
+	const FILL_ARROW = [
+		'flex w-7 flex-shrink-0 cursor-pointer items-center justify-center rounded border-none',
+		'bg-transparent text-ink-muted transition-colors duration-[120ms]',
+		'hover:bg-surface-hover hover:text-mq-maroon',
+		'disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink-muted'
+	].join(' ');
+
+	// Fill swatches: square (aspect-square), width auto-fills the grid cell so all
+	// six sit in one row with the arrows. The 6-col grid + gap set the size; gap-1
+	// below shows a real gap between them.
+	const FILL_SWATCH = [
+		'aspect-square w-full cursor-pointer rounded border border-transparent p-0',
+		'transition-[transform,box-shadow] duration-100 hover:-translate-y-px',
+		'[&.is-white]:border-line [&.active]:shadow-[0_0_0_2px_#76232f]'
+	].join(' ');
 
 	// Matches the real rendered default: ShapeNode falls back to white, so the
 	// panel opens showing the truth.
@@ -103,18 +140,38 @@
 
 <section class={GROUP}>
 	<h3 class={GROUP_LABEL}>FILL</h3>
-	<div class="grid grid-cols-6 gap-1.5">
-		{#each FILL_COLORS as color}
-			<button
-				type="button"
-				class={SWATCH}
-				class:active={fillColor.toUpperCase() === color}
-				class:is-white={color === '#FFFFFF'}
-				style="background-color: {color}"
-				aria-label="Fill {color}"
-				onclick={() => onStyleChange({ fillColor: color })}
-			></button>
-		{/each}
+	<div class="flex items-stretch gap-1">
+		<button
+			type="button"
+			class={FILL_ARROW}
+			aria-label="Previous colours"
+			disabled={fillPage === 0}
+			onclick={() => (fillPage = Math.max(0, fillPage - 1))}
+		>
+			<ChevronLeft size={18} />
+		</button>
+		<div class="grid flex-1 grid-cols-6 gap-1">
+			{#each fillColors as color}
+				<button
+					type="button"
+					class={FILL_SWATCH}
+					class:active={fillColor.toUpperCase() === color}
+					class:is-white={color === '#FFFFFF'}
+					style="background-color: {color}"
+					aria-label="Fill {color}"
+					onclick={() => onStyleChange({ fillColor: color })}
+				></button>
+			{/each}
+		</div>
+		<button
+			type="button"
+			class={FILL_ARROW}
+			aria-label="More colours"
+			disabled={fillPage === LAST_FILL_PAGE}
+			onclick={() => (fillPage = Math.min(LAST_FILL_PAGE, fillPage + 1))}
+		>
+			<ChevronRight size={18} />
+		</button>
 	</div>
 	<div class={ROW}>
 		<span class={ROW_LABEL}>Custom</span>

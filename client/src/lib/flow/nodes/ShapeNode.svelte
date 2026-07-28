@@ -400,8 +400,8 @@
 	{:else}
 		<NodeResizer
 			isVisible={selected}
-			minWidth={variant.kind === 'text-only' ? 40 : 60}
-			minHeight={variant.kind === 'text-only' ? 24 : 30}
+			minWidth={variant.kind === 'text-only' ? 10 : 20}
+			minHeight={variant.kind === 'text-only' ? 2 : 5}
 			handleClass="shape-resize-anchor"
 			lineClass="shape-resize-line"
 		/>

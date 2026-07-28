@@ -13,9 +13,10 @@
 	 * styles do. ConnectionEdge reads the same fields back when rendering.
 	 */
 	import type { Edge } from '@xyflow/svelte';
-	import { Trash2 } from '@lucide/svelte';
+	import { Trash2, ChevronLeft, ChevronRight } from '@lucide/svelte';
 	import LineEndingsDialog from '$lib/components/LineEndingsDialog.svelte';
 	import MarkerPreview from '$lib/components/MarkerPreview.svelte';
+	import ColorField from '$lib/components/ColorField.svelte';
 	import { MARKER_DEFS } from '$lib/flow/edges/markers';
 	import { markerPalette } from '$lib/stores/markers.store.svelte';
 	import type {
@@ -72,7 +73,34 @@
 		{ id: 'curved', label: 'Curved' }
 	];
 
-	const SWATCHES = ['#B4B2A9', '#2C2C2A', '#A6192E', '#1F4E9C', '#0F7B5F'];
+	// COLOR palette pages (draw.io-style ◀ ▶ pager), mirroring the node panel's
+	// FILL swatches. Page 0 is the line defaults the panel opens on — grey leads
+	// because it's the actual default stroke (keep in sync with DEFAULT_COLOR /
+	// ConnectionEdge's COLOR_DEFAULT). The rest are the same classic colours the
+	// FILL palette offers; six per page.
+	const COLOR_PAGES: string[][] = [
+		['#B4B2A9', '#2C2C2A', '#A6192E', '#1F4E9C', '#0F7B5F', '#6B4DBA'], // defaults (grey leads)
+		['#E53935', '#FF6347', '#FF7F0E', '#FB8C00', '#FFC107', '#FFD700'], // reds & oranges
+		['#FFEB3B', '#CDDC39', '#8BC34A', '#4CAF50', '#2E7D32', '#009688'], // yellows & greens
+		['#00BCD4', '#4FC3F7', '#2196F3', '#1F77B4', '#1A237E', '#3F51B5'], // cyans & blues
+		['#673AB7', '#9C27B0', '#E91E63', '#795548', '#9E9E9E', '#2C2C2A'] // purples, pink & neutrals
+	];
+	const LAST_COLOR_PAGE = COLOR_PAGES.length - 1;
+
+	// Which palette page is showing. Component-local $state → resets to 0 whenever
+	// this panel (re)mounts (toggling the style panel off/on unmounts it), so
+	// reopening always lands on the default page.
+	let colorPage = $state(0);
+	const colorSwatches = $derived(COLOR_PAGES[colorPage]);
+
+	// Arrow buttons flanking the swatch row; stretch to the swatch height (row is
+	// items-stretch), dimmed at the ends.
+	const COLOR_ARROW = [
+		'flex w-6 flex-shrink-0 cursor-pointer items-center justify-center rounded border-none',
+		'bg-transparent text-ink-muted transition-colors duration-[120ms]',
+		'hover:bg-surface-hover hover:text-mq-maroon',
+		'disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink-muted'
+	].join(' ');
 
 	const WIDTH_MIN = 0.5;
 	const WIDTH_MAX = 10;
@@ -332,31 +360,47 @@
 
 		<section class="flex flex-col gap-2.5">
 			<h3 class="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">COLOR</h3>
-			<div class="flex items-center gap-2.5">
-				{#each SWATCHES as c (c)}
-					<button
-						type="button"
-						class="h-7 w-7 flex-shrink-0 cursor-pointer rounded-full border-none p-0 {strokeColor === c
-							? 'shadow-[0_0_0_2px_#f5f3ef,0_0_0_4px_#76232f]'
-							: ''}"
-						style="background-color: {c};"
-						aria-label="Line colour {c}"
-						onclick={() => onDataChange({ strokeColor: c })}
-					></button>
-				{/each}
-				<label
-					class="relative inline-block h-7 w-7 flex-shrink-0 cursor-pointer rounded-full
-						[background:conic-gradient(#ff4d4d,#ffb14d,#f5e04d,#5ad45a,#4dc3ff,#6a5cff,#e14dff,#ff4d4d)]
-						{!SWATCHES.includes(strokeColor) ? 'shadow-[0_0_0_2px_#f5f3ef,0_0_0_4px_#76232f]' : ''}"
-					aria-label="Custom line colour"
+			<div class="flex items-stretch gap-1">
+				<button
+					type="button"
+					class={COLOR_ARROW}
+					aria-label="Previous colours"
+					disabled={colorPage === 0}
+					onclick={() => (colorPage = Math.max(0, colorPage - 1))}
 				>
-					<input
-						class="absolute inset-0 h-full w-full cursor-pointer border-none p-0 opacity-0"
-						type="color"
-						value={strokeColor}
-						oninput={(e) => onDataChange({ strokeColor: e.currentTarget.value.toUpperCase() })}
-					/>
-				</label>
+					<ChevronLeft size={18} />
+				</button>
+				<div class="grid flex-1 grid-cols-6 gap-1.5">
+					{#each colorSwatches as c (c)}
+						<button
+							type="button"
+							class="aspect-square w-full cursor-pointer rounded-full border-none p-0
+								transition-[transform,box-shadow] duration-100 hover:-translate-y-px {strokeColor === c
+								? 'shadow-[0_0_0_2px_#f5f3ef,0_0_0_4px_#76232f]'
+								: ''}"
+							style="background-color: {c};"
+							aria-label="Line colour {c}"
+							onclick={() => onDataChange({ strokeColor: c })}
+						></button>
+					{/each}
+				</div>
+				<button
+					type="button"
+					class={COLOR_ARROW}
+					aria-label="More colours"
+					disabled={colorPage === LAST_COLOR_PAGE}
+					onclick={() => (colorPage = Math.min(LAST_COLOR_PAGE, colorPage + 1))}
+				>
+					<ChevronRight size={18} />
+				</button>
+			</div>
+			<div class="flex items-center justify-between gap-2">
+				<span class="text-[0.85rem] text-ink-soft">Custom</span>
+				<ColorField
+					value={strokeColor}
+					label="Line"
+					onChange={(hex) => onDataChange({ strokeColor: hex })}
+				/>
 			</div>
 		</section>
 

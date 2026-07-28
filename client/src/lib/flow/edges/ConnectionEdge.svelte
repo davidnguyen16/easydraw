@@ -77,6 +77,10 @@
 	const WIDTH_DEFAULT = 1.5;
 	const CORNER_RADIUS = 8;
 	const HIT_WIDTH = 20;
+	// The canvas background colour. A double line paints a stroke of this colour
+	// over the centre of a wider colour stroke to carve the gap between its two
+	// rails. Keep in sync if the canvas ever stops being white.
+	const CANVAS_BG = '#ffffff';
 
 	let hovered = $state(false);
 
@@ -433,6 +437,14 @@
 	// the endpoint handles / pills); the default grey still darkens on active.
 	const strokeColor = $derived(userStrokeColor ?? (active ? COLOR_ACTIVE : COLOR_DEFAULT));
 	const strokeWidth = $derived(active ? userStrokeWidth + 0.5 : userStrokeWidth);
+
+	// Double-line rails: an outer colour stroke with a canvas-colour stroke over
+	// its centre. Each rail ends up `userStrokeWidth` thick with `doubleGap`
+	// between. Widths use userStrokeWidth (not the active-bumped strokeWidth) so
+	// the rails don't jump on hover. Markers are suppressed for double lines.
+	const isDouble = $derived(lineStyle === 'double');
+	const doubleGap = $derived(userStrokeWidth * 1.6);
+	const doubleOuterWidth = $derived(userStrokeWidth * 2 + doubleGap);
 
 	// Solid pill orientation: prefer the segment LEAVING the bend; fall back
 	// to the segment entering it. Keeps the pill aligned with its segment
@@ -898,18 +910,39 @@
 	/>
 
 	<!-- The visible line. CSS transitions on stroke + width avoid flicker. -->
-	<path
-		d={pathD}
-		fill="none"
-		stroke-linecap={renderedLineCap}
-		stroke-linejoin="round"
-		pointer-events="none"
-		class="transition-[stroke,stroke-width] duration-[120ms]"
-		marker-start={markerStart !== 'none' ? `url(#cm-s-${id})` : undefined}
-		marker-end={markerEnd !== 'none' ? `url(#cm-e-${id})` : undefined}
-		stroke-dasharray={dashArray}
-		style={`stroke: ${strokeColor}; stroke-width: ${strokeWidth}px;`}
-	/>
+	{#if isDouble}
+		<!-- Double: a wide colour stroke with a canvas-coloured centre stroke laid
+		     over it carves the gap → two parallel rails that follow any routing.
+		     No markers: double lines lock endpoints out (see ConnectionStylePanel). -->
+		<path
+			d={pathD}
+			fill="none"
+			stroke-linejoin="round"
+			pointer-events="none"
+			class="transition-[stroke] duration-[120ms]"
+			style={`stroke: ${strokeColor}; stroke-width: ${doubleOuterWidth}px;`}
+		/>
+		<path
+			d={pathD}
+			fill="none"
+			stroke-linejoin="round"
+			pointer-events="none"
+			style={`stroke: ${CANVAS_BG}; stroke-width: ${doubleGap}px;`}
+		/>
+	{:else}
+		<path
+			d={pathD}
+			fill="none"
+			stroke-linecap={renderedLineCap}
+			stroke-linejoin="round"
+			pointer-events="none"
+			class="transition-[stroke,stroke-width] duration-[120ms]"
+			marker-start={markerStart !== 'none' ? `url(#cm-s-${id})` : undefined}
+			marker-end={markerEnd !== 'none' ? `url(#cm-e-${id})` : undefined}
+			stroke-dasharray={dashArray}
+			style={`stroke: ${strokeColor}; stroke-width: ${strokeWidth}px;`}
+		/>
+	{/if}
 
 	<!-- Bend pills only exist for orthogonal routing — straight and curved
          paths have no draggable segments. Hidden while the whole connection

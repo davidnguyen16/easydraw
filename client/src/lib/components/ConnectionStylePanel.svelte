@@ -64,8 +64,13 @@
 	const LINE_STYLES: { id: EdgeLineStyle; label: string }[] = [
 		{ id: 'solid', label: 'Solid' },
 		{ id: 'dashed', label: 'Dashed' },
-		{ id: 'dotted', label: 'Dotted' }
+		{ id: 'dotted', label: 'Dotted' },
+		{ id: 'double', label: 'Double' }
 	];
+
+	// Double lines have no ends, so the Start/End endpoint pickers are locked
+	// (dimmed, non-interactive) while this style is active.
+	const markersLocked = $derived(lineStyle === 'double');
 
 	const ROUTINGS: { id: EdgeRouting; label: string }[] = [
 		{ id: 'straight', label: 'Straight' },
@@ -169,20 +174,31 @@
 			window.removeEventListener('scroll', onScroll, true);
 		};
 	});
+
+	// If the style flips to double while an endpoint menu is open, close it —
+	// those controls are locked out for double lines.
+	$effect(() => {
+		if (markersLocked && (openMenu === 'start' || openMenu === 'end')) openMenu = null;
+	});
 </script>
 
 {#snippet linePreview(styleId: EdgeLineStyle)}
 	<svg viewBox="0 0 44 12" width="44" height="12" aria-hidden="true">
-		<line
-			x1="2"
-			y1="6"
-			x2="42"
-			y2="6"
-			stroke="#2c2c2a"
-			stroke-width="1.6"
-			stroke-linecap="round"
-			stroke-dasharray={styleId === 'dashed' ? '7 5' : styleId === 'dotted' ? '0.1 5' : undefined}
-		/>
+		{#if styleId === 'double'}
+			<line x1="2" y1="4.4" x2="42" y2="4.4" stroke="#2c2c2a" stroke-width="1.3" />
+			<line x1="2" y1="7.6" x2="42" y2="7.6" stroke="#2c2c2a" stroke-width="1.3" />
+		{:else}
+			<line
+				x1="2"
+				y1="6"
+				x2="42"
+				y2="6"
+				stroke="#2c2c2a"
+				stroke-width="1.6"
+				stroke-linecap="round"
+				stroke-dasharray={styleId === 'dashed' ? '7 5' : styleId === 'dotted' ? '0.1 5' : undefined}
+			/>
+		{/if}
 	</svg>
 {/snippet}
 
@@ -257,17 +273,23 @@
 	<div class="flex flex-col gap-5 overflow-y-auto p-[18px]">
 		<section class="flex flex-col gap-2.5">
 			<h3 class="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">ENDPOINTS</h3>
-			<div class="grid grid-cols-2 gap-2.5">
+			<div
+				class="grid grid-cols-2 gap-2.5 transition-opacity duration-[120ms]"
+				class:pointer-events-none={markersLocked}
+				class:opacity-40={markersLocked}
+			>
 				<div class="flex flex-col gap-1.5">
 					<span class="text-[0.78rem] text-[#6f7068]">Start</span>
 					<button
 						type="button"
 						class="dd-trigger flex w-full cursor-pointer items-center gap-2 rounded-lg border
 							border-line bg-white px-2.5 py-[9px] text-[0.85rem] text-ink-soft
-							hover:border-[#c4c1b8] focus-visible:border-mq-red focus-visible:outline-none"
+							hover:border-[#c4c1b8] focus-visible:border-mq-red focus-visible:outline-none
+							disabled:cursor-not-allowed"
 						aria-haspopup="listbox"
 						aria-expanded={openMenu === 'start'}
 						aria-label="Start endpoint"
+						disabled={markersLocked}
 						onclick={(e) => toggleMenu('start', e)}
 					>
 						<MarkerPreview kind={markerStart} end="start" />
@@ -280,10 +302,12 @@
 						type="button"
 						class="dd-trigger flex w-full cursor-pointer items-center gap-2 rounded-lg border
 							border-line bg-white px-2.5 py-[9px] text-[0.85rem] text-ink-soft
-							hover:border-[#c4c1b8] focus-visible:border-mq-red focus-visible:outline-none"
+							hover:border-[#c4c1b8] focus-visible:border-mq-red focus-visible:outline-none
+							disabled:cursor-not-allowed"
 						aria-haspopup="listbox"
 						aria-expanded={openMenu === 'end'}
 						aria-label="End endpoint"
+						disabled={markersLocked}
 						onclick={(e) => toggleMenu('end', e)}
 					>
 						<MarkerPreview kind={markerEnd} end="end" />

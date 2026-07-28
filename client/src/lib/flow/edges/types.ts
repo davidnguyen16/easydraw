@@ -60,8 +60,13 @@ export type MarkerKind =
 	| 'bar-crowfoot'
 	| 'circle-bar';
 
-/** Stroke pattern of the line. */
-export type EdgeLineStyle = 'solid' | 'dashed' | 'dotted';
+/**
+ * Stroke pattern of the line.
+ *   'double' — two thin parallel lines (railroad look). Rendered as a wide
+ *   stroke with a canvas-coloured stroke laid over its centre, so it follows
+ *   any routing. Endpoints (markers) are not drawn for double lines.
+ */
+export type EdgeLineStyle = 'solid' | 'dashed' | 'dotted' | 'double';
 
 /**
  * Path algorithm.

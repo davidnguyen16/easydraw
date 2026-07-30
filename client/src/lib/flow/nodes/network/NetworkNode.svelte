@@ -88,10 +88,9 @@
 
 	function onLabelKeydown(event: KeyboardEvent) {
 		event.stopPropagation();
-		if (event.key === 'Enter' && !event.shiftKey) {
-			event.preventDefault();
-			inputEl?.blur();
-		} else if (event.key === 'Escape') {
+		// Enter inserts a newline (default textarea behaviour) like draw.io. Escape
+		// — or clicking away — finishes editing.
+		if (event.key === 'Escape') {
 			event.preventDefault();
 			inputEl?.blur();
 		}

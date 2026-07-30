@@ -156,12 +156,11 @@
 
 	function onLabelKeydown(evt: KeyboardEvent) {
 		evt.stopPropagation(); // keep keys out of xyflow's global shortcuts
-		if (evt.key === 'Enter' && !evt.shiftKey) {
+		// Enter inserts a newline (default textarea behaviour) like draw.io and
+		// other diagram editors. Escape — or clicking away — finishes editing.
+		if (evt.key === 'Escape') {
 			evt.preventDefault();
 			inputEl?.blur(); // → onLabelBlur ends editing
-		} else if (evt.key === 'Escape') {
-			evt.preventDefault();
-			inputEl?.blur();
 		}
 	}
 

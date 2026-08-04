@@ -1,0 +1,225 @@
+/*
+ * EasyDraw theme overrides layered on top of @xyflow/react/dist/style.css.
+ * React Flow ships the structural styles + default --xy-* values; this file
+ * re-declares only the values the SvelteKit client customised (ported 1:1 from
+ * its xy-theme.css, `.svelte-flow` → `.react-flow`), plus the basic-shape node
+ * opt-outs and the ShapeNode handle/resize overrides (from ShapeNode's <style>).
+ * MUST be imported AFTER the base React Flow stylesheet so these win.
+ */
+.react-flow {
+	--xy-edge-stroke-default: #c4c1b8;
+	--xy-edge-stroke-width-default: 1;
+	--xy-edge-stroke-selected-default: #76232f;
+
+	--xy-connectionline-stroke-default: #a6192e;
+	--xy-connectionline-stroke-width-default: 1;
+
+	--xy-attribution-background-color-default: rgba(255, 255, 255, 0.5);
+
+	--xy-minimap-background-color-default: #edebe5;
+	--xy-minimap-mask-background-color-default: rgba(214, 210, 196, 0.6);
+	--xy-minimap-mask-stroke-color-default: transparent;
+	--xy-minimap-mask-stroke-width-default: 1;
+	--xy-minimap-node-background-color-default: #d6d2c4;
+	--xy-minimap-node-stroke-color-default: transparent;
+	--xy-minimap-node-stroke-width-default: 2;
+
+	--xy-background-color-default: transparent;
+	--xy-background-pattern-dots-color-default: #c4c1b8;
+	--xy-background-pattern-lines-color-default: #d6d2c4;
+	--xy-background-pattern-cross-color-default: #d6d2c4;
+
+	--xy-theme-selected: #a6192e;
+	--xy-theme-hover: #d6d2c4;
+	--xy-theme-edge-hover: #373a36;
+	--xy-theme-color-focus: #edebe5;
+
+	--xy-node-color-default: inherit;
+	--xy-node-border-default: 1px solid #d6d2c4;
+	--xy-node-boxshadow-default:
+		0px 3.54px 4.55px 0px #00000005, 0px 3.54px 4.55px 0px #0000000d,
+		0px 0.51px 1.01px 0px #0000001a;
+	--xy-node-border-radius-default: 8px;
+
+	--xy-handle-background-color-default: #ffffff;
+	--xy-handle-border-color-default: #c4c1b8;
+
+	--xy-edge-label-color-default: #5a5c58;
+	--xy-resize-background-color-default: #a6192e;
+
+	--xy-node-background-color-default: #fff;
+	--xy-node-group-background-color-default: rgba(237, 235, 229, 0.35);
+	--xy-node-boxshadow-hover-default: 0 1px 4px 1px rgba(0, 0, 0, 0.08);
+	--xy-node-boxshadow-selected-default: 0 0 0 1.5px #a6192e;
+
+	--xy-selection-background-color-default: rgba(166, 25, 46, 0.06);
+	--xy-selection-border-default: 1px dotted rgba(166, 25, 46, 0.45);
+
+	--xy-controls-button-background-color-default: #fefefe;
+	--xy-controls-button-background-color-hover-default: #f4f4f4;
+	--xy-controls-button-color-default: inherit;
+	--xy-controls-button-color-hover-default: inherit;
+	--xy-controls-button-border-color-default: #eee;
+	--xy-controls-box-shadow-default: 0 0 2px 1px rgba(0, 0, 0, 0.08);
+
+	--xy-edge-label-background-color-default: #ffffff;
+}
+
+/*
+ * Basic-shape node opt-outs. xyflow's default node ships a white card
+ * (background, border, box-shadow, 10px padding); our outlined shapes own
+ * their whole visual, so strip it. Every shape's type id ends in "Node", which
+ * xyflow mirrors into a `.react-flow__node-<TypeId>` class — the [class*='Node']
+ * selector opts in every shape automatically (the lowercase base class
+ * `react-flow__node` itself never matches).
+ */
+.react-flow__node[class*='Node'],
+.react-flow__node-connection-anchor {
+	padding: 0;
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	border-radius: 0;
+}
+
+/* Connection handle dot — 10px white circle, red ring. Two classes (0,2,0)
+   out-specify xyflow's `.react-flow__handle` (0,1,0). */
+.react-flow__handle.shape-conn {
+	width: 10px;
+	height: 10px;
+	background: #ffffff;
+	border: 1.5px solid #a6192e;
+	border-radius: 50%;
+}
+
+/* Resize corner anchors — 15px white square, red ring. The three-class
+   selector out-specifies xyflow's `.handle` (5px). */
+.react-flow__resize-control.handle.shape-resize-anchor {
+	width: 15px;
+	height: 15px;
+	background: #ffffff;
+	border: 2px solid #a6192e;
+	border-radius: 4px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+/* Edge resize strips — invisible but widened to an 8px hit area for the
+   ↔ / ↕ resize cursor. Extra classes out-specify xyflow's line rules. */
+.react-flow__resize-control.line.shape-resize-line {
+	border-color: transparent;
+	background: transparent;
+}
+.react-flow__resize-control.line.left.shape-resize-line,
+.react-flow__resize-control.line.right.shape-resize-line {
+	width: 8px;
+}
+.react-flow__resize-control.line.top.shape-resize-line,
+.react-flow__resize-control.line.bottom.shape-resize-line {
+	height: 8px;
+}
+
+/* ── Entity node (ERD card) — same dot/anchor treatment as ShapeNode ── */
+.react-flow__handle.entity-handle {
+	width: 10px;
+	height: 10px;
+	background: #ffffff;
+	border: 1.5px solid #a6192e;
+	border-radius: 50%;
+}
+.react-flow__resize-control.handle.entity-resize-anchor {
+	width: 15px;
+	height: 15px;
+	background: #ffffff;
+	border: 2px solid #a6192e;
+	border-radius: 4px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+/* Hide the edge-line resize handles; spec calls for corner anchors only. */
+.entity-resize-line {
+	border-color: transparent;
+	background: transparent;
+}
+
+/* ── Network node — same dot/anchor treatment ── */
+.react-flow__handle.network-conn {
+	width: 10px;
+	height: 10px;
+	background: #ffffff;
+	border: 1.5px solid #a6192e;
+	border-radius: 50%;
+}
+.react-flow__resize-control.handle.network-resize-anchor {
+	width: 15px;
+	height: 15px;
+	background: #ffffff;
+	border: 2px solid #a6192e;
+	border-radius: 4px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+.react-flow__resize-control.line.network-resize-line {
+	border-color: transparent;
+	background: transparent;
+}
+.react-flow__resize-control.line.left.network-resize-line,
+.react-flow__resize-control.line.right.network-resize-line {
+	width: 8px;
+}
+.react-flow__resize-control.line.top.network-resize-line,
+.react-flow__resize-control.line.bottom.network-resize-line {
+	height: 8px;
+}
+
+/* ── Connection anchors + edge interaction (ported from ConnectionEdge /
+      AnchorNode <style> blocks) ── */
+
+/* The anchor node is purely a position host — never an interaction target.
+   Endpoint grabbing happens on the edge's EndpointHandle one z-layer below,
+   so NOTHING in the anchor subtree may intercept the pointer. */
+.connection-anchor-node,
+.connection-anchor-node * {
+	pointer-events: none !important;
+}
+
+/* Invisible handle, centred on the anchor node (= the wire end). Just a
+   measurable point — no fill, no border. The two-class selector outranks the
+   theme's `.react-flow__handle-top` rule so the centring transform wins. */
+.react-flow__handle.anchor-handle {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 9px;
+	height: 9px;
+	min-width: 9px;
+	min-height: 9px;
+	background: transparent;
+	border: none;
+	box-sizing: border-box;
+}
+
+/* While an endpoint is being dragged, force the move cursor everywhere so it
+   never flickers back to the arrow over the pane / a node. */
+body.endpoint-dragging,
+body.endpoint-dragging * {
+	cursor: move !important;
+}
+
+/* While a fully-floating connection is being rigid-moved as one object,
+   keep the closed-hand cursor everywhere. */
+body.connection-dragging,
+body.connection-dragging * {
+	cursor: grabbing !important;
+}
+
+/* The node the dragged endpoint will snap onto — shown EXACTLY like that
+   node's own hover state (reveal its handles; entity also gets its soft hover
+   shadow). The `conn-snap-target` class is set on the node wrapper mid-drag. */
+.react-flow__node.conn-snap-target .shape-conn,
+.react-flow__node.conn-snap-target .network-conn,
+.react-flow__node.conn-snap-target .entity-handle {
+	opacity: 1 !important;
+	pointer-events: all;
+}
+.react-flow__node.conn-snap-target .entity-card {
+	box-shadow: 0 4px 12px rgba(166, 25, 46, 0.15);
+}

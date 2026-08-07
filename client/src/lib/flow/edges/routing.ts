@@ -13,7 +13,7 @@
  *                    quadratic bezier so bends look like soft pipes.
  */
 
-import { Position } from '@xyflow/svelte';
+import { Position } from '@xyflow/react';
 import type { Axis, Point, Segment, Vertex } from './types';
 
 /** Tolerance for "same coordinate" comparisons (pixels). */

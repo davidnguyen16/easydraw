@@ -1,7 +1,7 @@
 import type { NodeShape } from '../types';
 import { NETWORK_DEFINITIONS } from './definitions';
-import NetworkNode from './NetworkNode.svelte';
-import NetworkPaletteIcon from './NetworkPaletteIcon.svelte';
+import NetworkNode from './NetworkNode';
+import NetworkPaletteIcon from './NetworkPaletteIcon';
 
 /** Network device and visual-boundary palette entries, generated from one catalog. */
 export const networkShapes: readonly NodeShape[] = NETWORK_DEFINITIONS.map((definition) => ({

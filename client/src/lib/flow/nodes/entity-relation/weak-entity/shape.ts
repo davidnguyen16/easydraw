@@ -1,7 +1,7 @@
 import type { NodeShape } from '../../types';
-import Component from '../entity/component.svelte';
+import Component from '../entity/component';
 import { createEntityDefaultData, entityFieldsPanel } from '../entity/shape';
-import Icon from './icon.svelte';
+import Icon from './icon';
 
 export const weakEntityShape: NodeShape = {
 	id: 'WeakEntityNode',

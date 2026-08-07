@@ -15,7 +15,7 @@
  * from the palette. They're merged into xyflow's `nodeTypes` map directly in
  * Flow.svelte (see ANCHOR_NODE_TYPE usage there).
  */
-import type { Node } from '@xyflow/svelte';
+import type { Node } from '@xyflow/react';
 
 /** xyflow node `type` string for connection anchors. */
 export const ANCHOR_NODE_TYPE = 'connection-anchor';
@@ -45,11 +45,11 @@ export function createAnchorNode(id: string, position: { x: number; y: number })
 		// selectable. All endpoint interaction (grab + drag-to-reconnect) lives on
 		// the edge's EndpointHandle one z-layer below; if the anchor stayed
 		// interactive it would steal the pointer over the dot's centre (cursor
-		// flicker, dead drag). The `class` is the hook for the CSS that forces
+		// flicker, dead drag). The `className` is the hook for the CSS that forces
 		// `pointer-events: none` on the whole node subtree.
 		draggable: false,
 		selectable: false,
-		class: 'connection-anchor-node'
+		className: 'connection-anchor-node'
 	} satisfies Node;
 }
 

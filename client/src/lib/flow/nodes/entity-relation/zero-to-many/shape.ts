@@ -1,5 +1,5 @@
 import type { NodeShape } from '../../types';
-import Icon from './icon.svelte';
+import Icon from './icon';
 
 /**
  * Zero-to-Many (optional) cardinality — a CONNECTION preset, not a node.

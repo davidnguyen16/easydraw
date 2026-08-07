@@ -1,5 +1,3 @@
-import { browser } from '$app/environment';
-
 const EASYDRAW_STORAGE_PREFIX = 'easydraw.';
 
 function clearEasyDrawKeys(storage: Storage) {
@@ -19,7 +17,7 @@ function clearEasyDrawKeys(storage: Storage) {
  * same origin.
  */
 export function clearEasyDrawBrowserData(): void {
-	if (!browser) return;
+	if (typeof window === 'undefined') return;
 
 	try {
 		clearEasyDrawKeys(window.localStorage);

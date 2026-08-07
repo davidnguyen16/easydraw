@@ -1,6 +1,6 @@
 import type { NodeShape } from '../../types';
-import Component from '../../ShapeNode.svelte';
-import Icon from './icon.svelte';
+import Component from '../../ShapeNode';
+import Icon from './icon';
 
 // Diamond geometry reused under the flowchart name.
 export const decisionShape: NodeShape = {

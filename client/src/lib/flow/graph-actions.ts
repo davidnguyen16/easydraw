@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import type { Edge, Node } from '@xyflow/svelte';
+import type { Edge, Node } from '@xyflow/react';
 import { ANCHOR_NODE_TYPE } from './nodes/anchor/anchor';
 
 export interface ClipboardSnapshot {

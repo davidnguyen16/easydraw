@@ -110,8 +110,7 @@ jobs:
       - name: Install client dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Check client types
-        run: npm run check
-
+      # `next build` type-checks the whole app, so it covers what the SvelteKit
+      # `npm run check` step used to do.
       - name: Build client
         run: npm run build

@@ -1,4 +1,4 @@
-import type { Viewport } from '@xyflow/svelte';
+import type { Viewport } from '@xyflow/react';
 
 export interface CanvasNavigationController {
 	constrainViewport: (viewport: Viewport) => Viewport;

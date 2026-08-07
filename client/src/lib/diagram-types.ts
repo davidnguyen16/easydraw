@@ -1,4 +1,4 @@
-import { Database, GitBranch, Workflow, Network } from '@lucide/svelte';
+import { Database, GitBranch, Workflow, Network } from 'lucide-react';
 
 /** The diagram kinds a user can create. Mirrors the server's allowed `type` values. */
 export type DiagramType = 'erd' | 'uml' | 'flowchart' | 'dfd';

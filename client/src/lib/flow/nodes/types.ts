@@ -14,8 +14,8 @@
  * data, StylePanel custom tabs) is derived from the registry — no fan-out
  * editing required when the catalog grows.
  */
-import type { Component } from 'svelte';
-import type { Node, NodeProps } from '@xyflow/svelte';
+import type { ComponentType } from 'react';
+import type { Node, NodeProps } from '@xyflow/react';
 
 /** Sidebar palette grouping. Add new values here as new categories appear. */
 export type NodeCategory = 'basic' | 'arrows' | 'flowchart' | 'entity-relation' | 'uml' | 'network';
@@ -44,7 +44,7 @@ export interface NodePanelProps {
 export interface NodePanel {
 	/** Tab label shown in StylePanel (e.g. "Fields"). */
 	label: string;
-	component: Component<NodePanelProps>;
+	component: ComponentType<NodePanelProps>;
 }
 
 export interface NodeShape {
@@ -68,9 +68,9 @@ export interface NodeShape {
 	 * connection-preset tiles (`edgePreset` set) — those never render a node,
 	 * so they're skipped when building the xyflow nodeTypes map.
 	 */
-	component?: Component<NodeProps>;
+	component?: ComponentType<NodeProps>;
 	/** SVG icon component rendered inside the sidebar palette tile. */
-	icon: Component<any>;
+	icon: ComponentType<any>;
 	/** Optional props forwarded only to the sidebar palette icon. */
 	paletteIconProps?: Record<string, unknown>;
 	/** Returns the initial data payload when a tile of this shape is dropped. */

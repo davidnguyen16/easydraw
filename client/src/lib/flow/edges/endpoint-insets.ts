@@ -1,4 +1,4 @@
-import { Position } from '@xyflow/svelte';
+import { Position } from '@xyflow/react';
 import { MARKER_GLYPHS } from './marker-glyphs';
 import type { Rect } from './routing';
 import type { MarkerKind, Point } from './types';

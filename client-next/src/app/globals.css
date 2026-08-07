@@ -1,0 +1,251 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Design tokens (Tailwind v4 CSS-first config), ported 1:1 from the SvelteKit
+   client. These become utilities, e.g. `bg-mq-maroon`, `text-mq-red`,
+   `border-line`, `text-ink-muted`, so the MQ palette lives in one place.
+--------------------------------------------------------------------------- */
+@theme {
+	/* Brand reds */
+	--color-mq-maroon: #76232f;
+	--color-mq-red: #a6192e;
+	--color-mq-red-hover: #c01933;
+	--color-mq-pink: #fbeef0;
+
+	/* Ink / text */
+	--color-ink: #2c2c2a;
+	--color-ink-soft: #373a36;
+	--color-ink-muted: #8a8b83;
+	--color-toolbar-text: #4a4c48;
+
+	/* Surfaces + lines */
+	--color-panel: #f5f3ef;
+	--color-surface-hover: #efece6;
+	--color-line: #d6d2c4;
+	--color-line-soft: #e3e0d6;
+	--color-line-dropdown: #ebe5d8;
+
+	/* Default UI font */
+	--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   Editor fonts — one .woff2 per family in public/fonts/ (served at /fonts/).
+   Family names must match the ToolBar font list exactly. Inter is the default.
+--------------------------------------------------------------------------- */
+@font-face {
+	font-family: 'Bergamo Std';
+	src: url('/fonts/bergamo-std.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Cousine';
+	src: url('/fonts/cousine.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Dustismo';
+	src: url('/fonts/dustismo.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Gentium Basic';
+	src: url('/fonts/gentium-basic.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Inter';
+	src: url('/fonts/inter.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Kirsty';
+	src: url('/fonts/kirsty.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Komika Hand';
+	src: url('/fonts/komika-hand.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Liberation Mono';
+	src: url('/fonts/liberation-mono.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Liberation Sans';
+	src: url('/fonts/liberation-sans.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Liberation Serif';
+	src: url('/fonts/liberation-serif.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Orbitron';
+	src: url('/fonts/orbitron.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'SF Arch Rival';
+	src: url('/fonts/sf-arch-rival.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'SF Cartoonist Hand';
+	src: url('/fonts/sf-cartoonist-hand.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* Custom base/reset rules — inside `@layer base` so Tailwind utilities (later
+   `utilities` layer) can still override them. */
+@layer base {
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
+
+	*:not(dialog) {
+		margin: 0;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		html {
+			interpolate-size: allow-keywords;
+		}
+	}
+
+	html,
+	body {
+		height: 100%;
+	}
+
+	body {
+		font-family: 'Inter', system-ui, -apple-system, sans-serif;
+		line-height: 1.5;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	/* Full-screen editor route locks page scroll (toggled by the editor page). */
+	body.editor-mode {
+		overflow: hidden;
+	}
+}
+
+/* Toolbar hover tooltip — pseudo-element text via content: attr(...). Kept as
+   plain CSS (Tailwind's content util can't express attr()). `.tb-tip` reads
+   aria-label; `.tb-tip-data` reads data-tip. Host buttons are `relative`. */
+.tb-tip::after,
+.tb-tip-data::after,
+.mb-tip::after {
+	position: absolute;
+	top: calc(100% + 7px);
+	left: 50%;
+	transform: translateX(-50%);
+	background: #373a36;
+	color: #fff;
+	font-family: system-ui, -apple-system, sans-serif;
+	font-size: 0.72rem;
+	font-weight: 500;
+	padding: 4px 8px;
+	border-radius: 4px;
+	white-space: nowrap;
+	z-index: 200;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.12s ease;
+}
+.tb-tip::after,
+.mb-tip::after {
+	content: attr(aria-label);
+}
+.tb-tip-data::after {
+	content: attr(data-tip);
+}
+.tb-tip:hover::after,
+.tb-tip-data:hover::after,
+.mb-tip:hover::after {
+	opacity: 1;
+	transition-delay: 0.45s;
+}
+
+/* Legal page prose (LegalSection children) — ported from LegalSection.svelte's
+   scoped :global block; namespaced under .legal-copy so nothing else is hit. */
+.legal-copy p + p,
+.legal-copy p + ul,
+.legal-copy p + ol,
+.legal-copy ul + p,
+.legal-copy ol + p,
+.legal-copy div + p,
+.legal-copy p + div {
+	margin-top: 1rem;
+}
+.legal-copy ul,
+.legal-copy ol {
+	padding-left: 1.25rem;
+}
+.legal-copy ul {
+	list-style: disc;
+}
+.legal-copy ol {
+	list-style: decimal;
+}
+.legal-copy li + li {
+	margin-top: 0.5rem;
+}
+.legal-copy li::marker {
+	color: #a6192e;
+}
+.legal-copy a {
+	color: #a6192e;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.legal-copy a:hover {
+	color: #76232f;
+}
+.legal-copy strong {
+	color: #2c2c2a;
+	font-weight: 600;
+}
+.legal-copy h3 {
+	margin-top: 1.25rem;
+	margin-bottom: 0.4rem;
+	color: #2c2c2a;
+	font-size: 0.95rem;
+	font-weight: 600;
+}
+
+/* Full-screen editor locks page scroll (added to <body> by the editor route). */
+body.editor-mode {
+	overflow: hidden;
+}

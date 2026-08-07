@@ -11,7 +11,6 @@ import {
   getCanvasPageId,
   getBaselineSignature,
   getSavedMetaSignature,
-  markSavedMetaInitial,
   createCanvasSignature,
   createMetaSignature,
   scheduleAutosave,
@@ -68,14 +67,12 @@ export default function DiagramPersistence({ diagramId }: { diagramId: string })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges]);
 
-  // Metadata (title / status) change → debounced autosave, independent of canvas.
+  // Metadata (title / status) change → debounced autosave, independent of the
+  // canvas, so renaming the file or flipping its status saves on its own.
+  // hydrateCanvasFromStore establishes the baseline this compares against.
   useEffect(() => {
     const metaSignature = createMetaSignature();
     if (getIsHydrating() || !getCanvasPageId()) return;
-    if (getSavedMetaSignature() === null) {
-      markSavedMetaInitial();
-      return;
-    }
     if (metaSignature === getSavedMetaSignature()) return;
     scheduleAutosave(diagramId, metaSignature);
     // eslint-disable-next-line react-hooks/exhaustive-deps

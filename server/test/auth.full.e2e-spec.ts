@@ -161,7 +161,12 @@ describe('POST /auth/login (full e2e)', () => {
     });
 
     // Verify the real authentication cookie.
-    const cookies = response.headers['set-cookie'] ?? [];
+    const setCookieHeader = response.headers['set-cookie'];
+    const cookies = Array.isArray(setCookieHeader)
+      ? setCookieHeader
+      : typeof setCookieHeader === 'string'
+      ? [setCookieHeader]
+      : [];
 
     expect(cookies.length).toBeGreaterThan(0);
     expect(cookies.join(';')).toContain('access_token=');

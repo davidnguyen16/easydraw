@@ -182,7 +182,10 @@ export function groupSelectedNodes(nodes: Node[]) {
 		type: 'group',
 		position: { x: minX - padding, y: minY - padding },
 		data: {},
-		style: `width: ${maxX - minX + padding * 2}px; height: ${maxY - minY + padding * 2}px;`
+		// React needs a CSSProperties object here — a CSS *string* (what the
+		// SvelteKit app wrote) makes React assign into CSSStyleDeclaration by
+		// index and throw "Indexed property setter is not supported".
+		style: { width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 }
 	} as unknown as Node;
 
 	const selectedIds = new Set(selected.map((node) => node.id));

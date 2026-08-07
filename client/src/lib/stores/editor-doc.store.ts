@@ -37,6 +37,39 @@ export interface EditorState {
 
 const STORAGE_KEY = 'easydraw.editor.v1';
 
+/**
+ * Diagrams saved by the SvelteKit app stored `node.style` as a CSS *string*
+ * (`"width: 150px; height: 70px;"`). React expects a CSSProperties object — a
+ * string makes React assign into CSSStyleDeclaration by index and throw
+ * "Failed to set an indexed property [0]", which kills the whole render.
+ * Convert on the way in so existing documents keep working.
+ */
+function parseStyleString(style: string): Record<string, string> {
+  const parsed: Record<string, string> = {};
+  for (const declaration of style.split(';')) {
+    const separator = declaration.indexOf(':');
+    if (separator === -1) continue;
+    const property = declaration.slice(0, separator).trim();
+    const value = declaration.slice(separator + 1).trim();
+    if (!property || !value) continue;
+    // `background-color` -> `backgroundColor`
+    parsed[property.replace(/-([a-z])/g, (_, char: string) => char.toUpperCase())] = value;
+  }
+  return parsed;
+}
+
+function normalizePageNodes(page: EditorPage): EditorPage {
+  if (!page.nodes.some((node) => typeof node.style === 'string')) return page;
+  return {
+    ...page,
+    nodes: page.nodes.map((node) =>
+      typeof node.style === 'string'
+        ? { ...node, style: parseStyleString(node.style) as Node['style'] }
+        : node,
+    ),
+  };
+}
+
 // Creates a stable string signature for dirty-checking a page against a snapshot.
 export function getPageSignature(page: EditorPage) {
   return JSON.stringify({ name: page.name, nodes: page.nodes, edges: page.edges });
@@ -207,10 +240,11 @@ export const useEditorDoc = create<EditorDocStore>((set, get) => ({
       const parsedState = JSON.parse(jsonPayload) as unknown;
       if (!isEditorState(parsedState)) return false;
 
+      const pages = parsedState.pages.map(normalizePageNodes);
       set({
-        pages: parsedState.pages,
+        pages,
         activePageId: parsedState.activePageId,
-        savedPageSignatures: buildPageSignatures(parsedState.pages),
+        savedPageSignatures: buildPageSignatures(pages),
         canvasDirtyPageIds: [],
       });
 

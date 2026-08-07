@@ -1,54 +1,33 @@
-// Phase 0 scaffold check — verifies Tailwind v4 + the ported @theme tokens +
-// the editor fonts all render. Replaced by the real landing page in Phase 6.
+import type { Metadata } from 'next';
+import LandingNav from '@/lib/components/landing/LandingNav';
+import Hero from '@/lib/components/landing/Hero';
+import DiagramTypes from '@/lib/components/landing/DiagramTypes';
+import Features from '@/lib/components/landing/Features';
+import HowItWorks from '@/lib/components/landing/HowItWorks';
+import FinalCTA from '@/lib/components/landing/FinalCTA';
+import LandingFooter from '@/lib/components/landing/LandingFooter';
 
-const SWATCHES: { name: string; className: string }[] = [
-  { name: "mq-maroon", className: "bg-mq-maroon" },
-  { name: "mq-red", className: "bg-mq-red" },
-  { name: "mq-pink", className: "bg-mq-pink" },
-  { name: "ink", className: "bg-ink" },
-  { name: "panel", className: "bg-panel" },
-  { name: "surface-hover", className: "bg-surface-hover" },
-  { name: "line", className: "bg-line" },
-];
-
-const FONTS = ["Inter", "Gentium Basic", "Orbitron", "Komika Hand", "Liberation Mono"];
+export const metadata: Metadata = {
+  title: 'EasyDraw — Design technical diagrams with ease',
+  description:
+    'ERDs and flowcharts in a clean, intuitive canvas — with flexible shapes for UML and data-flow diagrams. Free to use.',
+};
 
 export default function Home() {
+  // Warm cream page ground under the glassy white/80 sticky header — scrolled
+  // content shows through the header's backdrop blur, everything below sits on
+  // cream.
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 bg-panel p-10">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold">
-          <span className="text-mq-red">Easy</span>
-          <span className="text-ink">Draw</span>
-        </h1>
-        <p className="mt-2 text-ink-muted">Next.js migration — Phase 0 scaffold ✅</p>
-      </div>
-
-      <section className="flex flex-col items-center gap-2">
-        <span className="text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">
-          THEME TOKENS
-        </span>
-        <div className="flex gap-2">
-          {SWATCHES.map((s) => (
-            <div key={s.name} className="flex flex-col items-center gap-1">
-              <span
-                className={`${s.className} h-10 w-10 rounded-md border border-line`}
-                title={s.name}
-              />
-              <span className="text-[0.6rem] text-ink-muted">{s.name}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="flex flex-col items-center gap-1">
-        <span className="text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">FONTS</span>
-        {FONTS.map((f) => (
-          <span key={f} style={{ fontFamily: f }} className="text-lg text-ink-soft">
-            {f} — The quick brown fox
-          </span>
-        ))}
-      </section>
-    </main>
+    <div className="flex min-h-screen flex-col bg-[#faf8f3]">
+      <LandingNav />
+      <main className="flex-1">
+        <Hero />
+        <DiagramTypes />
+        <Features />
+        <HowItWorks />
+        <FinalCTA />
+      </main>
+      <LandingFooter />
+    </div>
   );
 }

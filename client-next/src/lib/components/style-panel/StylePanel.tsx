@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Node } from '@xyflow/react';
 import StyleTab from './StyleTab';
 import TextTab from './TextTab';
 import ArrangeTab from './ArrangeTab';
 import type { NodeStyleData } from './types';
+import { getShape } from '@/lib/flow/nodes/registry';
 import { FLOATING_STYLE_PANEL_RIGHT_GAP_PX, FLOATING_STYLE_PANEL_WIDTH_PX } from './layout';
 
-// Ported from StylePanel.svelte. The shape-specific custom tab (Entity's Fields
-// editor) is driven by the shape registry in the Svelte app — omitted here until
-// the registry is ported; Style / Text / Arrange match 1:1.
-type StyleTabId = 'style' | 'text' | 'arrange';
+// Ported from StylePanel.svelte. Shapes may ship a custom editor tab via the
+// registry (e.g. EntityNode's Fields editor) — surfaced generically here.
+type StyleTabId = 'style' | 'text' | 'panel' | 'arrange';
 
 interface Props {
   node: Node;
@@ -48,8 +48,20 @@ export default function StylePanel({
 }: Props) {
   const [activeTab, setActiveTab] = useState<StyleTabId>('style');
 
+  // The shape registry tells us whether the selected node ships a custom editor
+  // tab (e.g. EntityNode's Fields editor). No node-type branching here.
+  const shape = node.type ? getShape(node.type) : undefined;
+  const customPanel = shape?.panel;
+
+  // If the active node's shape has no custom panel while that tab is open, fall
+  // back to Style.
+  useEffect(() => {
+    if (!customPanel && activeTab === 'panel') setActiveTab('style');
+  }, [customPanel, activeTab]);
+
   // The style fields live on node.data so they survive page snapshots.
   const style = (node.data ?? {}) as NodeStyleData;
+  const PanelComponent = customPanel?.component;
 
   const renderTab = (id: StyleTabId, label: string) => (
     <button
@@ -71,6 +83,7 @@ export default function StylePanel({
       <div className="flex flex-shrink-0 border-b border-line" role="tablist" aria-label="Node styling tabs">
         {renderTab('style', 'Style')}
         {renderTab('text', 'Text')}
+        {customPanel && renderTab('panel', customPanel.label)}
         {renderTab('arrange', 'Arrange')}
       </div>
 
@@ -84,6 +97,8 @@ export default function StylePanel({
             onFontPreview={onFontPreview}
             onFontPreviewEnd={onFontPreviewEnd}
           />
+        ) : activeTab === 'panel' && PanelComponent ? (
+          <PanelComponent node={node} onDataChange={onStyleChange} />
         ) : (
           <ArrangeTab
             node={node}

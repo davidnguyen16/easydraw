@@ -165,7 +165,8 @@
    plain CSS (Tailwind's content util can't express attr()). `.tb-tip` reads
    aria-label; `.tb-tip-data` reads data-tip. Host buttons are `relative`. */
 .tb-tip::after,
-.tb-tip-data::after {
+.tb-tip-data::after,
+.mb-tip::after {
 	position: absolute;
 	top: calc(100% + 7px);
 	left: 50%;
@@ -183,14 +184,68 @@
 	opacity: 0;
 	transition: opacity 0.12s ease;
 }
-.tb-tip::after {
+.tb-tip::after,
+.mb-tip::after {
 	content: attr(aria-label);
 }
 .tb-tip-data::after {
 	content: attr(data-tip);
 }
 .tb-tip:hover::after,
-.tb-tip-data:hover::after {
+.tb-tip-data:hover::after,
+.mb-tip:hover::after {
 	opacity: 1;
 	transition-delay: 0.45s;
+}
+
+/* Legal page prose (LegalSection children) — ported from LegalSection.svelte's
+   scoped :global block; namespaced under .legal-copy so nothing else is hit. */
+.legal-copy p + p,
+.legal-copy p + ul,
+.legal-copy p + ol,
+.legal-copy ul + p,
+.legal-copy ol + p,
+.legal-copy div + p,
+.legal-copy p + div {
+	margin-top: 1rem;
+}
+.legal-copy ul,
+.legal-copy ol {
+	padding-left: 1.25rem;
+}
+.legal-copy ul {
+	list-style: disc;
+}
+.legal-copy ol {
+	list-style: decimal;
+}
+.legal-copy li + li {
+	margin-top: 0.5rem;
+}
+.legal-copy li::marker {
+	color: #a6192e;
+}
+.legal-copy a {
+	color: #a6192e;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.legal-copy a:hover {
+	color: #76232f;
+}
+.legal-copy strong {
+	color: #2c2c2a;
+	font-weight: 600;
+}
+.legal-copy h3 {
+	margin-top: 1.25rem;
+	margin-bottom: 0.4rem;
+	color: #2c2c2a;
+	font-size: 0.95rem;
+	font-weight: 600;
+}
+
+/* Full-screen editor locks page scroll (added to <body> by the editor route). */
+body.editor-mode {
+	overflow: hidden;
 }

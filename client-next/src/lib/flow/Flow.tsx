@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useDiagramId } from './use-diagram-id';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -13,6 +14,7 @@ import {
   type EdgeTypes,
   type Node,
   type Edge,
+  type OnConnectEnd,
 } from '@xyflow/react';
 import { nanoid } from 'nanoid';
 import '@xyflow/react/dist/style.css';
@@ -22,7 +24,7 @@ import ShapeNode from './nodes/ShapeNode';
 import EntityNode from './nodes/entity-relation/entity/component';
 import NetworkNode from './nodes/network/NetworkNode';
 import AnchorNode from './nodes/anchor/AnchorNode';
-import { ANCHOR_NODE_TYPE, ANCHOR_HANDLE_ID } from './nodes/anchor/anchor';
+import { ANCHOR_NODE_TYPE, ANCHOR_HANDLE_ID, createAnchorNode } from './nodes/anchor/anchor';
 import { NETWORK_DEFINITIONS } from './nodes/network/definitions';
 import { VARIANTS } from './nodes/shape-geometry';
 import ConnectionEdge from './edges/ConnectionEdge';
@@ -39,11 +41,20 @@ import {
 } from './graph-actions';
 import { useEditorStore } from '@/lib/stores/editor.store';
 import { EditorProvider } from './EditorContext';
+import MenuBar from '@/lib/components/MenuBar';
 import ToolBar from '@/lib/components/ToolBar';
+import KeyboardShortcuts from './KeyboardShortcuts';
 import ContextMenu from './ContextMenu';
 import Sidebar from '@/lib/components/sidebar/Sidebar';
+import CanvasScrollbars from './CanvasScrollbars';
+import { useSidebarStore } from '@/lib/stores/sidebar.store';
+import { FLOATING_STYLE_PANEL_INSET_PX } from '@/lib/components/style-panel/layout';
 import { getShape } from './nodes/registry';
+import { MIN_ZOOM, MAX_ZOOM } from './zoom';
 import { dndState } from './dnd';
+import DiagramPersistence from './DiagramPersistence';
+import EditorFooter from '@/lib/components/EditorFooter';
+import PresentBar from '@/lib/components/PresentBar';
 
 // Every registered shape type renders through ShapeNode (it switches on the
 // geometry KIND, never on the node type); entity + network nodes have their
@@ -74,6 +85,10 @@ function Canvas() {
   const setPreview = useFontPreviewStore((s) => s.setPreview);
   const locked = useEditorStore((s) => s.locked);
   const showStylePanel = useEditorStore((s) => s.showStylePanel);
+  const showGrid = useEditorStore((s) => s.showGrid);
+  const snapToGrid = useEditorStore((s) => s.snapToGrid);
+  const presenting = useEditorStore((s) => s.presenting);
+  const sidebarWidth = useSidebarStore((s) => (s.isCollapsed ? 0 : s.renderedWidth));
 
   // Right-click context menu (position kept relative to the canvas wrapper).
   const [menu, setMenu] = useState<{ id: string; top?: number; left?: number; right?: number; bottom?: number } | null>(null);
@@ -84,6 +99,7 @@ function Canvas() {
   // styling target). Edges get their own panel in a later phase.
   const selectedNode = nodes.find((n) => n.selected && n.type !== ANCHOR_NODE_TYPE);
   const selectedEdge = edges.find((e) => e.selected);
+  const rightInset = showStylePanel && (selectedNode || selectedEdge) ? FLOATING_STYLE_PANEL_INSET_PX : 0;
 
   // Style edits land on node.data (or edge.data). Read the latest graph from the
   // store inside each handler to avoid stale closures (ported from Flow.svelte).
@@ -227,6 +243,34 @@ function Canvas() {
     st.setEdges(st.edges.map((e) => ({ ...e, selected: false })));
   };
 
+  // When a freshly dragged connection is released over EMPTY canvas (no valid
+  // handle under the pointer), xyflow fires no onConnect — so drop a floating
+  // anchor at the release point and keep the edge, that end attached to the
+  // anchor. Guarded by `toHandle` so it never double-creates alongside onConnect.
+  const handleConnectEnd: OnConnectEnd = (event, connectionState) => {
+    if (connectionState.toHandle) return;
+    const fromHandle = connectionState.fromHandle;
+    if (!fromHandle) return;
+
+    const pt = 'changedTouches' in event ? event.changedTouches[0] : event;
+    const position = rf.screenToFlowPosition({ x: pt.clientX, y: pt.clientY });
+    const anchorId = nanoid();
+    const anchor = createAnchorNode(anchorId, position);
+
+    // fromHandle is the end the user started dragging; the floating anchor takes
+    // the opposite role.
+    const base = { id: nanoid(), type: 'connection', data: { bendPoints: [] } };
+    const newEdge: Edge =
+      fromHandle.type === 'target'
+        ? { ...base, source: anchorId, sourceHandle: ANCHOR_HANDLE_ID, target: fromHandle.nodeId, targetHandle: fromHandle.id ?? null }
+        : { ...base, source: fromHandle.nodeId, sourceHandle: fromHandle.id ?? null, target: anchorId, targetHandle: ANCHOR_HANDLE_ID };
+
+    // Anchor + edge in the same tick so the anchor is always referenced.
+    const s = useFlowStore.getState();
+    s.setNodes([...s.nodes, anchor]);
+    s.setEdges([...s.edges, newEdge]);
+  };
+
   return (
     <div ref={wrapperRef} className="relative h-full w-full">
       <ReactFlow
@@ -235,75 +279,113 @@ function Canvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         connectionMode={ConnectionMode.Loose}
         connectionLineComponent={ConnectionLinePreview}
-        nodesDraggable={!locked}
-        nodesConnectable={!locked}
-        elementsSelectable={!locked}
+        minZoom={MIN_ZOOM}
+        maxZoom={MAX_ZOOM}
+        panOnScroll
+        zoomOnScroll={false}
+        nodesDraggable={!locked && !presenting}
+        nodesConnectable={!locked && !presenting}
+        elementsSelectable={!locked && !presenting}
+        snapToGrid={snapToGrid}
+        snapGrid={[20, 20]}
         onNodeContextMenu={handleNodeContextMenu}
         onPaneClick={closeMenu}
         onNodeClick={closeMenu}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         fitView
+        fitViewOptions={{ maxZoom: 1 }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} />
+        {showGrid && <Background variant={BackgroundVariant.Dots} />}
         <Controls />
       </ReactFlow>
 
-      {showStylePanel && selectedNode ? (
-        <StylePanel
-          node={selectedNode}
-          onStyleChange={handleStyleChange}
-          onFontPreview={handleFontPreview}
-          onFontPreviewEnd={handleFontPreviewEnd}
-          onPositionChange={handlePositionChange}
-          onSizeChange={handleSizeChange}
-          onBringToFront={handleBringToFront}
-          onSendToBack={handleSendToBack}
-          onDuplicate={handleDuplicate}
-          onDelete={handleDelete}
-        />
-      ) : showStylePanel && selectedEdge ? (
-        <ConnectionStylePanel
-          edge={selectedEdge}
-          onDataChange={handleEdgeDataChange}
-          onDelete={handleDelete}
-        />
-      ) : null}
+      {/* Present mode hides all editor chrome — just the read-only canvas. */}
+      {!presenting && (
+        <>
+          <CanvasScrollbars
+            nodes={nodes}
+            edges={edges}
+            leftInset={sidebarWidth}
+            rightInset={rightInset}
+            onNavigationStart={closeMenu}
+          />
 
-      {menu && (
-        <ContextMenu
-          id={menu.id}
-          top={menu.top}
-          left={menu.left}
-          right={menu.right}
-          bottom={menu.bottom}
-          onClick={closeMenu}
-        />
+          {showStylePanel && selectedNode ? (
+            <StylePanel
+              node={selectedNode}
+              onStyleChange={handleStyleChange}
+              onFontPreview={handleFontPreview}
+              onFontPreviewEnd={handleFontPreviewEnd}
+              onPositionChange={handlePositionChange}
+              onSizeChange={handleSizeChange}
+              onBringToFront={handleBringToFront}
+              onSendToBack={handleSendToBack}
+              onDuplicate={handleDuplicate}
+              onDelete={handleDelete}
+            />
+          ) : showStylePanel && selectedEdge ? (
+            <ConnectionStylePanel
+              edge={selectedEdge}
+              onDataChange={handleEdgeDataChange}
+              onDelete={handleDelete}
+            />
+          ) : null}
+
+          {menu && (
+            <ContextMenu
+              id={menu.id}
+              top={menu.top}
+              left={menu.left}
+              right={menu.right}
+              bottom={menu.bottom}
+              onClick={closeMenu}
+            />
+          )}
+
+          <Sidebar />
+        </>
       )}
-
-      <Sidebar />
     </div>
   );
 }
 
-// Full editor shell: ReactFlowProvider → EditorProvider (context for the
-// chrome) → ToolBar on top + the canvas filling the rest.
+// MenuBar + ToolBar + footer are hidden in present mode (read-only fullscreen
+// canvas). DiagramPersistence runs the sync/autosave effects; PresentBar is the
+// floating present-mode control.
+function FlowShell({ diagramId }: { diagramId: string }) {
+  const presenting = useEditorStore((s) => s.presenting);
+  return (
+    <>
+      <div className="flex h-full w-full flex-col">
+        {!presenting && <MenuBar />}
+        {!presenting && <ToolBar />}
+        <div className="relative min-h-0 flex-1">
+          <Canvas />
+        </div>
+        {!presenting && <EditorFooter />}
+      </div>
+      {!presenting && <KeyboardShortcuts />}
+      {presenting && <PresentBar />}
+      <DiagramPersistence diagramId={diagramId} />
+    </>
+  );
+}
+
+// Full editor shell: ReactFlowProvider → EditorProvider (context for the chrome).
 export default function Flow() {
+  const diagramId = useDiagramId();
   return (
     <ReactFlowProvider>
       <EditorProvider>
-        <div className="flex h-full w-full flex-col">
-          <ToolBar />
-          <div className="relative min-h-0 flex-1">
-            <Canvas />
-          </div>
-        </div>
+        <FlowShell diagramId={diagramId} />
       </EditorProvider>
     </ReactFlowProvider>
   );

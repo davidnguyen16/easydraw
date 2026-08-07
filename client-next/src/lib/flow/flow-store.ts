@@ -14,48 +14,10 @@ import {
 import { createAnchorNode } from './nodes/anchor/anchor';
 import type { Point } from './edges/types';
 
-// Phase 3/4 demo graph — one node per geometry KIND plus entity + network, and
-// a `connection` edge between two shapes so the custom edge renders. Replaced
-// by real persistence in Phase 7.
-const initialNodes: Node[] = [
-  { id: 'rect', type: 'RectangleNode', position: { x: 40, y: 40 }, width: 150, height: 70, data: { label: 'Rectangle' } },
-  { id: 'round', type: 'RoundedRectangleNode', position: { x: 230, y: 40 }, width: 150, height: 70, data: { label: 'Rounded' } },
-  { id: 'ellipse', type: 'EllipseNode', position: { x: 420, y: 40 }, width: 150, height: 90, data: { label: 'Ellipse' } },
-  { id: 'diamond', type: 'DiamondNode', position: { x: 40, y: 170 }, width: 120, height: 120, data: { label: 'Diamond' } },
-  { id: 'para', type: 'ParallelogramNode', position: { x: 210, y: 180 }, width: 170, height: 90, data: { label: 'Parallelogram' } },
-  { id: 'cube', type: 'CubeNode', position: { x: 430, y: 175 }, width: 120, height: 110, data: { label: 'Cube' } },
-  { id: 'donut', type: 'DonutNode', position: { x: 40, y: 330 }, width: 120, height: 120, data: { label: 'Donut' } },
-  { id: 'actor', type: 'ActorNode', position: { x: 220, y: 320 }, width: 90, height: 150, data: { label: 'Actor' } },
-  { id: 'text', type: 'TextNode', position: { x: 370, y: 345 }, width: 140, height: 40, data: { label: 'Text node' } },
-  {
-    id: 'entity',
-    type: 'EntityNode',
-    position: { x: 620, y: 60 },
-    width: 200,
-    height: 120,
-    data: { label: 'User', fields: [{ name: 'id', key: 'PK' }, { name: 'email' }, { name: 'name' }] },
-  },
-  {
-    id: 'router',
-    type: 'NetworkRouterNode',
-    position: { x: 650, y: 250 },
-    width: 96,
-    height: 96,
-    data: { label: 'Router', accentColor: '#a6192e' },
-  },
-];
-
-const initialEdges: Edge[] = [
-  {
-    id: 'demo-conn',
-    type: 'connection',
-    source: 'rect',
-    sourceHandle: 'right',
-    target: 'ellipse',
-    targetHandle: 'left',
-    data: { bendPoints: [] },
-  },
-];
+// The canvas starts empty; DiagramPersistence hydrates it from the active page
+// (loaded via GET /diagrams/:id) on mount. A new diagram has no nodes.
+const initialNodes: Node[] = [];
+const initialEdges: Edge[] = [];
 
 export type FlowState = {
   nodes: Node[];

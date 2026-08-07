@@ -224,22 +224,12 @@ export default function ConnectionEdge({
 
   const labels = (connectionData.labels ?? []) as ConnectionLabel[];
 
-  // Footprint of each committed label so pills can DODGE the text.
-  const labelCharPx = Math.max(7, labelFontSize * 0.55);
-  const labelBoxes = labels.map((l) => {
-    const c = pointAtT(l.t);
-    return {
-      cx: c.x,
-      cy: c.y,
-      halfW: Math.max(10, (l.text.length * labelCharPx) / 2) + 12,
-      halfH: Math.max(21, labelFontSize + 8),
-    };
-  });
-  function nearLabel(p: Point): boolean {
-    return labelBoxes.some((b) => Math.abs(b.cx - p.x) < b.halfW && Math.abs(b.cy - p.y) < b.halfH);
-  }
-
   // ─── Path arc-length math (positions labels ALONG the line) ─────────
+  // Must stay ABOVE the label footprints below: those call pointAtT during
+  // render, and `pointAtT` reads these two consts. Declaring them afterwards
+  // throws "Cannot access 'totalLength' before initialization" for any
+  // connection that carries a label (an empty label list never calls it, which
+  // is what made this look intermittent).
   const segLengths = segments.map((s) => Math.hypot(s.p2.x - s.p1.x, s.p2.y - s.p1.y));
   const totalLength = segLengths.reduce((sum, l) => sum + l, 0);
 
@@ -257,6 +247,21 @@ export default function ConnectionEdge({
       acc += len;
     }
     return segments[segments.length - 1].p2;
+  }
+
+  // Footprint of each committed label so pills can DODGE the text.
+  const labelCharPx = Math.max(7, labelFontSize * 0.55);
+  const labelBoxes = labels.map((l) => {
+    const c = pointAtT(l.t);
+    return {
+      cx: c.x,
+      cy: c.y,
+      halfW: Math.max(10, (l.text.length * labelCharPx) / 2) + 12,
+      halfH: Math.max(21, labelFontSize + 8),
+    };
+  });
+  function nearLabel(p: Point): boolean {
+    return labelBoxes.some((b) => Math.abs(b.cx - p.x) < b.halfW && Math.abs(b.cy - p.y) < b.halfH);
   }
 
   // Clamped projection of `p` onto segment a→b: fraction along + distance.

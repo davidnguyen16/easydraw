@@ -1,6 +1,6 @@
 import type { NodeShape } from '../../types';
-import Component from '../../ShapeNode.svelte';
-import Icon from './icon.svelte';
+import Component from '../../ShapeNode';
+import Icon from './icon';
 
 export const arrowUpShape: NodeShape = {
 	id: 'ArrowUpNode',

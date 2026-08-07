@@ -1,5 +1,5 @@
 import type { NodeShape } from '../../types';
-import Icon from './icon.svelte';
+import Icon from './icon';
 
 /**
  * One-to-Many cardinality — a connection preset whose end marker combines

@@ -1,18 +1,18 @@
 import type { CardinalityPresetConfig } from '../shared/cardinality-preset';
 import { createCardinalityPreset } from '../shared/cardinality-preset';
-import OneIcon from './one-icon.svelte';
-import ZeroToOneIcon from './zero-to-one-icon.svelte';
-import ManyIcon from './many-icon.svelte';
-import ManyToManyIcon from './many-to-many-icon.svelte';
-import OneOptionalToManyOptionalIcon from './one-optional-to-many-optional-icon.svelte';
-import OneMandatoryToManyOptionalIcon from './one-mandatory-to-many-optional-icon.svelte';
-import OneMandatoryToOneOptionalIcon from './one-mandatory-to-one-optional-icon.svelte';
-import OneOptionalToOneOptionalIcon from './one-optional-to-one-optional-icon.svelte';
-import OneMandatoryToManyMandatoryIcon from './one-mandatory-to-many-mandatory-icon.svelte';
-import OneOptionalToManyMandatoryIcon from './one-optional-to-many-mandatory-icon.svelte';
-import ManyMandatoryToManyMandatoryIcon from './many-mandatory-to-many-mandatory-icon.svelte';
-import ManyOptionalToManyMandatoryIcon from './many-optional-to-many-mandatory-icon.svelte';
-import ManyOptionalToManyOptionalIcon from './many-optional-to-many-optional-icon.svelte';
+import OneIcon from './one-icon';
+import ZeroToOneIcon from './zero-to-one-icon';
+import ManyIcon from './many-icon';
+import ManyToManyIcon from './many-to-many-icon';
+import OneOptionalToManyOptionalIcon from './one-optional-to-many-optional-icon';
+import OneMandatoryToManyOptionalIcon from './one-mandatory-to-many-optional-icon';
+import OneMandatoryToOneOptionalIcon from './one-mandatory-to-one-optional-icon';
+import OneOptionalToOneOptionalIcon from './one-optional-to-one-optional-icon';
+import OneMandatoryToManyMandatoryIcon from './one-mandatory-to-many-mandatory-icon';
+import OneOptionalToManyMandatoryIcon from './one-optional-to-many-mandatory-icon';
+import ManyMandatoryToManyMandatoryIcon from './many-mandatory-to-many-mandatory-icon';
+import ManyOptionalToManyMandatoryIcon from './many-optional-to-many-mandatory-icon';
+import ManyOptionalToManyOptionalIcon from './many-optional-to-many-optional-icon';
 
 const CARDINALITY_PRESETS = [
 	{

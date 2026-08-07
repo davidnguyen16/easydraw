@@ -1,37 +1,32 @@
 {
-	"name": "easydraw",
-	"private": true,
-	"version": "0.0.1",
-	"type": "module",
-	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"format": "prettier --write .",
-		"lint": "prettier --check ."
-	},
-	"devDependencies": {
-		"@sveltejs/adapter-auto": "^7.0.0",
-		"@sveltejs/adapter-static": "^3.0.10",
-		"@sveltejs/kit": "^2.49.1",
-		"@sveltejs/vite-plugin-svelte": "^6.2.1",
-		"@tailwindcss/vite": "^4.3.2",
-		"prettier": "^3.7.4",
-		"prettier-plugin-svelte": "^3.4.0",
-		"svelte": "^5.45.6",
-		"svelte-check": "^4.3.4",
-		"tailwindcss": "^4.3.2",
-		"typescript": "^5.9.3",
-		"vite": "^7.2.6"
-	},
-	"dependencies": {
-		"@lucide/svelte": "^1.21.0",
-		"@xyflow/svelte": "^1.5.0",
-		"html-to-image": "^1.11.13",
-		"jspdf": "^4.2.1",
-		"nanoid": "^5.1.6"
-	}
+  "name": "easydraw",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.11.2",
+    "html-to-image": "^1.11.13",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.28.0",
+    "nanoid": "^6.0.1",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
 }

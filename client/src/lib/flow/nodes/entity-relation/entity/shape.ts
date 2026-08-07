@@ -1,7 +1,7 @@
 import type { NodeShape } from '../../types';
-import Component from './component.svelte';
-import FieldsPanel from './FieldsPanel.svelte';
-import Icon from './icon.svelte';
+import Component from './component';
+import FieldsPanel from './FieldsPanel';
+import Icon from './icon';
 
 export function createEntityDefaultData(label = 'Entity', weak = false): Record<string, unknown> {
 	return {

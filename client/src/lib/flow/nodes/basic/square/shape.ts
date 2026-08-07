@@ -1,6 +1,6 @@
 import type { NodeShape } from '../../types';
-import Component from '../../ShapeNode.svelte';
-import Icon from './icon.svelte';
+import Component from '../../ShapeNode';
+import Icon from './icon';
 
 // Same boxed geometry as Rectangle — identity comes from the 1:1 drop box.
 export const squareShape: NodeShape = {

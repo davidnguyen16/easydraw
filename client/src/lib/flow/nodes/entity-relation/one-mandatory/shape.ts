@@ -1,5 +1,5 @@
 import type { NodeShape } from '../../types';
-import Icon from './icon.svelte';
+import Icon from './icon';
 
 /** One-and-only-one (mandatory) cardinality at the target end. */
 export const oneMandatoryShape: NodeShape = {

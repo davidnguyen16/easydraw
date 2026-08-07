@@ -1,6 +1,6 @@
 import type { ConnectionEdgeData, EdgeLineStyle, EdgeRouting } from '../../edges/types';
 import type { NodeShape } from '../types';
-import NetworkConnectionIcon from './NetworkConnectionIcon.svelte';
+import NetworkConnectionIcon from './NetworkConnectionIcon';
 
 export type NetworkConnectionKind =
 	| 'ethernet'

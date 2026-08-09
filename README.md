@@ -10,9 +10,7 @@
   <img alt="CI" src="https://github.com/davidnguyen16/easydraw/actions/workflows/ci.yml/badge.svg">
 </p>
 
-<!-- Add a screenshot of the editor here (docs/screenshot.png) and uncomment:
-![The EasyDraw editor](docs/screenshot.png)
--->
+![The EasyDraw editor: an entity-relationship diagram on the canvas, with the shape library on the left](docs/screenshot.png)
 
 ## 🌟 Highlights
 
@@ -126,6 +124,27 @@ the database itself. EasyDraw is the tool that should have existed then.
 Found a bug, or something that should work differently? Email
 **[support@easydraw.net](mailto:support@easydraw.net)**: Real usage reports
 are the main thing shaping what gets built next.
+
+## 🙏 Acknowledgements
+
+EasyDraw stands on a lot of open-source work. Particular thanks to:
+
+- **[React Flow](https://reactflow.dev)** (MIT) — the canvas primitives the
+  editor is built on
+- **[Next.js](https://nextjs.org)** and **[React](https://react.dev)** (MIT) —
+  the application framework
+- **[NestJS](https://nestjs.com)** (MIT) and **[Prisma](https://prisma.io)**
+  (Apache-2.0) — the API and its database layer
+- **[Tailwind CSS](https://tailwindcss.com)** (MIT), **[Zustand](https://zustand.docs.pmnd.rs)**
+  (MIT) and **[Lucide](https://lucide.dev)** (ISC) — styling, state and icons
+- **[html-to-image](https://github.com/bubkoo/html-to-image)** and
+  **[jsPDF](https://github.com/parallax/jsPDF)** (MIT) — image and PDF export
+- **[Helmet](https://helmetjs.github.io)**, **[Passport](https://www.passportjs.org)**,
+  **[Pino](https://getpino.io)** (MIT) and **[bcrypt.js](https://github.com/dcodeIO/bcrypt.js)**
+  (BSD-3-Clause) — security, sign-in and logging
+
+The typefaces offered in the editor are bundled under their own licences —
+[the font inventory](client/public/fonts/README.md) lists each one.
 
 ## 📄 License
 

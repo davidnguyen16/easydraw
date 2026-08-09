@@ -2,8 +2,9 @@
  * Font families offered by the editor (toolbar dropdown + style panel).
  *
  * Single source of truth: each entry must have a matching `@font-face` in
- * `src/global.css` and a `.woff2` file in `static/fonts/`. Inter is the
- * default applied app-wide (see the `body` rule in global.css).
+ * `src/app/globals.css` and a `.woff2` file in `public/fonts/` (see the README
+ * there). Inter is the default applied app-wide, via the `body` rule in
+ * `globals.css`.
  */
 export const FONT_FAMILIES = [
 	'Bergamo Std',

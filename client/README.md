@@ -1,4 +1,4 @@
-<h1 align="center">EasyDraw — Client</h1>
+<h1 align="center">EasyDraw - Client</h1>
 
 <p align="center">
   The editor itself: canvas, shape library, styling panels and export.
@@ -15,7 +15,7 @@
 ## ℹ️ Overview
 
 The client is a **fully static** Next.js application. Every page is prerendered
-at build time and served from a CDN — there is no server-side rendering in the
+at build time and served from a CDN - there is no server-side rendering in the
 request path, so the editor loads as fast as the network can deliver files, and
 hosting costs stay close to nothing.
 
@@ -39,7 +39,7 @@ Keeping these apart is what makes page switching safe: the page you are leaving
 is written back to the document before the next one is read out of it, so an
 unsaved edit can never be lost in the swap.
 
-Saving is debounced and **generation-guarded** — if you keep drawing while a
+Saving is debounced and **generation-guarded**. If you keep drawing while a
 save is in flight, only the newest request is allowed to mark the document as
 saved, so a slow response can never overwrite newer work with older state.
 
@@ -76,7 +76,7 @@ they stay put when the route changes shape.
 
 **Export captures the diagram, not the screen.** Rather than photographing the
 visible viewport, export re-anchors the canvas to the diagram's true bounds, so
-what you get is the whole drawing at full quality — including connection bends
+what you get is the whole drawing at full quality including connection bends
 that stray outside every shape.
 
 **Live style preview.** Hovering a font or size in the toolbar paints the

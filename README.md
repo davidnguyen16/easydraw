@@ -1,4 +1,9 @@
-<h1 align="center">EasyDraw</h1>
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.png">
+    <img alt="EasyDraw" src="docs/logo.png" width="278">
+  </picture>
+</h1>
 
 <p align="center">
   Design ERDs, UML and flowcharts in your browser - free, no install.

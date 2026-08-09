@@ -123,8 +123,9 @@ the database itself. EasyDraw is the tool that should have existed then.
 
 ## 📬 Feedback
 
-Found a bug, or something that should work differently? Open an issue — real
-usage reports are the main thing shaping what gets built next.
+Found a bug, or something that should work differently? Email
+**[support@easydraw.net](mailto:support@easydraw.net)** — real usage reports
+are the main thing shaping what gets built next.
 
 ## 📄 License
 

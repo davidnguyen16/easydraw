@@ -129,19 +129,19 @@ are the main thing shaping what gets built next.
 
 EasyDraw stands on a lot of open-source work. Particular thanks to:
 
-- **[React Flow](https://reactflow.dev)** (MIT) — the canvas primitives the
+- **[React Flow](https://reactflow.dev)** (MIT): the canvas primitives the
   editor is built on
-- **[Next.js](https://nextjs.org)** and **[React](https://react.dev)** (MIT) —
+- **[Next.js](https://nextjs.org)** and **[React](https://react.dev)** (MIT):
   the application framework
 - **[NestJS](https://nestjs.com)** (MIT) and **[Prisma](https://prisma.io)**
-  (Apache-2.0) — the API and its database layer
+  (Apache-2.0): the API and its database layer
 - **[Tailwind CSS](https://tailwindcss.com)** (MIT), **[Zustand](https://zustand.docs.pmnd.rs)**
-  (MIT) and **[Lucide](https://lucide.dev)** (ISC) — styling, state and icons
+  (MIT) and **[Lucide](https://lucide.dev)** (ISC): styling, state and icons
 - **[html-to-image](https://github.com/bubkoo/html-to-image)** and
-  **[jsPDF](https://github.com/parallax/jsPDF)** (MIT) — image and PDF export
+  **[jsPDF](https://github.com/parallax/jsPDF)** (MIT): image and PDF export
 - **[Helmet](https://helmetjs.github.io)**, **[Passport](https://www.passportjs.org)**,
   **[Pino](https://getpino.io)** (MIT) and **[bcrypt.js](https://github.com/dcodeIO/bcrypt.js)**
-  (BSD-3-Clause) — security, sign-in and logging
+  (BSD-3-Clause): security, sign-in and logging
 
 The typefaces offered in the editor are bundled under their own licences —
 [the font inventory](client/public/fonts/README.md) lists each one.

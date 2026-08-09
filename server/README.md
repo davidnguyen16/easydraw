@@ -1,98 +1,101 @@
+<h1 align="center">EasyDraw — Server</h1>
+
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  The API behind accounts and saved diagrams.
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+<p align="center">
+  <a href="https://easydraw.net"><b>🌐 Live app</b></a>
+  &nbsp;·&nbsp;
+  <a href="../README.md">📖 Project overview</a>
+  &nbsp;·&nbsp;
+  <a href="../client/README.md">🎨 Client</a>
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## ℹ️ Overview
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+A NestJS REST API serving `api.easydraw.net`, backed by PostgreSQL. Its job is
+deliberately small: authenticate a person, and store or return their diagrams.
+None of the drawing logic lives here — the editor does that work in the
+browser, which keeps the API fast and the running cost low.
 
-## Project setup
+## 🔌 API surface
 
-```bash
-$ npm install
-```
+**Authentication**
 
-## Compile and run the project
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `POST` | `/auth/register` | Create an account |
+| `POST` | `/auth/login` | Sign in, set the session cookie |
+| `POST` | `/auth/logout` | Clear the session |
+| `GET` | `/auth/me` | Who is signed in — drives the route guards |
+| `GET` | `/auth/google` → `/auth/google/callback` | Google OAuth sign-in |
+| `POST` | `/auth/forgot-password` | Send a reset link |
+| `POST` | `/auth/reset-password` | Set a new password from that link |
+| `DELETE` | `/auth/account` | Delete the account and its diagrams |
 
-```bash
-# development
-$ npm run start
+**Diagrams** — every route is scoped to the signed-in owner.
 
-# watch mode
-$ npm run start:dev
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/diagrams` | List the dashboard |
+| `POST` | `/diagrams` | Create |
+| `GET` | `/diagrams/:id` | Open one |
+| `PATCH` | `/diagrams/:id` | Save title, status and contents |
+| `DELETE` | `/diagrams/:id` | Delete |
 
-# production mode
-$ npm run start:prod
-```
+An interactive reference is generated from the code with Swagger.
 
-## Run tests
+## 🗃️ Data model
 
-```bash
-# unit tests
-$ npm run test
+Two tables. A **user** holds an email, an optional password hash and an
+optional Google id — either can be absent, which is what lets the same account
+be reached by password or by Google. A **diagram** belongs to one user and
+keeps its title, type, status and contents.
 
-# e2e tests
-$ npm run test:e2e
+The interesting decision is that a diagram's contents are stored as **a single
+JSONB column** rather than being decomposed into tables of nodes, edges and
+points. A diagram is only ever read and written whole, so normalising it would
+buy nothing and cost a great many joins on every open. One row in, one row out.
 
-# test coverage
-$ npm run test:cov
-```
+## 🔐 Authentication
 
-## Deployment
+Sessions are a **JWT in an httpOnly cookie**. Application JavaScript cannot
+read it, which keeps the token out of reach of cross-site scripting, and the
+browser attaches it automatically so the client never handles a token at all.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Because the API and the app are served from sibling hostnames under the same
+domain, the cookie is first-party — it survives the third-party cookie
+restrictions that break split-domain setups in Safari and Firefox.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Passwords are hashed with **bcrypt**. Password-reset links carry a single-use
+token that is stored hashed and expires shortly after it is issued, so a leaked
+database still yields no usable reset link. Reset responses are deliberately
+identical whether or not the address is registered, so the endpoint cannot be
+used to discover who has an account.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## 🛡️ Hardening
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+| Concern | Measure |
+| --- | --- |
+| Common header attacks | **Helmet** sets the standard security headers |
+| Brute force | **Throttler** rate-limits authentication routes |
+| Malformed input | **class-validator** checks every request body before it reaches the database |
+| Cross-origin abuse | CORS is restricted to the app's own origin, with credentials |
+| SQL injection | **Prisma** parameterises every query |
 
-## Resources
+## ⚡ Caching and observability
 
-Check out a few resources that may come in handy when working with NestJS:
+Dashboard listings are cached in **Redis** and keyed per user, so returning to
+the dashboard does not re-query the database each time; the cache is dropped
+when that user changes a diagram.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Requests are logged as structured JSON with **Pino**, which makes them
+searchable once shipped to log storage rather than something you read by eye.
 
-## Support
+## ☁️ Running in production
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+The API runs as a container on **AWS ECS** behind a load balancer that
+terminates TLS for `api.easydraw.net`, talking to **AWS RDS** for PostgreSQL.
+Configuration and credentials are supplied by the environment, never committed.
+Deployments are automated from the main branch by GitHub Actions.

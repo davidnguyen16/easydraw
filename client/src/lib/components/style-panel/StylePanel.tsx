@@ -7,6 +7,7 @@ import TextTab from './TextTab';
 import ArrangeTab from './ArrangeTab';
 import type { NodeStyleData } from './types';
 import { getShape } from '@/lib/flow/nodes/registry';
+import type { NodeDataChangeOptions } from '@/lib/flow/nodes/types';
 import { FLOATING_STYLE_PANEL_RIGHT_GAP_PX, FLOATING_STYLE_PANEL_WIDTH_PX } from './layout';
 
 // Ported from StylePanel.svelte. Shapes may ship a custom editor tab via the
@@ -16,6 +17,11 @@ type StyleTabId = 'style' | 'text' | 'panel' | 'arrange';
 interface Props {
   node: Node;
   onStyleChange: (patch: Partial<NodeStyleData>) => void;
+  onNodeDataChange: (
+    nodeId: string,
+    patch: Record<string, unknown>,
+    options?: NodeDataChangeOptions,
+  ) => void;
   onFontPreview: (family: string) => void;
   onFontPreviewEnd: () => void;
   onPositionChange: (x: number, y: number) => void;
@@ -37,6 +43,7 @@ const TAB_CLASS =
 export default function StylePanel({
   node,
   onStyleChange,
+  onNodeDataChange,
   onFontPreview,
   onFontPreviewEnd,
   onPositionChange,
@@ -98,7 +105,12 @@ export default function StylePanel({
             onFontPreviewEnd={onFontPreviewEnd}
           />
         ) : activeTab === 'panel' && PanelComponent ? (
-          <PanelComponent node={node} onDataChange={onStyleChange} />
+          <PanelComponent
+            node={node}
+            onDataChange={(patch, options) =>
+              onNodeDataChange(node.id, patch, options)
+            }
+          />
         ) : (
           <ArrangeTab
             node={node}

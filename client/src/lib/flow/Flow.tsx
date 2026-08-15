@@ -50,6 +50,7 @@ import CanvasScrollbars from './CanvasScrollbars';
 import { useSidebarStore } from '@/lib/stores/sidebar.store';
 import { FLOATING_STYLE_PANEL_INSET_PX } from '@/lib/components/style-panel/layout';
 import { getShape } from './nodes/registry';
+import type { NodeDataChangeOptions } from './nodes/types';
 import { MIN_ZOOM, MAX_ZOOM } from './zoom';
 import { dndState } from './dnd';
 import DiagramPersistence from './DiagramPersistence';
@@ -114,6 +115,41 @@ function Canvas() {
     if (edge) {
       s.setEdges(s.edges.map((e) => (e.id === edge.id ? { ...e, data: { ...e.data, ...patch } } : e)));
     }
+  };
+
+  const handleNodeDataChange = (
+    nodeId: string,
+    patch: Record<string, unknown>,
+    options?: NodeDataChangeOptions,
+  ) => {
+    const state = useFlowStore.getState();
+
+    state.setNodes(
+      state.nodes.map((node) => {
+        if (node.id !== nodeId) return node;
+
+        const updatedNode = {
+          ...node,
+          data: {
+            ...node.data,
+            ...patch,
+          },
+        };
+
+        if (!options?.resetHeight) return updatedNode;
+
+        return {
+          ...updatedNode,
+          height: undefined,
+          style: node.style
+            ? {
+                ...node.style,
+                height: undefined,
+              }
+            : undefined,
+        };
+      }),
+    );
   };
 
   // Hover-preview: park the value on the selected target without touching data.
@@ -322,6 +358,7 @@ function Canvas() {
             <StylePanel
               node={selectedNode}
               onStyleChange={handleStyleChange}
+              onNodeDataChange={handleNodeDataChange}
               onFontPreview={handleFontPreview}
               onFontPreviewEnd={handleFontPreviewEnd}
               onPositionChange={handlePositionChange}

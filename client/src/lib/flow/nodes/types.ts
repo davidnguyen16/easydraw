@@ -36,9 +36,16 @@ export type PaletteGroupId =
  * declares one. The panel receives the live node + a generic data-patch
  * callback so it can update whatever it needs without StylePanel knowing.
  */
+export interface NodeDataChangeOptions {
+	resetHeight?: boolean;
+}
+
 export interface NodePanelProps {
 	node: Node;
-	onDataChange: (patch: Record<string, unknown>) => void;
+	onDataChange: (
+		patch: Record<string, unknown>,
+		options?: NodeDataChangeOptions
+	) => void;
 }
 
 export interface NodePanel {

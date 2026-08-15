@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useReactFlow } from '@xyflow/react';
 import type { NodePanelProps } from '@/lib/flow/nodes/types';
 import {
   ENTITY_FIELD_TYPES,
@@ -71,8 +70,6 @@ function Chevron({ up }: { up: boolean }) {
 }
 
 export default function FieldsPanel({ node, onDataChange }: NodePanelProps) {
-  const { updateNode } = useReactFlow();
-
   const entity = (node.data ?? {}) as unknown as EntityData;
   const fields = (entity.fields ?? []) as EntityField[];
   const showDataTypes = entity.showDataTypes ?? false;
@@ -106,16 +103,7 @@ export default function FieldsPanel({ node, onDataChange }: NodePanelProps) {
   }, []);
 
   function commitFields(next: EntityField[]) {
-    onDataChange({ fields: next });
-
-    // Field count drives the entity's intrinsic content height. If the user
-    // drag-resized the card, clear the explicit height so content drives the
-    // size again (width is left alone). React Flow stores style as a
-    // CSSProperties object, so strip height there too.
-    updateNode(node.id, (n) => ({
-      height: undefined,
-      style: n.style ? { ...n.style, height: undefined } : undefined,
-    }));
+    onDataChange({ fields: next }, { resetHeight: true });
   }
 
   function patchField(index: number, patch: Partial<EntityField>) {
@@ -170,7 +158,7 @@ export default function FieldsPanel({ node, onDataChange }: NodePanelProps) {
   }
 
   function setShowDataTypes(value: boolean) {
-    onDataChange({ showDataTypes: value });
+    onDataChange({ showDataTypes: value }, { resetHeight: true });
     if (!value) setOpenTypeIndex(null);
   }
 

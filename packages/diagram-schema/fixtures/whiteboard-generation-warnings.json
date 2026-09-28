@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "outcome": "diagram",
+  "nodes": [
+    { "id": "client", "shape": "rectangle", "label": "Web App", "bounds": { "x": 50, "y": 300, "width": 220, "height": 180 } },
+    { "id": "service", "shape": "rectangle", "label": "", "bounds": { "x": 390, "y": 300, "width": 220, "height": 180 } },
+    { "id": "database", "shape": "database", "label": "Database", "bounds": { "x": 730, "y": 280, "width": 210, "height": 240 } },
+    { "id": "note", "shape": "text", "label": "Hệ thống đặt vé", "bounds": { "x": 280, "y": 80, "width": 380, "height": 100 } }
+  ],
+  "edges": [
+    { "id": "request", "sourceId": "client", "targetId": "service", "label": "HTTPS", "direction": "both" },
+    { "id": "query", "sourceId": "service", "targetId": "database", "label": "", "direction": "none" }
+  ],
+  "warnings": [
+    { "code": "unreadable-text", "message": "Không đọc rõ tên thành phần ở giữa; giữ nhãn trống để bạn kiểm tra.", "elementId": "service" },
+    { "code": "ambiguous-connection", "message": "Có đường nối tới Database nhưng không đọc rõ đầu mũi tên; cần kiểm tra hướng.", "elementId": "query" },
+    { "code": "unsupported-content", "message": "Nét trang trí ở góc ảnh không được chuyển thành node.", "elementId": null }
+  ]
+}

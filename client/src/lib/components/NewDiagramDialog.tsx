@@ -2,21 +2,35 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import { DIAGRAM_TYPES, type DiagramType } from '@/lib/diagram-types';
 
 const MAX_LENGTH = 100;
+const MAX_CATEGORY = 40;
 
-export default function NewDiagramDialog({
-  open,
-  onClose,
-  onCreate,
-}: {
+/** Offered as completions; the field takes any label. */
+const DEFAULT_CATEGORIES = ['ERD', 'UML', 'Flowchart', 'DFD', 'Network', 'Architecture', 'Data centre', 'Office'];
+
+export interface NewDiagramPayload {
+  name: string;
+  /** Free label chosen by the user, or null for none. */
+  category: string | null;
+}
+
+interface Props {
   open: boolean;
   onClose: () => void;
-  onCreate: (payload: { name: string; type: DiagramType }) => Promise<void> | void;
-}) {
+  onCreate: (payload: NewDiagramPayload) => Promise<void> | void;
+  /** Labels the user already uses, shown first in the completions. */
+  suggestions?: readonly string[];
+}
+
+/** Mounted only while open, so every opening starts from fresh fields. */
+export default function NewDiagramDialog({ open, ...props }: Props) {
+  return open ? <NewDiagramForm {...props} /> : null;
+}
+
+function NewDiagramForm({ onClose, onCreate, suggestions = [] }: Omit<Props, 'open'>) {
   const [name, setName] = useState('Untitled Diagram');
-  const [type, setType] = useState<DiagramType>('erd');
+  const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [touched, setTouched] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -24,48 +38,47 @@ export default function NewDiagramDialog({
   const trimmed = name.trim();
   const isValid = trimmed.length > 0;
   const showError = touched && !isValid;
+  const options = [...new Set([...suggestions, ...DEFAULT_CATEGORIES].map((s) => s.trim()).filter(Boolean))];
 
   const close = () => {
     if (!loading) onClose();
   };
 
-  // Reset fields + focus/select the name each time the dialog opens.
+  // Focus and select the name on open.
   useEffect(() => {
-    if (!open) return;
-    setName('Untitled Diagram');
-    setType('erd');
-    setTouched(false);
-    setLoading(false);
     const id = requestAnimationFrame(() => {
       inputRef.current?.focus();
       inputRef.current?.select();
     });
     return () => cancelAnimationFrame(id);
-  }, [open]);
+  }, []);
 
   useEffect(() => {
-    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape' && !loading) onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, loading]);
+  }, [loading, onClose]);
 
   const handleCreate = async () => {
     setTouched(true);
     if (!isValid || loading) return;
     setLoading(true);
     try {
-      await onCreate({ name: trimmed, type });
+      await onCreate({ name: trimmed, category: category.trim() || null });
       onClose();
     } finally {
       setLoading(false);
     }
   };
 
-  if (!open) return null;
+  const onEnter = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void handleCreate();
+    }
+  };
 
   return (
     <div
@@ -102,12 +115,7 @@ export default function NewDiagramDialog({
             maxLength={MAX_LENGTH}
             placeholder="My Diagram"
             onBlur={() => setTouched(true)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleCreate();
-              }
-            }}
+            onKeyDown={onEnter}
             aria-invalid={showError}
             className={`w-full rounded-lg border px-3 py-2.5 text-ink outline-none placeholder:text-ink-muted focus:ring-1 ${
               showError
@@ -119,42 +127,24 @@ export default function NewDiagramDialog({
         </div>
 
         <div className="mb-6">
-          <span className="mb-1.5 block text-sm font-medium text-ink">Type</span>
-          <div
-            className="grid grid-cols-2 gap-2 max-[420px]:grid-cols-1"
-            role="radiogroup"
-            aria-label="Diagram type"
-          >
-            {DIAGRAM_TYPES.map((dt) => {
-              const selected = type === dt.value;
-              const Icon = dt.icon;
-              return (
-                <button
-                  key={dt.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  onClick={() => setType(dt.value)}
-                  className={`flex items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
-                    selected
-                      ? 'border-mq-red bg-mq-red/5 ring-1 ring-mq-red/20'
-                      : 'border-line hover:bg-surface-hover'
-                  }`}
-                >
-                  <Icon
-                    size={20}
-                    className={`mt-0.5 flex-shrink-0 ${selected ? 'text-mq-red' : 'text-ink-muted'}`}
-                  />
-                  <div className="min-w-0">
-                    <p className={`text-sm font-medium ${selected ? 'text-mq-red' : 'text-ink'}`}>
-                      {dt.label}
-                    </p>
-                    <p className="text-xs text-ink-muted">{dt.description}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          <label htmlFor="diagram-category" className="mb-1.5 block text-sm font-medium text-ink">
+            Type <span className="font-normal text-ink-muted">(optional)</span>
+          </label>
+          <input
+            id="diagram-category"
+            list="diagram-category-options"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            maxLength={MAX_CATEGORY}
+            placeholder="e.g. ERD, Flowchart, Network — or your own"
+            onKeyDown={onEnter}
+            autoComplete="off"
+            className="w-full rounded-lg border border-line px-3 py-2.5 text-ink outline-none placeholder:text-ink-muted focus:border-mq-red focus:ring-1 focus:ring-mq-red"
+          />
+          <datalist id="diagram-category-options">
+            {options.map((option) => <option key={option} value={option} />)}
+          </datalist>
+          <p className="mt-1 text-xs text-ink-muted">A label for your dashboard. Any name works; it never limits which shapes you can use.</p>
         </div>
 
         <div className="flex justify-end gap-2">

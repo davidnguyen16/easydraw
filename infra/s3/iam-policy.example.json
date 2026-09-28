@@ -1,0 +1,21 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CheckConfiguredBucket",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "arn:aws:s3:::YOUR_ASSETS_BUCKET"
+    },
+    {
+      "Sid": "PrivateDiagramAssets",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": [
+        "arn:aws:s3:::YOUR_ASSETS_BUCKET/pending/*",
+        "arn:aws:s3:::YOUR_ASSETS_BUCKET/assets/*",
+        "arn:aws:s3:::YOUR_ASSETS_BUCKET/whiteboard-previews/*"
+      ]
+    }
+  ]
+}

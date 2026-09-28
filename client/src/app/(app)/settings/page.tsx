@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Calendar, LogOut, ShieldAlert, Trash2, User } from 'lucide-react';
 import Logo from '@/lib/components/Logo';
 import DeleteAccountDialog from '@/lib/components/DeleteAccountDialog';
+import SessionList from '@/lib/components/SessionList';
 import { useAuthStore, accountInitials, deleteAccount } from '@/lib/stores/auth.store';
 
 function formatDate(value?: string) {
@@ -99,6 +100,8 @@ export default function SettingsPage() {
             <span>Joined {formatDate(user?.createdAt)}</span>
           </div>
         </section>
+
+        <SessionList />
 
         <section className="space-y-4 rounded-xl border border-red-200 bg-white p-5 sm:p-6">
           <div className="flex items-center gap-2">

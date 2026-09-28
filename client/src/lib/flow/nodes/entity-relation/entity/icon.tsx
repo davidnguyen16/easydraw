@@ -8,17 +8,17 @@ export default function Icon() {
     		x="30"
     		y="13"
     		textAnchor="middle"
-    		font-size="7.5"
+        fontSize="7.5"
     		fill="#A6192E"
-    		font-weight="700"
-    		font-family="system-ui, sans-serif">Entity</text
+        fontWeight="700"
+        fontFamily="system-ui, sans-serif">Entity</text
     	>
     	<rect x="7" y="20" width="46" height="9" rx="1" fill="#f3f3f3" />
-    	<text x="10" y="26.5" font-size="6" fill="#666" font-family="system-ui, sans-serif">field</text>
+      <text x="10" y="26.5" fontSize="6" fill="#666" fontFamily="system-ui, sans-serif">field</text>
     	<rect x="7" y="32" width="46" height="9" rx="1" fill="#f3f3f3" />
-    	<text x="10" y="38.5" font-size="6" fill="#666" font-family="system-ui, sans-serif">field</text>
+      <text x="10" y="38.5" fontSize="6" fill="#666" fontFamily="system-ui, sans-serif">field</text>
     	<rect x="7" y="44" width="46" height="9" rx="1" fill="#f3f3f3" />
-    	<text x="10" y="50.5" font-size="6" fill="#666" font-family="system-ui, sans-serif">field</text>
+      <text x="10" y="50.5" fontSize="6" fill="#666" fontFamily="system-ui, sans-serif">field</text>
     </svg>
   );
 }

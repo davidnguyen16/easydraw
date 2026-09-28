@@ -24,7 +24,7 @@ export interface EditorKeyboardHandlers {
 }
 
 function isInputTarget(target: HTMLElement) {
-	return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+	return target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.tagName === 'SELECT' || target?.isContentEditable;
 }
 
 export function createEditorKeyboardHandler(handlers: EditorKeyboardHandlers) {

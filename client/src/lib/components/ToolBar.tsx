@@ -6,6 +6,9 @@ import UiIcon from '@/lib/components/icons/UiIcon';
 import { FONT_FAMILIES } from '@/lib/fonts';
 import { MAX_ZOOM_PERCENT, MIN_ZOOM_PERCENT, ZOOM_PRESETS } from '@/lib/flow/zoom';
 import { useEditor } from '@/lib/flow/EditorContext';
+import { useEditorStore } from '@/lib/stores/editor.store';
+import ViewModeSwitch from '@/lib/diagram3d/ViewModeSwitch';
+import type { DiagramViewMode } from '@/lib/diagram3d/types';
 
 const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 24, 36, 48, 64];
 const SIZE_MIN = 1;
@@ -27,8 +30,11 @@ function icon(name: string) {
   return <UiIcon name={name} strokeWidth={1.8} />;
 }
 
-export default function ToolBar() {
+export default function ToolBar({ onViewModeChange }: {
+  onViewModeChange?: (mode: DiagramViewMode) => void;
+}) {
   const editor = useEditor();
+  const viewMode = useEditorStore((state) => state.viewMode);
 
   const [openDropdown, setOpenDropdown] = useState<'zoom' | 'font' | 'size' | null>(null);
   const [zoomDraft, setZoomDraft] = useState<string | null>(null);
@@ -133,7 +139,7 @@ export default function ToolBar() {
   }
 
   return (
-    <div className="relative flex w-full flex-[0_0_46px] items-center gap-1 border-b border-line-soft bg-white py-0 pr-14 pl-3 [font-family:system-ui,-apple-system,sans-serif]">
+    <div className={`relative flex min-h-[46px] w-full items-center gap-1 border-b border-line-soft bg-white py-0 pl-3 [font-family:system-ui,-apple-system,sans-serif] ${onViewModeChange ? 'pr-44' : 'pr-14'}`}>
       {/* File */}
       <div className="flex items-center gap-0.5">
         <button type="button" className={ICON_BTN} aria-label="Open file" onClick={editor.open}>
@@ -407,8 +413,9 @@ export default function ToolBar() {
         </button>
       </div>
 
-      {/* Style-panel toggle: pinned to the toolbar's right corner. */}
-      <div className="absolute top-1/2 right-3 -translate-y-1/2">
+      {/* View mode and style panel: pinned to the toolbar's right corner. */}
+      <div className="absolute top-1/2 right-3 flex -translate-y-1/2 items-center gap-1">
+        {onViewModeChange && <ViewModeSwitch value={viewMode} onChange={onViewModeChange} />}
         <button
           type="button"
           className={`${ICON_BTN} ${editor.state.showStylePanel ? 'toggled' : ''}`}

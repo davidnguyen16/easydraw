@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="256" height="205">
+  <title>IoT Device</title>
+  <rect x="25" y="18" width="50" height="46" rx="7" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8"/>
+  <rect x="35" y="28" width="30" height="26" rx="4" fill="#f5e6e8" stroke="#a6192e" stroke-width="1.8"/>
+  <line x1="31" y1="12" x2="31" y2="18" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="31" y1="64" x2="31" y2="70" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="41" y1="12" x2="41" y2="18" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="41" y1="64" x2="41" y2="70" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="51" y1="12" x2="51" y2="18" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="51" y1="64" x2="51" y2="70" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="61" y1="12" x2="61" y2="18" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="61" y1="64" x2="61" y2="70" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="19" y1="25" x2="25" y2="25" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="75" y1="25" x2="81" y2="25" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="19" y1="35" x2="25" y2="35" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="75" y1="35" x2="81" y2="35" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="19" y1="45" x2="25" y2="45" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="75" y1="45" x2="81" y2="45" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="19" y1="55" x2="25" y2="55" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="75" y1="55" x2="81" y2="55" fill="none" stroke="#9a9a99" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M30 29 Q50 11 70 29" fill="none" stroke="#a6192e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38 34 Q50 22 62 34" fill="none" stroke="#a6192e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="50" cy="39" r="2.4" fill="#a6192e" stroke="none" stroke-width="1.8"/>
+</svg>

@@ -1,0 +1,39 @@
+import type { PagedDiagramData } from '@easydraw/diagram-schema';
+import type { Edge, Node } from '@xyflow/react';
+import { buildDiagramScene } from '@/lib/diagram3d/scene-model';
+
+// Match the deliberately bounded 2D preview catalog. In particular, a preview
+// must never resolve arbitrary account-library assets while switching views.
+const PREVIEW_TYPES = new Set(['RectangleNode', 'RoundedRectangleNode', 'EllipseNode',
+  'DiamondNode', 'DatabaseNode', 'TextNode', 'VectorPathNode', 'SourceImageNode']);
+const finite = (value: unknown, fallback: number) => typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value)
+  ? value as Record<string, unknown> : {};
+
+/** Project the existing reviewed graph; never regenerate, save, edit or attach
+ * camera state to its document. This clone belongs only to the renderer. */
+export function createPreviewScene(document: PagedDiagramData) {
+  const page = structuredClone(document.pages.find((item) => item.id === document.activePageId) ?? document.pages[0]);
+  if (!page) return buildDiagramScene([], []);
+  const nodes: Node[] = page.nodes.map((node) => ({
+    id: node.id,
+    type: node.type && PREVIEW_TYPES.has(node.type) ? node.type : 'UnsupportedPreviewNode',
+    position: { x: finite(node.position?.x, 0), y: finite(node.position?.y, 0) },
+    width: Math.max(1, finite(node.width, 160)),
+    height: Math.max(1, finite(node.height, node.type === 'TextNode' ? 40 : 80)),
+    data: record(node.data),
+    selected: false,
+  }));
+  const ids = new Set(nodes.map((node) => node.id));
+  const edges: Edge[] = page.edges.filter((edge) => ids.has(edge.source) && ids.has(edge.target)).map((edge) => ({
+    id: edge.id, type: 'connection', source: edge.source, target: edge.target,
+    sourceHandle: typeof edge.sourceHandle === 'string' ? edge.sourceHandle : 'right',
+    targetHandle: typeof edge.targetHandle === 'string' ? edge.targetHandle : 'left',
+    data: record(edge.data), selected: false,
+  }));
+  const model = buildDiagramScene(nodes, edges);
+  for (const node of nodes) {
+    if (node.type === 'UnsupportedPreviewNode') model.warnings.push(`Unsupported preview object ${node.id}: shown as a placeholder, not an inferred 3D shape.`);
+  }
+  return model;
+}

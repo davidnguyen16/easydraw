@@ -6,6 +6,7 @@ import { DiagramsService } from './diagrams.service';
 @Module({
   imports: [PrismaModule],
   controllers: [DiagramsController],
-  providers: [DiagramsService]
+  providers: [DiagramsService],
+  exports: [DiagramsService],
 })
 export class DiagramsModule {}

@@ -99,11 +99,10 @@ export default function EntityNode({ id, data, selected }: NodeProps) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const inputRefs = useRef(new Map<string, HTMLInputElement>());
 
-  function registerInput(key: string) {
-    return (el: HTMLInputElement | null) => {
-      if (el) inputRefs.current.set(key, el);
-      else inputRefs.current.delete(key);
-    };
+  // Called from inline ref callbacks, never during render.
+  function registerInput(key: string, el: HTMLInputElement | null) {
+    if (el) inputRefs.current.set(key, el);
+    else inputRefs.current.delete(key);
   }
 
   function startEdit(key: string) {
@@ -179,7 +178,6 @@ export default function EntityNode({ id, data, selected }: NodeProps) {
           />
         ) : null}
 
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
         <header
           className="border-b border-[#373a36] px-3 py-2 text-center select-none"
           style={headerStyle}
@@ -189,7 +187,7 @@ export default function EntityNode({ id, data, selected }: NodeProps) {
           }}
         >
           <input
-            ref={registerInput('title')}
+            ref={(el) => registerInput('title', el)}
             className={`nodrag w-full border-none bg-transparent p-0 text-center text-[13px] font-medium
               text-ink outline-none placeholder:text-[rgba(44,44,42,0.45)]
               ${editingKey === 'title' ? 'pointer-events-auto cursor-text select-text' : 'pointer-events-none cursor-[inherit]'}`}
@@ -209,7 +207,6 @@ export default function EntityNode({ id, data, selected }: NodeProps) {
             const key = resolveFieldKey(field);
             const editKey = `field:${index}`;
             return (
-              // eslint-disable-next-line jsx-a11y/no-static-element-interactions
               <li
                 key={index}
                 className="flex items-center border-t-[0.5px] border-line px-3 py-2
@@ -236,7 +233,7 @@ export default function EntityNode({ id, data, selected }: NodeProps) {
                   ) : null}
                 </span>
                 <input
-                  ref={registerInput(editKey)}
+                  ref={(el) => registerInput(editKey, el)}
                   className={`nodrag min-w-0 flex-1 border-none bg-transparent p-0 text-[12px] text-ink-soft
                     outline-none ${key === 'PK' ? 'font-medium' : ''}
                     ${editingKey === editKey ? 'pointer-events-auto cursor-text select-text' : 'pointer-events-none cursor-[inherit]'}`}

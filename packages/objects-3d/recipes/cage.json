@@ -1,0 +1,156 @@
+{
+  "id": "cage",
+  "name": "Security cage",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 200,
+      "height": 200,
+      "depth": 2.4
+    },
+    "fill": "#b5c3cf",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.14,
+          1,
+          0.14
+        ],
+        "position": [
+          -0.43,
+          0,
+          0.43
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.14,
+          1,
+          0.14
+        ],
+        "position": [
+          0.43,
+          0,
+          0.43
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.14,
+          1,
+          0.14
+        ],
+        "position": [
+          -0.43,
+          0,
+          -0.43
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.14,
+          1,
+          0.14
+        ],
+        "position": [
+          0.43,
+          0,
+          -0.43
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.06,
+          1
+        ],
+        "position": [
+          0,
+          0.47,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.14,
+          0.06,
+          1
+        ],
+        "position": [
+          -0.43,
+          -0.2,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.14,
+          0.06,
+          1
+        ],
+        "position": [
+          0.43,
+          -0.2,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.06,
+          0.14
+        ],
+        "position": [
+          0,
+          -0.2,
+          -0.43
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.06,
+          0.14
+        ],
+        "position": [
+          0,
+          -0.2,
+          0.43
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.72,
+          0.9,
+          0.72
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  }
+}

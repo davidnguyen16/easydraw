@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="256" height="205">
+  <title>IP Camera</title>
+  <path d="M18 27 H65 C74 27 80 34 80 42 C80 50 74 57 65 57 H18 Z" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="66" cy="42" r="11" fill="#f5e6e8" stroke="#a6192e" stroke-width="2"/>
+  <circle cx="66" cy="42" r="5" fill="#2c2c2a" stroke="none" stroke-width="1.8"/>
+  <line x1="30" y1="57" x2="38" y2="67" fill="none" stroke="#2c2c2a" stroke-width="2" stroke-linecap="round"/>
+  <line x1="26" y1="68" x2="50" y2="68" fill="none" stroke="#2c2c2a" stroke-width="2.4" stroke-linecap="round"/>
+  <polygon points="18,31 8,37 8,47 18,53" fill="#f5e6e8" stroke="#2c2c2a" stroke-width="1.8" stroke-linejoin="round"/>
+</svg>

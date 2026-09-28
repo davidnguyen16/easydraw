@@ -1,0 +1,11 @@
+{
+  "Rules": [
+    {
+      "ID": "ExpireQuarantinedUploads",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "pending/" },
+      "Expiration": { "Days": 1 },
+      "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 1 }
+    }
+  ]
+}

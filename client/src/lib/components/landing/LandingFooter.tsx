@@ -1,8 +1,25 @@
 import Link from 'next/link';
 import Logo from '@/lib/components/Logo';
+import styles from './LandingNavigation.module.css';
 
-export default function LandingFooter() {
+export default function LandingFooter({ variant = 'legacy' }: { variant?: 'home' | 'legacy' }) {
   const year = new Date().getFullYear();
+
+  if (variant === 'home') return <footer className={styles.footer}>
+    <div className={styles.footerInner}>
+      <div className={styles.footerBrand}>
+        <Link href="/" aria-label="EasyDraw home" className={styles.logo}><Logo size="sm" /></Link>
+        <p>A little sketch. A bigger perspective.</p>
+      </div>
+      <div className={styles.footerMeta}>
+        <nav aria-label="Legal information" className={styles.footerLinks}>
+          <Link href="/terms">Terms</Link>
+          <Link href="/privacy">Privacy</Link>
+        </nav>
+        <p>© {year} EasyDraw</p>
+      </div>
+    </div>
+  </footer>;
 
   return (
     <footer className="border-t border-line-soft bg-[#faf8f3]">

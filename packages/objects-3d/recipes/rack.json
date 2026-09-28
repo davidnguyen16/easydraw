@@ -1,0 +1,1164 @@
+{
+  "id": "rack",
+  "name": "Server rack",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 60,
+      "height": 100,
+      "depth": 2
+    },
+    "fill": "#273545",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.91,
+          0.91,
+          0.87
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.04,
+          0.98
+        ],
+        "position": [
+          0,
+          0.48,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.045,
+          0.98
+        ],
+        "position": [
+          0,
+          -0.477,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.065,
+          0.92,
+          0.07
+        ],
+        "position": [
+          -0.462,
+          0,
+          -0.455
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.065,
+          0.92,
+          0.07
+        ],
+        "position": [
+          -0.462,
+          0,
+          0.455
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.008,
+          0.78,
+          0.018
+        ],
+        "position": [
+          -0.483,
+          0.015,
+          0.455
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.065,
+          0.92,
+          0.07
+        ],
+        "position": [
+          0.463,
+          0,
+          -0.455
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.065,
+          0.92,
+          0.07
+        ],
+        "position": [
+          0.463,
+          0,
+          0.455
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.008,
+          0.78,
+          0.018
+        ],
+        "position": [
+          0.483,
+          0.015,
+          0.455
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.79,
+          0.11,
+          0.028
+        ],
+        "position": [
+          0,
+          0.39,
+          0.461
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.65,
+          0.012,
+          0.008
+        ],
+        "position": [
+          0,
+          -0.31,
+          -0.439
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.65,
+          0.012,
+          0.008
+        ],
+        "position": [
+          0,
+          -0.229,
+          -0.439
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.65,
+          0.012,
+          0.008
+        ],
+        "position": [
+          0,
+          -0.148,
+          -0.439
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.65,
+          0.012,
+          0.008
+        ],
+        "position": [
+          0,
+          -0.067,
+          -0.439
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.65,
+          0.012,
+          0.008
+        ],
+        "position": [
+          0,
+          0.014,
+          -0.439
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.65,
+          0.012,
+          0.008
+        ],
+        "position": [
+          0,
+          0.095,
+          -0.439
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.65,
+          0.012,
+          0.008
+        ],
+        "position": [
+          0,
+          0.176,
+          -0.439
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.65,
+          0.012,
+          0.008
+        ],
+        "position": [
+          0,
+          0.257,
+          -0.439
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.815,
+          0.071,
+          0.022
+        ],
+        "position": [
+          0,
+          -0.3,
+          0.45
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.76,
+          0.059,
+          0.03
+        ],
+        "position": [
+          0,
+          -0.3,
+          0.464
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          -0.312,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          -0.288,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          -0.359,
+          -0.3,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          0.359,
+          -0.3,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.022,
+          0.01,
+          0.008
+        ],
+        "position": [
+          0.302,
+          -0.288,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.011,
+          0.008,
+          0.008
+        ],
+        "position": [
+          0.332,
+          -0.288,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.815,
+          0.071,
+          0.022
+        ],
+        "position": [
+          0,
+          -0.219,
+          0.45
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.76,
+          0.059,
+          0.03
+        ],
+        "position": [
+          0,
+          -0.219,
+          0.464
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          -0.231,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          -0.207,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          -0.359,
+          -0.219,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          0.359,
+          -0.219,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.022,
+          0.01,
+          0.008
+        ],
+        "position": [
+          0.302,
+          -0.207,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.011,
+          0.008,
+          0.008
+        ],
+        "position": [
+          0.332,
+          -0.207,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.815,
+          0.071,
+          0.022
+        ],
+        "position": [
+          0,
+          -0.138,
+          0.45
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.76,
+          0.059,
+          0.03
+        ],
+        "position": [
+          0,
+          -0.138,
+          0.464
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          -0.15,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          -0.126,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          -0.359,
+          -0.138,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          0.359,
+          -0.138,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.022,
+          0.01,
+          0.008
+        ],
+        "position": [
+          0.302,
+          -0.126,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.011,
+          0.008,
+          0.008
+        ],
+        "position": [
+          0.332,
+          -0.126,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.815,
+          0.071,
+          0.022
+        ],
+        "position": [
+          0,
+          -0.057,
+          0.45
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.76,
+          0.059,
+          0.03
+        ],
+        "position": [
+          0,
+          -0.057,
+          0.464
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          -0.069,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          -0.045,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          -0.359,
+          -0.057,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          0.359,
+          -0.057,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.022,
+          0.01,
+          0.008
+        ],
+        "position": [
+          0.302,
+          -0.045,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.011,
+          0.008,
+          0.008
+        ],
+        "position": [
+          0.332,
+          -0.045,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.815,
+          0.071,
+          0.022
+        ],
+        "position": [
+          0,
+          0.024,
+          0.45
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.76,
+          0.059,
+          0.03
+        ],
+        "position": [
+          0,
+          0.024,
+          0.464
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          0.012,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          0.036,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          -0.359,
+          0.024,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          0.359,
+          0.024,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.022,
+          0.01,
+          0.008
+        ],
+        "position": [
+          0.302,
+          0.036,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.011,
+          0.008,
+          0.008
+        ],
+        "position": [
+          0.332,
+          0.036,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.815,
+          0.071,
+          0.022
+        ],
+        "position": [
+          0,
+          0.105,
+          0.45
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.76,
+          0.059,
+          0.03
+        ],
+        "position": [
+          0,
+          0.105,
+          0.464
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          0.093,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          0.117,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          -0.359,
+          0.105,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          0.359,
+          0.105,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.022,
+          0.01,
+          0.008
+        ],
+        "position": [
+          0.302,
+          0.117,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.011,
+          0.008,
+          0.008
+        ],
+        "position": [
+          0.332,
+          0.117,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.815,
+          0.071,
+          0.022
+        ],
+        "position": [
+          0,
+          0.186,
+          0.45
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.76,
+          0.059,
+          0.03
+        ],
+        "position": [
+          0,
+          0.186,
+          0.464
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          0.174,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          0.198,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          -0.359,
+          0.186,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          0.359,
+          0.186,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.022,
+          0.01,
+          0.008
+        ],
+        "position": [
+          0.302,
+          0.198,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "amber",
+        "size": [
+          0.011,
+          0.008,
+          0.008
+        ],
+        "position": [
+          0.332,
+          0.198,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.815,
+          0.071,
+          0.022
+        ],
+        "position": [
+          0,
+          0.267,
+          0.45
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.76,
+          0.059,
+          0.03
+        ],
+        "position": [
+          0,
+          0.267,
+          0.464
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          0.255,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.47,
+          0.008,
+          0.006
+        ],
+        "position": [
+          -0.075,
+          0.279,
+          0.482
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          -0.359,
+          0.267,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.017,
+          0.037,
+          0.009
+        ],
+        "position": [
+          0.359,
+          0.267,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.022,
+          0.01,
+          0.008
+        ],
+        "position": [
+          0.302,
+          0.279,
+          0.484
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.011,
+          0.008,
+          0.008
+        ],
+        "position": [
+          0.332,
+          0.279,
+          0.484
+        ]
+      }
+    ]
+  }
+}

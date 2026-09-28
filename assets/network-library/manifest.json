@@ -1,0 +1,377 @@
+{
+  "name": "Network",
+  "description": "Vendor-neutral network device symbols, formerly the built-in Network palette.",
+  "items": [
+    {
+      "file": "router.svg",
+      "name": "Router",
+      "group": "Network devices",
+      "aliases": [
+        "network router",
+        "routing"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "wireless-router.svg",
+      "name": "Wireless Router",
+      "group": "Network devices",
+      "aliases": [
+        "wifi router",
+        "wireless gateway"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "switch-l2.svg",
+      "name": "Layer 2 Switch",
+      "group": "Network devices",
+      "aliases": [
+        "l2 switch",
+        "ethernet switch"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "switch-l3.svg",
+      "name": "Layer 3 Switch",
+      "group": "Network devices",
+      "aliases": [
+        "l3 switch",
+        "multilayer switch"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "hub.svg",
+      "name": "Hub",
+      "group": "Network devices",
+      "aliases": [
+        "network hub"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "bridge.svg",
+      "name": "Bridge",
+      "group": "Network devices",
+      "aliases": [
+        "network bridge"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "gateway.svg",
+      "name": "Gateway",
+      "group": "Network devices",
+      "aliases": [
+        "network gateway"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "modem.svg",
+      "name": "Modem",
+      "group": "Network devices",
+      "aliases": [
+        "broadband modem"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "access-point.svg",
+      "name": "Access Point",
+      "group": "Network devices",
+      "aliases": [
+        "ap",
+        "wifi access point"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "wireless-controller.svg",
+      "name": "Wireless LAN Controller",
+      "group": "Network devices",
+      "aliases": [
+        "wlc",
+        "wifi controller"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "firewall.svg",
+      "name": "Firewall",
+      "group": "Security & traffic",
+      "aliases": [
+        "network security",
+        "packet filter"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "ids-ips.svg",
+      "name": "IDS / IPS",
+      "group": "Security & traffic",
+      "aliases": [
+        "intrusion detection",
+        "intrusion prevention"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "vpn-gateway.svg",
+      "name": "VPN Gateway",
+      "group": "Security & traffic",
+      "aliases": [
+        "virtual private network",
+        "vpn concentrator"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "load-balancer.svg",
+      "name": "Load Balancer",
+      "group": "Security & traffic",
+      "aliases": [
+        "load balancing",
+        "traffic manager"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "proxy.svg",
+      "name": "Proxy",
+      "group": "Security & traffic",
+      "aliases": [
+        "proxy server",
+        "reverse proxy"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "nat-gateway.svg",
+      "name": "NAT Gateway",
+      "group": "Security & traffic",
+      "aliases": [
+        "network address translation",
+        "nat"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "desktop.svg",
+      "name": "Desktop PC",
+      "group": "End devices",
+      "aliases": [
+        "computer",
+        "workstation",
+        "client"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "laptop.svg",
+      "name": "Laptop",
+      "group": "End devices",
+      "aliases": [
+        "notebook",
+        "client"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "printer.svg",
+      "name": "Printer",
+      "group": "End devices",
+      "aliases": [
+        "network printer"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "ip-phone.svg",
+      "name": "IP Phone",
+      "group": "End devices",
+      "aliases": [
+        "voip phone",
+        "telephone"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "smartphone.svg",
+      "name": "Smartphone",
+      "group": "End devices",
+      "aliases": [
+        "mobile phone",
+        "cell phone"
+      ],
+      "defaultWidth": 68,
+      "defaultHeight": 94
+    },
+    {
+      "file": "tablet.svg",
+      "name": "Tablet",
+      "group": "End devices",
+      "aliases": [
+        "mobile device"
+      ],
+      "defaultWidth": 78,
+      "defaultHeight": 98
+    },
+    {
+      "file": "iot-device.svg",
+      "name": "IoT Device",
+      "group": "End devices",
+      "aliases": [
+        "internet of things",
+        "sensor",
+        "embedded device"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "ip-camera.svg",
+      "name": "IP Camera",
+      "group": "End devices",
+      "aliases": [
+        "cctv",
+        "security camera",
+        "network camera"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "server.svg",
+      "name": "Generic Server",
+      "group": "Servers & storage",
+      "aliases": [
+        "application server",
+        "compute"
+      ],
+      "defaultWidth": 82,
+      "defaultHeight": 100
+    },
+    {
+      "file": "database-server.svg",
+      "name": "Database Server",
+      "group": "Servers & storage",
+      "aliases": [
+        "db server",
+        "sql server"
+      ],
+      "defaultWidth": 82,
+      "defaultHeight": 100
+    },
+    {
+      "file": "nas-storage.svg",
+      "name": "NAS / Storage",
+      "group": "Servers & storage",
+      "aliases": [
+        "network attached storage",
+        "file storage"
+      ],
+      "defaultWidth": 82,
+      "defaultHeight": 100
+    },
+    {
+      "file": "internet.svg",
+      "name": "Internet",
+      "group": "WAN & cloud",
+      "aliases": [
+        "world wide web",
+        "wan"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "cloud.svg",
+      "name": "Cloud",
+      "group": "WAN & cloud",
+      "aliases": [
+        "cloud network",
+        "cloud computing"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "isp.svg",
+      "name": "ISP",
+      "group": "WAN & cloud",
+      "aliases": [
+        "internet service provider"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "data-center.svg",
+      "name": "Data Center",
+      "group": "WAN & cloud",
+      "aliases": [
+        "datacenter",
+        "dc"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "branch-office.svg",
+      "name": "Branch Office",
+      "group": "WAN & cloud",
+      "aliases": [
+        "branch site",
+        "remote office"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 84
+    },
+    {
+      "file": "cell-tower.svg",
+      "name": "Cellular Tower",
+      "group": "WAN & cloud",
+      "aliases": [
+        "cell tower",
+        "mobile tower",
+        "5g tower"
+      ],
+      "defaultWidth": 104,
+      "defaultHeight": 96
+    },
+    {
+      "file": "satellite.svg",
+      "name": "Satellite",
+      "group": "WAN & cloud",
+      "aliases": [
+        "satellite network",
+        "space"
+      ],
+      "defaultWidth": 112,
+      "defaultHeight": 90
+    }
+  ]
+}

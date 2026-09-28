@@ -24,6 +24,9 @@ export const ICON_PATHS: Record<string, string> = {
 	export: `<path d="M12 17V5" />
 		<path d="M8 9l4-4 4 4" />
 		<path d="M5 15.5V20h14v-4.5" />`,
+	import: `<path d="M12 4v12" />
+		<path d="M8 12l4 4 4-4" />
+		<path d="M5 15.5V20h14v-4.5" />`,
 
 	// ── edit ─────────────────────────────────────────────────────────────
 	undo: `<polyline points="9 14 4 9 9 4" />

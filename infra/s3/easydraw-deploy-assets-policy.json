@@ -1,0 +1,21 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InspectEasyDrawAssetsBucket",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket", "s3:GetBucketLocation", "s3:GetBucketCORS"],
+      "Resource": "arn:aws:s3:::easydraw-assets-assetsbucket-hc3l8rfmi37a"
+    },
+    {
+      "Sid": "ManagePrivateEasyDrawImages",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": [
+        "arn:aws:s3:::easydraw-assets-assetsbucket-hc3l8rfmi37a/pending/*",
+        "arn:aws:s3:::easydraw-assets-assetsbucket-hc3l8rfmi37a/assets/*",
+        "arn:aws:s3:::easydraw-assets-assetsbucket-hc3l8rfmi37a/whiteboard-previews/*"
+      ]
+    }
+  ]
+}

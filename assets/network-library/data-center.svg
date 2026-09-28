@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="256" height="205">
+  <title>Data Center</title>
+  <polygon points="17,70 17,22 50,7 83,22 83,70" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8" stroke-linejoin="round"/>
+  <line x1="17" y1="31" x2="83" y2="31" fill="none" stroke="#9a9a99" stroke-width="1.2" stroke-linecap="round"/>
+  <rect x="27" y="39" width="15" height="9" rx="2" fill="#f5e6e8" stroke="#9a9a99" stroke-width="1.1"/>
+  <rect x="58" y="39" width="15" height="9" rx="2" fill="#f5e6e8" stroke="#9a9a99" stroke-width="1.1"/>
+  <rect x="27" y="53" width="15" height="9" rx="2" fill="#f5e6e8" stroke="#9a9a99" stroke-width="1.1"/>
+  <rect x="58" y="53" width="15" height="9" rx="2" fill="#f5e6e8" stroke="#9a9a99" stroke-width="1.1"/>
+  <line x1="50" y1="70" x2="50" y2="58" fill="none" stroke="#a6192e" stroke-width="2" stroke-linecap="round"/>
+</svg>

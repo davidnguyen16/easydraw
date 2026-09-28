@@ -1,0 +1,82 @@
+{
+  "id": "wall-clock",
+  "name": "Wall clock",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 30,
+      "height": 8,
+      "depth": 0.3
+    },
+    "fill": "#f4f4f2",
+    "parts": [
+      {
+        "shape": "cylinder",
+        "material": "frame",
+        "size": [
+          1,
+          0.1,
+          1
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          1.5707963267948966,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "body",
+        "size": [
+          0.9,
+          0.12,
+          0.9
+        ],
+        "position": [
+          0,
+          0,
+          0.02
+        ],
+        "rotation": [
+          1.5707963267948966,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.03,
+          0.3,
+          0.02
+        ],
+        "position": [
+          0,
+          0.13,
+          0.08
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.22,
+          0.03,
+          0.02
+        ],
+        "position": [
+          0.1,
+          0,
+          0.08
+        ]
+      }
+    ]
+  }
+}

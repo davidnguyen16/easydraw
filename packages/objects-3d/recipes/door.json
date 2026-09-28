@@ -1,0 +1,156 @@
+{
+  "id": "door",
+  "name": "Door",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 138,
+      "height": 25,
+      "depth": 2.3
+    },
+    "fill": "#e0e7e8",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.8,
+          0.93,
+          0.6
+        ],
+        "position": [
+          0,
+          -0.01,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.08,
+          1,
+          0.96
+        ],
+        "position": [
+          -0.46,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.08,
+          1,
+          0.96
+        ],
+        "position": [
+          0.46,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.84,
+          0.075,
+          0.96
+        ],
+        "position": [
+          0,
+          0.463,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.44,
+          0.48,
+          0.025
+        ],
+        "position": [
+          -0.055,
+          0.125,
+          0.319
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "screen",
+        "size": [
+          0.389,
+          0.427,
+          0.01
+        ],
+        "position": [
+          -0.055,
+          0.125,
+          0.338
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.026,
+          0.39,
+          0.003
+        ],
+        "position": [
+          -0.198,
+          0.13,
+          0.346
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.045,
+          0.21,
+          0.105
+        ],
+        "position": [
+          0.3,
+          -0.08,
+          0.385
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.06,
+          0.105,
+          0.014
+        ],
+        "position": [
+          0.46,
+          -0.04,
+          0.483
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.031,
+          0.021,
+          0.004
+        ],
+        "position": [
+          0.46,
+          -0.011,
+          0.494
+        ]
+      }
+    ]
+  }
+}

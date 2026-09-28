@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useDiagramId } from './use-diagram-id';
 import {
   ReactFlow,
@@ -12,7 +13,6 @@ import {
   useReactFlow,
   type NodeTypes,
   type EdgeTypes,
-  type Node,
   type Edge,
   type OnConnectEnd,
 } from '@xyflow/react';
@@ -21,11 +21,13 @@ import '@xyflow/react/dist/style.css';
 import '@/app/xy-theme.css';
 import { useFlowStore } from './flow-store';
 import ShapeNode from './nodes/ShapeNode';
+import CustomImageNode from './nodes/custom/CustomImageNode';
+import VectorPathNode from './nodes/vector/VectorPathNode';
+import SourceImageNode from './nodes/source-image/SourceImageNode';
+import { SOURCE_IMAGE_NODE_TYPE, VECTOR_PATH_NODE_TYPE } from '@easydraw/diagram-schema';
 import EntityNode from './nodes/entity-relation/entity/component';
-import NetworkNode from './nodes/network/NetworkNode';
 import AnchorNode from './nodes/anchor/AnchorNode';
 import { ANCHOR_NODE_TYPE, ANCHOR_HANDLE_ID, createAnchorNode } from './nodes/anchor/anchor';
-import { NETWORK_DEFINITIONS } from './nodes/network/definitions';
 import { VARIANTS } from './nodes/shape-geometry';
 import ConnectionEdge from './edges/ConnectionEdge';
 import ConnectionLinePreview from './edges/ConnectionLinePreview';
@@ -33,14 +35,8 @@ import StylePanel from '@/lib/components/style-panel/StylePanel';
 import ConnectionStylePanel from '@/lib/components/ConnectionStylePanel';
 import type { NodeStyleData } from '@/lib/components/style-panel/types';
 import { useFontPreviewStore } from './font-preview-store';
-import {
-  bringSelectedToFront,
-  sendSelectedToBack,
-  duplicateSelectedNodes,
-  deleteSelectedGraph,
-} from './graph-actions';
 import { useEditorStore } from '@/lib/stores/editor.store';
-import { EditorProvider } from './EditorContext';
+import { EditorProvider, useEditor } from './EditorContext';
 import MenuBar from '@/lib/components/MenuBar';
 import ToolBar from '@/lib/components/ToolBar';
 import KeyboardShortcuts from './KeyboardShortcuts';
@@ -53,19 +49,32 @@ import { getShape } from './nodes/registry';
 import type { NodeDataChangeOptions } from './nodes/types';
 import { MIN_ZOOM, MAX_ZOOM } from './zoom';
 import { dndState } from './dnd';
+import { createPaletteNode } from './palette-node';
+import { clearAssetCache } from '@/lib/node-library/assets';
 import DiagramPersistence from './DiagramPersistence';
 import EditorFooter from '@/lib/components/EditorFooter';
 import PresentBar from '@/lib/components/PresentBar';
+import ImportNotice from '@/lib/components/ImportNotice';
+import Diagram3DToolbar from '@/lib/diagram3d/Diagram3DToolbar';
+import type { DiagramViewMode } from '@/lib/diagram3d/types';
+
+// Neither Three.js nor a WebGL context is loaded until the user opens 3D.
+const Diagram3DView = dynamic(() => import('@/lib/diagram3d/Diagram3DView'), {
+  ssr: false,
+  loading: () => <div role="status" className="flex h-full items-center justify-center bg-[#f6f5f1] text-sm text-[#77786f]">Loading 3D view…</div>,
+});
 
 // Every registered shape type renders through ShapeNode (it switches on the
-// geometry KIND, never on the node type); entity + network nodes have their
+// geometry KIND, never on the node type); entity nodes have their
 // own components, and the connection anchor is an internal type for floating
 // edge endpoints. Built once so the reference stays stable across renders.
 const nodeTypes: NodeTypes = {
   ...Object.fromEntries(Object.keys(VARIANTS).map((id) => [id, ShapeNode])),
   EntityNode,
   WeakEntityNode: EntityNode,
-  ...Object.fromEntries(NETWORK_DEFINITIONS.map((def) => [def.id, NetworkNode])),
+  CustomImageNode,
+  [VECTOR_PATH_NODE_TYPE]: VectorPathNode,
+  [SOURCE_IMAGE_NODE_TYPE]: SourceImageNode,
   [ANCHOR_NODE_TYPE]: AnchorNode,
 };
 
@@ -77,7 +86,8 @@ const defaultEdgeOptions = {
   type: 'connection',
 };
 
-function Canvas() {
+function Canvas({ active = true }: { active?: boolean }) {
+  const editor = useEditor();
   const nodes = useFlowStore((s) => s.nodes);
   const edges = useFlowStore((s) => s.edges);
   const onNodesChange = useFlowStore((s) => s.onNodesChange);
@@ -172,28 +182,16 @@ function Canvas() {
   };
 
   const handleBringToFront = () => {
-    const s = useFlowStore.getState();
-    s.setNodes(bringSelectedToFront(s.nodes));
+    editor.bringToFront();
   };
   const handleSendToBack = () => {
-    const s = useFlowStore.getState();
-    s.setNodes(sendSelectedToBack(s.nodes));
+    editor.sendToBack();
   };
   const handleDuplicate = () => {
-    const s = useFlowStore.getState();
-    const createOnEdit = (nodeId: string) => (patch: Record<string, unknown>) => {
-      const st = useFlowStore.getState();
-      st.setNodes(st.nodes.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n)));
-    };
-    s.setNodes(duplicateSelectedNodes(s.nodes, createOnEdit));
+    editor.duplicate();
   };
   const handleDelete = () => {
-    const s = useFlowStore.getState();
-    const next = deleteSelectedGraph(s.nodes, s.edges);
-    if (next.changed) {
-      s.setNodes(next.nodes);
-      s.setEdges(next.edges);
-    }
+    editor.deleteSelected();
   };
 
   // Edge styling writes into edge.data (marker / line style / routing / width /
@@ -237,14 +235,13 @@ function Canvas() {
   };
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
-    const shapeId = dndState.current;
+    const payload = dndState.current;
     dndState.current = null;
-    if (!shapeId) return;
-    const shape = getShape(shapeId);
-    if (!shape) return;
+    if (!payload || !active || locked || presenting) return;
+    const shape = typeof payload === 'string' ? getShape(payload) : undefined;
     const position = rf.screenToFlowPosition({ x: event.clientX, y: event.clientY });
 
-    if (shape.edgePreset) {
+    if (shape?.edgePreset) {
       const preset = shape.edgePreset(position);
       const srcId = useFlowStore.getState().addAnchorNode(preset.source);
       const tgtId = useFlowStore.getState().addAnchorNode(preset.target);
@@ -264,16 +261,8 @@ function Canvas() {
       return;
     }
 
-    const newNode: Node = {
-      id: nanoid(),
-      type: shape.id,
-      position,
-      data: shape.defaultData(),
-      selected: true,
-      ...(shape.defaultWidth ? { width: shape.defaultWidth } : {}),
-      ...(shape.defaultHeight ? { height: shape.defaultHeight } : {}),
-      ...(shape.defaultZIndex !== undefined ? { zIndex: shape.defaultZIndex } : {}),
-    };
+    const newNode = createPaletteNode(payload, position, nanoid());
+    if (!newNode) return;
     const st = useFlowStore.getState();
     st.setNodes([...st.nodes.map((n) => ({ ...n, selected: false })), newNode]);
     st.setEdges(st.edges.map((e) => ({ ...e, selected: false })));
@@ -308,7 +297,10 @@ function Canvas() {
   };
 
   return (
-    <div ref={wrapperRef} className="relative h-full w-full">
+    <div
+      ref={wrapperRef}
+      className="relative h-full w-full"
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -325,9 +317,14 @@ function Canvas() {
         maxZoom={MAX_ZOOM}
         panOnScroll
         zoomOnScroll={false}
-        nodesDraggable={!locked && !presenting}
-        nodesConnectable={!locked && !presenting}
-        elementsSelectable={!locked && !presenting}
+        nodesDraggable={active && !locked && !presenting}
+        nodesConnectable={active && !locked && !presenting}
+        elementsSelectable={active && !locked && !presenting}
+        nodesFocusable={active}
+        edgesFocusable={active}
+        deleteKeyCode={active ? 'Backspace' : null}
+        selectionKeyCode={active ? 'Shift' : null}
+        multiSelectionKeyCode={active ? ['Meta', 'Control'] : null}
         snapToGrid={snapToGrid}
         snapGrid={[20, 20]}
         onNodeContextMenu={handleNodeContextMenu}
@@ -344,7 +341,7 @@ function Canvas() {
       </ReactFlow>
 
       {/* Present mode hides all editor chrome — just the read-only canvas. */}
-      {!presenting && (
+      {active && !presenting && (
         <>
           <CanvasScrollbars
             nodes={nodes}
@@ -398,19 +395,48 @@ function Canvas() {
 // canvas). DiagramPersistence runs the sync/autosave effects; PresentBar is the
 // floating present-mode control.
 function FlowShell({ diagramId }: { diagramId: string }) {
+  useEffect(() => () => clearAssetCache(), []);
+  const viewMode = useEditorStore((state) => state.viewMode);
+  const is3D = viewMode === '3d';
+  const changeViewMode = useCallback((mode: DiagramViewMode) => {
+    if (mode === '3d') {
+      useFontPreviewStore.getState().setPreview(null);
+    }
+    useEditorStore.getState().setViewMode(mode);
+  }, []);
+  const returnTo2D = useCallback(() => changeViewMode('2d'), [changeViewMode]);
   const presenting = useEditorStore((s) => s.presenting);
   return (
     <>
       <div className="flex h-full w-full flex-col">
-        {!presenting && <MenuBar />}
-        {!presenting && <ToolBar />}
+        {!presenting && (
+          <div>
+            <MenuBar />
+          </div>
+        )}
+        {!presenting && (
+          <div>
+            <ToolBar onViewModeChange={changeViewMode} />
+          </div>
+        )}
+        {is3D && !presenting && <Diagram3DToolbar />}
         <div className="relative min-h-0 flex-1">
-          <Canvas />
+          {/* Keep the original viewport mounted and sized. Inert + disabled
+              ReactFlow keys stop hidden 2D actions without resetting pan/zoom. */}
+          <div className={`absolute inset-0 ${is3D ? 'invisible pointer-events-none' : ''}`} inert={is3D} aria-hidden={is3D}>
+            <Canvas active={!is3D} />
+          </div>
+          {is3D && <div className="absolute inset-0"><Diagram3DView onReturnTo2D={returnTo2D} /></div>}
+          {!presenting && <ImportNotice />}
         </div>
-        {!presenting && <EditorFooter />}
+        {!presenting && (
+          <div>
+            <EditorFooter />
+          </div>
+        )}
       </div>
       {!presenting && <KeyboardShortcuts />}
-      {presenting && <PresentBar />}
+      {presenting && <PresentBar onViewModeChange={changeViewMode} />}
       <DiagramPersistence diagramId={diagramId} />
     </>
   );
@@ -422,7 +448,7 @@ export default function Flow() {
   return (
     <ReactFlowProvider>
       <EditorProvider>
-        <FlowShell diagramId={diagramId} />
+        <FlowShell key={diagramId} diagramId={diagramId} />
       </EditorProvider>
     </ReactFlowProvider>
   );

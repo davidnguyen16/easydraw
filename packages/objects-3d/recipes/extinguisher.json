@@ -1,0 +1,180 @@
+{
+  "id": "extinguisher",
+  "name": "Fire extinguisher",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 34,
+      "height": 34,
+      "depth": 0.85
+    },
+    "fill": "#bd4051",
+    "parts": [
+      {
+        "shape": "cylinder",
+        "material": "frame",
+        "size": [
+          0.46,
+          0.04,
+          0.46
+        ],
+        "position": [
+          0,
+          -0.48,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "red",
+        "size": [
+          0.44,
+          0.6,
+          0.44
+        ],
+        "position": [
+          0,
+          -0.16,
+          0
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "red",
+        "size": [
+          0.44,
+          0.2,
+          0.44
+        ],
+        "position": [
+          0,
+          0.145,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "silver",
+        "size": [
+          0.12,
+          0.13,
+          0.12
+        ],
+        "position": [
+          0,
+          0.277,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.22,
+          0.053,
+          0.14
+        ],
+        "position": [
+          0.025,
+          0.36,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.34,
+          0.033,
+          0.07
+        ],
+        "position": [
+          0.07,
+          0.426,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          -0.12
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "dark",
+        "size": [
+          0.045,
+          0.66,
+          0.045
+        ],
+        "position": [
+          0.3,
+          -0.02,
+          0.04
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.21,
+          0.045,
+          0.045
+        ],
+        "position": [
+          0.215,
+          0.3,
+          0.04
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "silver",
+        "size": [
+          0.092,
+          0.023,
+          0.092
+        ],
+        "position": [
+          0.065,
+          0.302,
+          0.096
+        ],
+        "rotation": [
+          1.571,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.32,
+          0.27,
+          0.008
+        ],
+        "position": [
+          0,
+          -0.105,
+          0.221
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "red",
+        "size": [
+          0.27,
+          0.024,
+          0.003
+        ],
+        "position": [
+          0,
+          -0.007,
+          0.228
+        ]
+      }
+    ]
+  }
+}

@@ -140,35 +140,6 @@
 	background: transparent;
 }
 
-/* ── Network node — same dot/anchor treatment ── */
-.react-flow__handle.network-conn {
-	width: 10px;
-	height: 10px;
-	background: #ffffff;
-	border: 1.5px solid #a6192e;
-	border-radius: 50%;
-}
-.react-flow__resize-control.handle.network-resize-anchor {
-	width: 15px;
-	height: 15px;
-	background: #ffffff;
-	border: 2px solid #a6192e;
-	border-radius: 4px;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
-}
-.react-flow__resize-control.line.network-resize-line {
-	border-color: transparent;
-	background: transparent;
-}
-.react-flow__resize-control.line.left.network-resize-line,
-.react-flow__resize-control.line.right.network-resize-line {
-	width: 8px;
-}
-.react-flow__resize-control.line.top.network-resize-line,
-.react-flow__resize-control.line.bottom.network-resize-line {
-	height: 8px;
-}
-
 /* ── Connection anchors + edge interaction (ported from ConnectionEdge /
       AnchorNode <style> blocks) ── */
 
@@ -215,11 +186,17 @@ body.connection-dragging * {
    node's own hover state (reveal its handles; entity also gets its soft hover
    shadow). The `conn-snap-target` class is set on the node wrapper mid-drag. */
 .react-flow__node.conn-snap-target .shape-conn,
-.react-flow__node.conn-snap-target .network-conn,
 .react-flow__node.conn-snap-target .entity-handle {
 	opacity: 1 !important;
 	pointer-events: all;
 }
 .react-flow__node.conn-snap-target .entity-card {
 	box-shadow: 0 4px 12px rgba(166, 25, 46, 0.15);
+}
+
+/* Dashboard thumbnail capture: the picture is the diagram, not the editing state.
+   Selection outlines are Tailwind box-shadows on the selected node's children. */
+.react-flow.is-capturing .react-flow__node.selected * {
+	--tw-shadow: 0 0 #0000 !important;
+	--tw-ring-shadow: 0 0 #0000 !important;
 }

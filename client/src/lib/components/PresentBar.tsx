@@ -6,16 +6,21 @@ import { useEditorStore } from '@/lib/stores/editor.store';
 import { useEditorDoc } from '@/lib/stores/editor-doc.store';
 import { useEditorMeta } from '@/lib/stores/editor-meta.store';
 import { handleSwitchPage } from '@/lib/flow/editor-persistence';
+import { getSceneViewport } from '@/lib/diagram3d/scene-viewport';
+import ViewModeSwitch from '@/lib/diagram3d/ViewModeSwitch';
+import type { DiagramViewMode } from '@/lib/diagram3d/types';
 
 const PRESENT_BAR_ZONE = 64; // px from the top that keeps/reveals the bar
 
 // Present mode: a minimal top bar floating over the read-only canvas. It's fixed
 // (out of flow) so the canvas fills the screen, and slides up 2s after the
 // cursor leaves the top edge (Lucidchart-style). Port of Flow.svelte's inline
-// present header + its auto-hide/navigation effect.
-export default function PresentBar() {
+// present header + its auto-hide/navigation effect. The 2D/3D switch stays
+// pinned bottom-right so the presenter can change view without leaving.
+export default function PresentBar({ onViewModeChange }: { onViewModeChange: (mode: DiagramViewMode) => void }) {
   const rf = useReactFlow();
   const setPresenting = useEditorStore((s) => s.setPresenting);
+  const viewMode = useEditorStore((s) => s.viewMode);
   const pages = useEditorDoc((s) => s.pages);
   const activePageId = useEditorDoc((s) => s.activePageId);
   const fileName = useEditorMeta((s) => s.fileName);
@@ -35,7 +40,8 @@ export default function PresentBar() {
     fitFrame.current = requestAnimationFrame(() => {
       fitFrame.current = requestAnimationFrame(() => {
         fitFrame.current = null;
-        rf.fitView({ maxZoom: 1 });
+        if (useEditorStore.getState().viewMode === '3d') getSceneViewport()?.fitView();
+        else rf.fitView({ maxZoom: 1 });
       });
     });
   }, [rf]);
@@ -67,6 +73,17 @@ export default function PresentBar() {
     setPresenting(false);
   }, [setPresenting]);
 
+  // The view being switched to may never have been framed for the full-screen
+  // canvas (e.g. presenting began in 3D), so fit it the same way a page is.
+  const switchViewMode = useCallback(
+    (mode: DiagramViewMode) => {
+      if (mode === useEditorStore.getState().viewMode) return;
+      onViewModeChange(mode);
+      schedulePresentFit();
+    },
+    [onViewModeChange, schedulePresentFit],
+  );
+
   // Fit once the chrome is hidden and the canvas has grown to fill the screen.
   useEffect(() => {
     schedulePresentFit();
@@ -74,7 +91,6 @@ export default function PresentBar() {
 
   // Auto-hide bar + keyboard navigation.
   useEffect(() => {
-    setBarVisible(true);
     let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
     const cancelHide = () => {
@@ -130,6 +146,10 @@ export default function PresentBar() {
   }, [exitPresent, navigatePresentPage, navigateToPresentPage]);
 
   return (
+    <>
+    <div className="fixed bottom-4 right-4 z-40 rounded-xl border border-[#e7e0d6] bg-white/95 p-1 shadow-sm">
+      <ViewModeSwitch value={viewMode} onChange={switchViewMode} />
+    </div>
     <header
       className={`fixed inset-x-0 top-0 z-50 grid h-[52px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b border-line-soft bg-white px-4 shadow-sm transition-transform duration-300 ease-out ${
         barVisible ? 'translate-y-0' : '-translate-y-full'
@@ -226,5 +246,6 @@ export default function PresentBar() {
         </div>
       </div>
     </header>
+    </>
   );
 }

@@ -508,8 +508,8 @@ export function routeOrthogonal(opts: RouteOptions): Point[] {
 	// drag preview in every case: when reconnecting the SOURCE end,
 	// EdgeReconnectAnchor computes the preview from the fixed TARGET back to
 	// the pointer (reversed), and SmoothStep isn't perfectly symmetric — so
-	// without canonicalising, preview and final would diverge. The rendered
-	// line is undirected, so reordering the points is purely visual-neutral.
+	// without canonicalising, preview and final would diverge. The order is
+	// restored before returning, since markers and labels are directed.
 	const swap = source.x > target.x || (approxEq(source.x, target.x) && source.y > target.y);
 	if (swap) {
 		[source, target] = [target, source];
@@ -529,7 +529,11 @@ export function routeOrthogonal(opts: RouteOptions): Point[] {
 	// points so handle stubs stay distinct segments, then tidy the result.
 	let routed = avoidRect(points, targetRect, preferTop, preferLeft);
 	routed = avoidRect(routed, sourceRect, preferTop, preferLeft);
-	return simplifyPoints(routed);
+	const simplified = simplifyPoints(routed);
+	// The canonical order was for routing only. Callers draw source → target,
+	// and end markers and label positions (t along the path) depend on that
+	// direction, so hand the points back in the caller's order.
+	return swap ? simplified.reverse() : simplified;
 }
 
 export interface BezierOptions {

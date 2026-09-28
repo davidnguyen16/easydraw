@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 3 64 74" width="221" height="256">
+  <title>Generic Server</title>
+  <rect x="23" y="7" width="54" height="66" rx="6" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8"/>
+  <rect x="29" y="14" width="42" height="13" rx="3" fill="#f5e6e8" stroke="#9a9a99" stroke-width="1.2"/>
+  <rect x="29" y="33" width="42" height="13" rx="3" fill="#f5e6e8" stroke="#9a9a99" stroke-width="1.2"/>
+  <rect x="29" y="52" width="42" height="13" rx="3" fill="#f5e6e8" stroke="#9a9a99" stroke-width="1.2"/>
+  <circle cx="64" cy="20" r="1.9" fill="#a6192e" stroke="none" stroke-width="1.8"/>
+  <circle cx="64" cy="39" r="1.9" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <circle cx="64" cy="58" r="1.9" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+</svg>

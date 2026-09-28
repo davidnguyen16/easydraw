@@ -1,0 +1,72 @@
+{
+  "id": "floor-tile",
+  "name": "Raised floor tile",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 60,
+      "height": 60,
+      "depth": 0.04
+    },
+    "fill": "#c2cdd5",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1,
+          0.5,
+          1
+        ],
+        "position": [
+          0,
+          0.25,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          1,
+          0.5,
+          1
+        ],
+        "position": [
+          0,
+          -0.25,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.04,
+          0.02
+        ],
+        "position": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.02,
+          0.04,
+          1
+        ],
+        "position": [
+          0,
+          0.5,
+          0
+        ]
+      }
+    ]
+  }
+}

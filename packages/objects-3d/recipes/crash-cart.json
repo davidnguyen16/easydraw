@@ -1,0 +1,156 @@
+{
+  "id": "crash-cart",
+  "name": "Crash cart",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 50,
+      "height": 50,
+      "depth": 1.2
+    },
+    "fill": "#9aa7b1",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1,
+          0.7,
+          1
+        ],
+        "position": [
+          0,
+          -0.05,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1.02,
+          0.04,
+          1.02
+        ],
+        "position": [
+          0,
+          0.31,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.8,
+          0.08,
+          0.7
+        ],
+        "position": [
+          0,
+          0.4,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.06,
+          0.2,
+          0.06
+        ],
+        "position": [
+          0,
+          0.45,
+          -0.2
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.7,
+          0.45,
+          0.04
+        ],
+        "position": [
+          0,
+          0.6,
+          -0.15
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "screen",
+        "size": [
+          0.62,
+          0.36,
+          0.01
+        ],
+        "position": [
+          0,
+          0.6,
+          -0.125
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "dark",
+        "size": [
+          0.14,
+          0.14,
+          0.14
+        ],
+        "position": [
+          -0.4,
+          -0.44,
+          -0.4
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "dark",
+        "size": [
+          0.14,
+          0.14,
+          0.14
+        ],
+        "position": [
+          0.4,
+          -0.44,
+          -0.4
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "dark",
+        "size": [
+          0.14,
+          0.14,
+          0.14
+        ],
+        "position": [
+          -0.4,
+          -0.44,
+          0.4
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "dark",
+        "size": [
+          0.14,
+          0.14,
+          0.14
+        ],
+        "position": [
+          0.4,
+          -0.44,
+          0.4
+        ]
+      }
+    ]
+  }
+}

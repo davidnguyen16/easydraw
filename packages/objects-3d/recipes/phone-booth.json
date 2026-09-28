@@ -1,0 +1,157 @@
+{
+  "id": "phone-booth",
+  "name": "Phone booth",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 60,
+      "height": 60,
+      "depth": 2.3
+    },
+    "fill": "#2f3a46",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          1,
+          0.08
+        ],
+        "position": [
+          0,
+          0,
+          -0.46
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.08,
+          1,
+          1
+        ],
+        "position": [
+          -0.46,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.08,
+          1,
+          1
+        ],
+        "position": [
+          0.46,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.06,
+          1
+        ],
+        "position": [
+          0,
+          0.47,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.06,
+          1
+        ],
+        "position": [
+          0,
+          -0.47,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "custom",
+        "color": "#bfe3ef",
+        "size": [
+          0.84,
+          0.88,
+          0.01
+        ],
+        "position": [
+          0,
+          0,
+          0.45
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "wood",
+        "size": [
+          0.8,
+          0.04,
+          0.4
+        ],
+        "position": [
+          0,
+          -0.1,
+          -0.2
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "silver",
+        "size": [
+          0.2,
+          0.5,
+          0.2
+        ],
+        "position": [
+          0,
+          -0.19,
+          0.1
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "leaf",
+        "size": [
+          0.3,
+          0.3,
+          0.3
+        ],
+        "position": [
+          0.2,
+          0.07,
+          -0.25
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "screen",
+        "size": [
+          0.24,
+          0.16,
+          0.01
+        ],
+        "position": [
+          -0.1,
+          0.05,
+          -0.41
+        ]
+      }
+    ]
+  }
+}

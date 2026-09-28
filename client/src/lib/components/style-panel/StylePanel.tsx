@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { Node } from '@xyflow/react';
 import StyleTab from './StyleTab';
 import TextTab from './TextTab';
@@ -12,7 +12,7 @@ import { FLOATING_STYLE_PANEL_RIGHT_GAP_PX, FLOATING_STYLE_PANEL_WIDTH_PX } from
 
 // Ported from StylePanel.svelte. Shapes may ship a custom editor tab via the
 // registry (e.g. EntityNode's Fields editor) — surfaced generically here.
-type StyleTabId = 'style' | 'text' | 'panel' | 'arrange';
+type StyleTabId = 'style' | 'text' | 'panel' | 'arrange' | 'spatial' | 'object';
 
 interface Props {
   node: Node;
@@ -30,6 +30,9 @@ interface Props {
   onSendToBack: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  spatialControls?: ReactNode;
+  /** 3D-object designer, shown as an "Object" tab when the node can carry a 3D look. */
+  objectControls?: ReactNode;
 }
 
 const TAB_CLASS =
@@ -52,8 +55,10 @@ export default function StylePanel({
   onSendToBack,
   onDuplicate,
   onDelete,
+  spatialControls,
+  objectControls,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<StyleTabId>('style');
+  const [requestedTab, setActiveTab] = useState<StyleTabId>('style');
 
   // The shape registry tells us whether the selected node ships a custom editor
   // tab (e.g. EntityNode's Fields editor). No node-type branching here.
@@ -62,9 +67,7 @@ export default function StylePanel({
 
   // If the active node's shape has no custom panel while that tab is open, fall
   // back to Style.
-  useEffect(() => {
-    if (!customPanel && activeTab === 'panel') setActiveTab('style');
-  }, [customPanel, activeTab]);
+  const activeTab = (!customPanel && requestedTab === 'panel') || (!spatialControls && requestedTab === 'spatial') || (!objectControls && requestedTab === 'object') ? 'style' : requestedTab;
 
   // The style fields live on node.data so they survive page snapshots.
   const style = (node.data ?? {}) as NodeStyleData;
@@ -92,6 +95,8 @@ export default function StylePanel({
         {renderTab('text', 'Text')}
         {customPanel && renderTab('panel', customPanel.label)}
         {renderTab('arrange', 'Arrange')}
+        {spatialControls && renderTab('spatial', '3D')}
+        {objectControls && renderTab('object', 'Object')}
       </div>
 
       <div className="flex flex-col gap-5 overflow-y-auto p-[18px]">
@@ -104,7 +109,7 @@ export default function StylePanel({
             onFontPreview={onFontPreview}
             onFontPreviewEnd={onFontPreviewEnd}
           />
-        ) : activeTab === 'panel' && PanelComponent ? (
+        ) : activeTab === 'spatial' && spatialControls ? spatialControls : activeTab === 'object' && objectControls ? objectControls : activeTab === 'panel' && PanelComponent ? (
           <PanelComponent
             node={node}
             onDataChange={(patch, options) =>

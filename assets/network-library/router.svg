@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="256" height="205">
+  <title>Router</title>
+  <ellipse cx="50" cy="40" rx="42" ry="25" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8"/>
+  <line x1="30" y1="40" x2="70" y2="40" fill="none" stroke="#a6192e" stroke-width="2.2" stroke-linecap="round"/>
+  <polyline points="37,34 30,40 37,46" fill="none" stroke="#a6192e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="63,34 70,40 63,46" fill="none" stroke="#a6192e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="50" y1="24" x2="50" y2="56" fill="none" stroke="#a6192e" stroke-width="2.2" stroke-linecap="round"/>
+  <polyline points="44,31 50,24 56,31" fill="none" stroke="#a6192e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="44,49 50,56 56,49" fill="none" stroke="#a6192e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

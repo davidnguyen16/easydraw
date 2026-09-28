@@ -1,0 +1,114 @@
+{
+  "id": "filing-cabinet",
+  "name": "Filing cabinet",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 45,
+      "height": 60,
+      "depth": 1.05
+    },
+    "fill": "#8c96a0",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          1,
+          1
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.9,
+          0.27,
+          0.02
+        ],
+        "position": [
+          0,
+          -0.33,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.9,
+          0.27,
+          0.02
+        ],
+        "position": [
+          0,
+          0,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.9,
+          0.27,
+          0.02
+        ],
+        "position": [
+          0,
+          0.33,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.3,
+          0.03,
+          0.03
+        ],
+        "position": [
+          0,
+          -0.27,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.3,
+          0.03,
+          0.03
+        ],
+        "position": [
+          0,
+          0.06,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.3,
+          0.03,
+          0.03
+        ],
+        "position": [
+          0,
+          0.39,
+          0.52
+        ]
+      }
+    ]
+  }
+}

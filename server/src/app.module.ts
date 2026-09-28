@@ -10,6 +10,11 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
 import { Keyv } from 'keyv';
 import { LoggerModule } from 'nestjs-pino';
+import { NodeLibraryModule } from './node-library/node-library.module';
+import { ObjectLibraryModule } from './object-library/object-library.module';
+import { TemplatesModule } from './templates/templates.module';
+import { DiagramPreviewsModule } from './diagram-previews/diagram-previews.module';
+import { TrustedOriginGuard } from './auth/trusted-origin.guard';
 
 @Module({
   imports: [
@@ -26,11 +31,13 @@ import { LoggerModule } from 'nestjs-pino';
         serializers: {
           // Log the route, but never its query string. OAuth callbacks can
           // contain short-lived authorisation codes in the URL.
-          req: (req) => ({
+          req: (req: { method?: string; url?: string }) => ({
             method: req.method,
-            url: typeof req.url === 'string' ? req.url.split('?')[0] : req.url,
+            url: req.url?.split('?')[0],
           }),
-          res: (res) => ({ statusCode: res.statusCode }),
+          res: (res: { statusCode?: number }) => ({
+            statusCode: res.statusCode,
+          }),
         },
       },
     }),
@@ -53,8 +60,16 @@ import { LoggerModule } from 'nestjs-pino';
     PrismaModule,
     DiagramsModule,
     AuthModule,
+    NodeLibraryModule,
+    ObjectLibraryModule,
+    TemplatesModule,
+    DiagramPreviewsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: TrustedOriginGuard },
+  ],
 })
 export class AppModule {}

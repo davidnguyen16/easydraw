@@ -72,7 +72,6 @@ export default function LineEndingsDialog({ onClose }: Props) {
   }, [onClose]);
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
     <div
       className="fixed inset-0 z-[300] flex items-center justify-center bg-ink/45"
       role="presentation"

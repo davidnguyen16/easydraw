@@ -360,7 +360,7 @@ export default function ConnectionEdge({
     });
   }
 
-  function startGhostDrag(segment: Segment, _event: PointerEvent) {
+  function startGhostDrag(segment: Segment) {
     // Dragging a segment midpoint perpendicular slides the WHOLE segment —
     // that needs TWO bend points (one per endpoint); reuse or insert.
     const segmentAxis = segment.axis;
@@ -419,7 +419,7 @@ export default function ConnectionEdge({
     window.addEventListener('pointercancel', onUp);
   }
 
-  function startSolidDrag(bendIndex: number, _event: PointerEvent) {
+  function startSolidDrag(bendIndex: number) {
     const onMove = (ev: PointerEvent) => {
       const flowPos = flow.screenToFlowPosition({ x: ev.clientX, y: ev.clientY });
       patchBendPoints((prev) => {
@@ -449,7 +449,7 @@ export default function ConnectionEdge({
     if (interior.length === 0) {
       const flowPos = flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
       patchBendPoints(() => [{ x: flowPos.x, y: flowPos.y }]);
-      startSolidDrag(0, event);
+      startSolidDrag(0);
       return;
     }
 
@@ -464,7 +464,7 @@ export default function ConnectionEdge({
         longest = seg;
       }
     }
-    startGhostDrag(longest, event);
+    startGhostDrag(longest);
   }
 
   // ─── Endpoint reconnect drag (draw.io style) ────────────────────────
@@ -770,7 +770,7 @@ export default function ConnectionEdge({
               x={hoverGhostSegment.mid.x}
               y={hoverGhostSegment.mid.y}
               axis={hoverGhostSegment.axis}
-              onPointerDown={(e) => startGhostDrag(hoverGhostSegment, e)}
+              onPointerDown={() => startGhostDrag(hoverGhostSegment)}
             />
           ) : null
         ) : null}
@@ -784,7 +784,7 @@ export default function ConnectionEdge({
                   x={bend.x}
                   y={bend.y}
                   axis={axisAtBend(bendIndex)}
-                  onPointerDown={(e) => startSolidDrag(bendIndex, e)}
+                  onPointerDown={() => startSolidDrag(bendIndex)}
                 />
               ) : null,
             )

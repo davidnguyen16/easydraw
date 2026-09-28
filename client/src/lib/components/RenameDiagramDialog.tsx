@@ -7,11 +7,14 @@ export default function RenameDiagramDialog({
   open,
   onClose,
   currentName = '',
+  noun = 'diagram',
   onSave,
 }: {
   open: boolean;
   onClose: () => void;
   currentName?: string;
+  /** What kind of document this is, for the copy: "diagram", "whiteboard". */
+  noun?: string;
   onSave: (name: string) => Promise<void>;
 }) {
   const [name, setName] = useState('');
@@ -26,11 +29,21 @@ export default function RenameDiagramDialog({
     if (!loading) onClose();
   };
 
-  // Reset to the current name + focus/select each time the dialog opens.
+  // Reset to the current name each time the dialog opens (or the name changes
+  // while open). Adjusted while rendering, so no frame shows a stale name.
+  const syncKey = open ? currentName : null;
+  const [syncedKey, setSyncedKey] = useState<string | null>(null);
+  if (syncKey !== syncedKey) {
+    setSyncedKey(syncKey);
+    if (syncKey !== null) {
+      setName(syncKey);
+      setLoading(false);
+    }
+  }
+
+  // Focus/select the input once the opened dialog is painted.
   useEffect(() => {
     if (!open) return;
-    setName(currentName);
-    setLoading(false);
     const id = requestAnimationFrame(() => {
       inputRef.current?.focus();
       inputRef.current?.select();
@@ -73,7 +86,7 @@ export default function RenameDiagramDialog({
       <div className="relative z-10 w-full max-w-md rounded-2xl border border-line bg-white p-6 shadow-xl">
         <div className="mb-5 flex items-start justify-between">
           <h2 id="rename-diagram-title" className="text-lg font-semibold text-ink">
-            Rename diagram
+            Rename {noun}
           </h2>
           <button
             onClick={close}

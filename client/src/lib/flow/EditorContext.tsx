@@ -13,7 +13,6 @@ import { useEditorStore } from '@/lib/stores/editor.store';
 import { useFontPreviewStore } from '@/lib/flow/font-preview-store';
 import { ANCHOR_NODE_TYPE } from '@/lib/flow/nodes/anchor/anchor';
 import {
-  duplicateSelectedNodes,
   deleteSelectedGraph,
   copySelection,
   bringSelectedToFront,
@@ -23,7 +22,6 @@ import {
   toggleNodeLock,
   selectAllGraph,
   groupSelectedNodes,
-  ungroupSelectedNodes,
   pasteSnapshot,
   type ClipboardSnapshot,
 } from '@/lib/flow/graph-actions';
@@ -33,10 +31,14 @@ import {
   handleSaveAs as saveAsDiagram,
   handleExport as exportDiagram,
   handleNewFile as newFileDiagram,
-  loadFileContent,
+  openFileFromDisk,
   applyHistorySnapshot,
 } from '@/lib/flow/editor-persistence';
+import { IMPORT_EXTENSIONS } from '@easydraw/diagram-import';
 import type { NodeStyleData } from '@/lib/components/style-panel/types';
+import { getSceneViewport } from '@/lib/diagram3d/scene-viewport';
+import { runGraphCommand, isGraphGestureActive } from './editor-commands';
+import { ungroupSelectedGraph } from './ungroup-graph';
 
 export interface NodeTextStyle {
   fontFamily: string;
@@ -68,6 +70,8 @@ export interface EditorContextValue {
   history: { canUndo: boolean; canRedo: boolean };
   save: () => void;
   open: () => void;
+  /** File › Import: draw.io / Visio (Lucidchart) files converted on the way in. */
+  importFile: () => void;
   newFile: () => void;
   undo: () => void;
   redo: () => void;
@@ -118,6 +122,17 @@ export function useEditor(): EditorContextValue {
 let clipboard: ClipboardSnapshot | null = null;
 let pasteCount = 0;
 
+function pickFile(extensions: string[]) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = extensions.join(',');
+  input.onchange = () => {
+    const file = input.files?.[0];
+    if (file) void openFileFromDisk(file);
+  };
+  input.click();
+}
+
 export function EditorProvider({ children }: { children: ReactNode }) {
   const rf = useReactFlow();
   const diagramId = useDiagramId();
@@ -125,6 +140,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const nodes = useFlowStore((s) => s.nodes);
   const edges = useFlowStore((s) => s.edges);
   const locked = useEditorStore((s) => s.locked);
+  const viewMode = useEditorStore((s) => s.viewMode);
+  const zoom3d = useEditorStore((s) => s.zoom3d);
   const showStylePanel = useEditorStore((s) => s.showStylePanel);
   const toggleLock = useEditorStore((s) => s.toggleLock);
   const toggleStylePanel = useEditorStore((s) => s.toggleStylePanel);
@@ -157,7 +174,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   const applyStyle = (patch: NodeStyleData) => {
     const s = useFlowStore.getState();
-    const n = s.nodes.find((x) => x.selected && x.type !== ANCHOR_NODE_TYPE);
+    const n = s.nodes.find((x) => x.selected && x.type !== ANCHOR_NODE_TYPE && !x.data.locked);
     if (n) {
       s.setNodes(s.nodes.map((x) => (x.id === n.id ? { ...x, data: { ...x.data, ...patch } } : x)));
       return;
@@ -175,7 +192,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   const value: EditorContextValue = {
     state: {
-      zoomPercent: Math.round(zoom * 100),
+      zoomPercent: viewMode === '3d' ? zoom3d : Math.round(zoom * 100),
       locked,
       showStylePanel,
       showGrid,
@@ -184,26 +201,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     },
     history: { canUndo, canRedo },
     save: () => saveDiagram(diagramId),
-    open: () => {
-      // Load a .easydraw / JSON file from disk into the editor (File > Open).
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.easydraw,application/json,.json,application/xml,.xml';
-      input.onchange = () => {
-        const file = input.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const content = e.target?.result;
-          if (typeof content !== 'string') return;
-          if (!loadFileContent(content)) {
-            window.alert('Failed to open: file is not a valid EasyDraw diagram.');
-          }
-        };
-        reader.readAsText(file);
-      };
-      input.click();
-    },
+    // File › Open takes EasyDraw's own files first but accepts the import
+    // formats too, so a .drawio dropped on "Open" still works; File › Import
+    // advertises only the foreign formats.
+    open: () => pickFile(['.easydraw', '.json', ...IMPORT_EXTENSIONS]),
+    importFile: () => pickFile([...IMPORT_EXTENSIONS]),
     newFile: () => newFileDiagram(),
     undo: () => {
       const snap = historyUndo();
@@ -213,11 +215,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       const snap = historyRedo();
       if (snap) applyHistorySnapshot(snap);
     },
-    zoomIn: () => rf.zoomIn(),
-    zoomOut: () => rf.zoomOut(),
-    fitView: () => rf.fitView({ maxZoom: 1 }),
-    fitSelection: () => rf.fitView({ nodes: nodes.filter((n) => n.selected), maxZoom: 1 }),
-    setZoom: (percent) => rf.zoomTo(percent / 100),
+    zoomIn: () => { if (viewMode === '3d') getSceneViewport()?.zoomIn(); else rf.zoomIn(); },
+    zoomOut: () => { if (viewMode === '3d') getSceneViewport()?.zoomOut(); else rf.zoomOut(); },
+    fitView: () => { if (viewMode === '3d') getSceneViewport()?.fitView(); else rf.fitView({ maxZoom: 1 }); },
+    fitSelection: () => { if (viewMode === '3d') getSceneViewport()?.fitSelection(); else rf.fitView({ nodes: nodes.filter((n) => n.selected), maxZoom: 1 }); },
+    setZoom: (percent) => { if (viewMode === '3d') getSceneViewport()?.setZoom(percent); else rf.zoomTo(percent / 100); },
     toggleLock,
     toggleStylePanel,
     copy: () => {
@@ -264,11 +266,15 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     },
     duplicate: () => {
       const s = useFlowStore.getState();
+      const snapshot = copySelection(s.nodes, s.edges);
+      if (!snapshot) return;
       const createOnEdit = (id: string) => (p: Record<string, unknown>) => {
         const st = useFlowStore.getState();
         st.setNodes(st.nodes.map((x) => (x.id === id ? { ...x, data: { ...x.data, ...p } } : x)));
       };
-      s.setNodes(duplicateSelectedNodes(s.nodes, createOnEdit));
+      const next = pasteSnapshot(s.nodes, s.edges, snapshot, 1, createOnEdit);
+      s.setNodes(next.nodes);
+      s.setEdges(next.edges);
     },
     deleteSelected: () => {
       const s = useFlowStore.getState();
@@ -322,10 +328,30 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     },
     ungroup: () => {
       const s = useFlowStore.getState();
-      const result = ungroupSelectedNodes(s.nodes);
-      if (result.ungrouped) s.setNodes(result.nodes);
+      const result = ungroupSelectedGraph(s.nodes, s.edges);
+      if (result.ungrouped) {
+        s.setNodes(result.nodes);
+        s.setEdges(result.edges);
+      }
     },
   };
+
+  // Shared commands are independent of the active renderer. One action is one
+  // undo step; global lock/presentation must also protect keyboard/menu paths.
+  const canEdit = () => !useEditorStore.getState().locked && !useEditorStore.getState().presenting;
+  const commands = ['cut', 'paste', 'duplicate', 'deleteSelected', 'bringToFront', 'sendToBack',
+    'bringForward', 'sendBackward', 'group', 'ungroup'] as const;
+  for (const key of commands) {
+    const action = value[key];
+    value[key] = () => { if (canEdit()) runGraphCommand(action); };
+  }
+  value.applyStyle = (patch) => { if (canEdit()) runGraphCommand(() => applyStyle(patch)); };
+  const lockNode = value.toggleNodeLock;
+  value.toggleNodeLock = (id) => { if (canEdit()) runGraphCommand(() => lockNode(id)); };
+  for (const key of ['undo', 'redo', 'selectAll', 'open', 'newFile'] as const) {
+    const action = value[key];
+    value[key] = () => { if (canEdit() && !isGraphGestureActive()) action(); };
+  }
 
   return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;
 }

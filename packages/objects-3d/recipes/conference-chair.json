@@ -1,0 +1,100 @@
+{
+  "id": "conference-chair",
+  "name": "Conference chair",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 44,
+      "height": 44,
+      "depth": 0.9
+    },
+    "fill": "#3d4b5c",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.8,
+          0.08,
+          0.8
+        ],
+        "position": [
+          0,
+          0.06,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.76,
+          0.42,
+          0.08
+        ],
+        "position": [
+          0,
+          0.31,
+          -0.36
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.06,
+          0.52,
+          0.06
+        ],
+        "position": [
+          -0.33,
+          -0.24,
+          -0.33
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.06,
+          0.52,
+          0.06
+        ],
+        "position": [
+          0.33,
+          -0.24,
+          -0.33
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.06,
+          0.52,
+          0.06
+        ],
+        "position": [
+          -0.33,
+          -0.24,
+          0.33
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.06,
+          0.52,
+          0.06
+        ],
+        "position": [
+          0.33,
+          -0.24,
+          0.33
+        ]
+      }
+    ]
+  }
+}

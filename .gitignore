@@ -1,0 +1,11 @@
+/node_modules/
+/packages/*/dist/
+/coverage/
+*.tsbuildinfo
+npm-debug.log*
+
+# Docs, notes and generated samples stay local; the repository holds code.
+# Files already tracked (the root/client/server READMEs, the images under
+# docs/) are unaffected.
+*.md
+output/

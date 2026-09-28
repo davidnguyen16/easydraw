@@ -1,0 +1,156 @@
+{
+  "id": "desk",
+  "name": "Desk",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 160,
+      "height": 80,
+      "depth": 0.75
+    },
+    "fill": "#bd9871",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "wood",
+        "size": [
+          1,
+          0.06,
+          1
+        ],
+        "position": [
+          0,
+          0.22,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.05,
+          0.5,
+          0.05
+        ],
+        "position": [
+          -0.46,
+          -0.03,
+          -0.44
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.05,
+          0.5,
+          0.05
+        ],
+        "position": [
+          0.46,
+          -0.03,
+          -0.44
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.05,
+          0.5,
+          0.05
+        ],
+        "position": [
+          -0.46,
+          -0.03,
+          0.44
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.05,
+          0.5,
+          0.05
+        ],
+        "position": [
+          0.46,
+          -0.03,
+          0.44
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.02,
+          0.3,
+          0.9
+        ],
+        "position": [
+          -0.46,
+          -0.05,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.06,
+          0.16,
+          0.06
+        ],
+        "position": [
+          0,
+          0.33,
+          -0.2
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.44,
+          0.26,
+          0.03
+        ],
+        "position": [
+          0,
+          0.46,
+          -0.2
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "screen",
+        "size": [
+          0.4,
+          0.22,
+          0.01
+        ],
+        "position": [
+          0,
+          0.46,
+          -0.18
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.36,
+          0.02,
+          0.14
+        ],
+        "position": [
+          0,
+          0.26,
+          0.15
+        ]
+      }
+    ]
+  }
+}

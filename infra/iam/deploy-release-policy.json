@@ -1,0 +1,61 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EcrLogin",
+      "Effect": "Allow",
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*"
+    },
+    {
+      "Sid": "PushApiImages",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecr:PutImage",
+        "ecr:BatchGetImage",
+        "ecr:DescribeImages"
+      ],
+      "Resource": "arn:aws:ecr:ap-southeast-2:ACCOUNT_ID:repository/easydraw-api"
+    },
+    {
+      "Sid": "ReadAndRollService",
+      "Effect": "Allow",
+      "Action": ["ecs:DescribeServices", "ecs:UpdateService"],
+      "Resource": "arn:aws:ecs:ap-southeast-2:ACCOUNT_ID:service/default/easydraw-api"
+    },
+    {
+      "Sid": "TaskDefinitions",
+      "Effect": "Allow",
+      "Action": ["ecs:DescribeTaskDefinition", "ecs:RegisterTaskDefinition"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "RunMigrationTaskOnly",
+      "Effect": "Allow",
+      "Action": "ecs:RunTask",
+      "Resource": "arn:aws:ecs:ap-southeast-2:ACCOUNT_ID:task-definition/default-easydraw-api-migrate:*",
+      "Condition": {
+        "ArnEquals": { "ecs:cluster": "arn:aws:ecs:ap-southeast-2:ACCOUNT_ID:cluster/default" }
+      }
+    },
+    {
+      "Sid": "WatchMigrationTask",
+      "Effect": "Allow",
+      "Action": "ecs:DescribeTasks",
+      "Resource": "arn:aws:ecs:ap-southeast-2:ACCOUNT_ID:task/default/*"
+    },
+    {
+      "Sid": "PassTheTaskRoleToEcsOnly",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::ACCOUNT_ID:role/ECS-role-a61c3da3",
+      "Condition": {
+        "StringEquals": { "iam:PassedToService": "ecs-tasks.amazonaws.com" }
+      }
+    }
+  ]
+}

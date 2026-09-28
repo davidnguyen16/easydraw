@@ -129,7 +129,7 @@ export default function MenuBar() {
 
   const goToDashboard = () => {
     setUserMenuOpen(false);
-    router.push('/dashboard');
+    router.push('/dashboard/diagrams');
   };
 
   const goToSettings = () => {
@@ -183,6 +183,7 @@ export default function MenuBar() {
     File: [
       { icon: 'new', label: 'New', shortcut: 'Ctrl+N', onClick: editor.newFile },
       { icon: 'open', label: 'Open…', shortcut: 'Ctrl+O', onClick: editor.open },
+      { icon: 'import', label: 'Import from draw.io / Visio…', onClick: editor.importFile },
       { icon: 'save', label: 'Save', shortcut: 'Ctrl+S', onClick: editor.save },
       { icon: 'save-as', label: 'Save As…', shortcut: 'Ctrl+Shift+S', onClick: editor.saveAs },
       { type: 'divider' },
@@ -277,9 +278,9 @@ export default function MenuBar() {
           [font-family:system-ui,-apple-system,sans-serif]"
       >
         <Link
-          href="/dashboard"
-          title="Back to dashboard"
-          aria-label="Back to dashboard"
+          href="/dashboard/diagrams"
+          title="Back to diagrams"
+          aria-label="Back to diagrams"
           className="flex flex-shrink-0 items-center rounded-md p-1 transition-colors hover:bg-white/10"
         >
           <svg width="40" height="40" viewBox="0 0 48 48" fill="none" aria-hidden="true">

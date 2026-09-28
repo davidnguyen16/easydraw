@@ -6,8 +6,9 @@
  * flow-coordinate bounds land at the top-left of the exported image. The live
  * canvas is never panned or zoomed and surrounding editor chrome is excluded.
  */
-import { toJpeg, toPng } from 'html-to-image';
+import { toCanvas, toJpeg, toPng } from 'html-to-image';
 import type { ExportBounds } from './types';
+import { waitForDocumentImages } from './image-readiness';
 
 export interface CaptureOptions {
   backgroundColor?: string;
@@ -99,7 +100,9 @@ function getImageOptions(
         geometry.height,
         options.pixelRatio ?? DEFAULTS.pixelRatio,
       ),
-      cacheBust: true,
+      // Custom images use immutable local blob URLs. Adding a query invalidates
+      // those URLs (and would also invalidate an S3 signature).
+      cacheBust: false,
       style: {
         width: `${geometry.width}px`,
         height: `${geometry.height}px`,
@@ -116,6 +119,7 @@ export async function captureAsPng(
   options: CaptureOptions = {},
 ): Promise<string> {
   const { geometry, imageOptions } = getImageOptions(root, bounds, options);
+  await waitForDocumentImages(geometry.viewport);
   return toPng(geometry.viewport, imageOptions);
 }
 
@@ -125,8 +129,40 @@ export async function captureAsJpeg(
   options: CaptureOptions = {},
 ): Promise<string> {
   const { geometry, imageOptions } = getImageOptions(root, bounds, options);
+  await waitForDocumentImages(geometry.viewport);
   return toJpeg(geometry.viewport, { ...imageOptions, quality: options.quality ?? 0.95 });
 }
+
+/**
+ * A small raster of the whole diagram for the dashboard card. The density is
+ * chosen so the result fits the thumbnail box, so a large diagram costs no
+ * more than a small one.
+ */
+export async function captureThumbnailCanvas(
+  root: HTMLElement | null,
+  bounds: ExportBounds | null,
+  maxWidth: number,
+  maxHeight: number,
+): Promise<HTMLCanvasElement> {
+  const padding = 24;
+  const size = getCaptureGeometry(root, bounds, padding);
+  const pixelRatio = Math.min(1, maxWidth / size.width, maxHeight / size.height);
+  const { geometry, imageOptions } = getImageOptions(root, bounds, { padding, pixelRatio });
+  await waitForDocumentImages(geometry.viewport);
+  // Editing chrome stays out of the picture: handles, resize controls, the
+  // marquee, and (via the is-capturing rule in xy-theme.css) selection outlines.
+  root?.classList.add('is-capturing');
+  try {
+    return await toCanvas(geometry.viewport, {
+      ...imageOptions,
+      filter: (node) => !(node instanceof Element && EDITING_CHROME.some((cls) => node.classList.contains(cls))),
+    });
+  } finally {
+    root?.classList.remove('is-capturing');
+  }
+}
+
+const EDITING_CHROME = ['react-flow__handle', 'react-flow__resize-control', 'react-flow__nodesselection', 'react-flow__selection', 'react-flow__nodesselection-rect'];
 
 /** Returns the exact CSS-pixel dimensions used by image and PDF exports. */
 export function getExportSize(

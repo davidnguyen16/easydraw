@@ -19,18 +19,21 @@ export default function DeleteAccountDialog({
 
   const canDelete = confirmText === 'DELETE' && !isDeleting;
 
-  // Reset stale confirmation/error state and focus the destructive-action guard
-  // every time the dialog opens (and clear on close).
-  useEffect(() => {
-    if (open) {
-      setConfirmText('');
-      setDeleteError(null);
-      setIsDeleting(false);
-      const id = requestAnimationFrame(() => confirmInputRef.current?.focus());
-      return () => cancelAnimationFrame(id);
-    }
+  // Reset stale confirmation/error state every time the dialog opens or
+  // closes. Adjusted while rendering, so no frame shows the old text.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     setConfirmText('');
     setDeleteError(null);
+    if (open) setIsDeleting(false);
+  }
+
+  // Focus the destructive-action guard once the opened dialog is painted.
+  useEffect(() => {
+    if (!open) return;
+    const id = requestAnimationFrame(() => confirmInputRef.current?.focus());
+    return () => cancelAnimationFrame(id);
   }, [open]);
 
   const close = () => {

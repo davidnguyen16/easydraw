@@ -26,6 +26,7 @@ if (
   parsedDatabaseUrl.pathname !== '/easydraw_test'
 ) {
   throw new Error(
-    `Refusing to run e2e against: ${databaseUrl}`,
+    // Host, port and name only: the full URL carries the password.
+    `Refusing to run e2e against: ${parsedDatabaseUrl.hostname}:${parsedDatabaseUrl.port}${parsedDatabaseUrl.pathname}`,
   );
 }

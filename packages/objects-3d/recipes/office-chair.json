@@ -1,0 +1,86 @@
+{
+  "id": "office-chair",
+  "name": "Office chair",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 50,
+      "height": 50,
+      "depth": 1
+    },
+    "fill": "#2f3a46",
+    "parts": [
+      {
+        "shape": "cylinder",
+        "material": "dark",
+        "size": [
+          0.8,
+          0.04,
+          0.8
+        ],
+        "position": [
+          0,
+          -0.48,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "silver",
+        "size": [
+          0.08,
+          0.36,
+          0.08
+        ],
+        "position": [
+          0,
+          -0.28,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.7,
+          0.1,
+          0.7
+        ],
+        "position": [
+          0,
+          -0.05,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.66,
+          0.5,
+          0.08
+        ],
+        "position": [
+          0,
+          0.25,
+          -0.32
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.08,
+          0.36,
+          0.08
+        ],
+        "position": [
+          0,
+          0,
+          -0.32
+        ]
+      }
+    ]
+  }
+}

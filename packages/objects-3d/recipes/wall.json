@@ -1,0 +1,58 @@
+{
+  "id": "wall",
+  "name": "Wall segment",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 300,
+      "height": 12,
+      "depth": 3
+    },
+    "fill": "#e0e7e8",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          1,
+          1
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1.01,
+          0.05,
+          1.05
+        ],
+        "position": [
+          0,
+          0.48,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1.01,
+          0.05,
+          1.05
+        ],
+        "position": [
+          0,
+          -0.48,
+          0
+        ]
+      }
+    ]
+  }
+}

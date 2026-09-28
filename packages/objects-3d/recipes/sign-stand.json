@@ -1,0 +1,72 @@
+{
+  "id": "sign-stand",
+  "name": "Sign stand",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 40,
+      "height": 20,
+      "depth": 1.5
+    },
+    "fill": "#c2cdd5",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.12,
+          1,
+          0.12
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.9,
+          0.6,
+          0.05
+        ],
+        "position": [
+          0,
+          0.2,
+          0.06
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "screen",
+        "size": [
+          0.82,
+          0.5,
+          0.01
+        ],
+        "position": [
+          0,
+          0.2,
+          0.09
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "dark",
+        "size": [
+          0.5,
+          0.05,
+          0.5
+        ],
+        "position": [
+          0,
+          -0.48,
+          0
+        ]
+      }
+    ]
+  }
+}

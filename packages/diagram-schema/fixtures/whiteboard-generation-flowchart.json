@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "outcome": "diagram",
+  "nodes": [
+    { "id": "start", "shape": "ellipse", "label": "Bắt đầu", "bounds": { "x": 100, "y": 70, "width": 160, "height": 100 } },
+    { "id": "credentials", "shape": "rounded-rectangle", "label": "Nhập email và mật khẩu", "bounds": { "x": 90, "y": 260, "width": 180, "height": 120 } },
+    { "id": "valid", "shape": "diamond", "label": "Thông tin hợp lệ?", "bounds": { "x": 390, "y": 260, "width": 200, "height": 160 } },
+    { "id": "dashboard", "shape": "rectangle", "label": "Mở trang tổng quan", "bounds": { "x": 720, "y": 180, "width": 220, "height": 130 } },
+    { "id": "error", "shape": "rectangle", "label": "Thông báo lỗi", "bounds": { "x": 720, "y": 530, "width": 220, "height": 130 } }
+  ],
+  "edges": [
+    { "id": "begin", "sourceId": "start", "targetId": "credentials", "label": "", "direction": "forward" },
+    { "id": "submit", "sourceId": "credentials", "targetId": "valid", "label": "Đăng nhập", "direction": "forward" },
+    { "id": "yes", "sourceId": "valid", "targetId": "dashboard", "label": "Có", "direction": "forward" },
+    { "id": "no", "sourceId": "valid", "targetId": "error", "label": "Không", "direction": "forward" },
+    { "id": "retry", "sourceId": "error", "targetId": "credentials", "label": "Thử lại", "direction": "forward" }
+  ],
+  "warnings": []
+}

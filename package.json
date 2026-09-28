@@ -1,0 +1,36 @@
+{
+  "name": "easydraw-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.12.1",
+  "workspaces": [
+    "client",
+    "server",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:packages": "npm run build -w @easydraw/shared-types && npm run build -w @easydraw/diagram-schema && npm run build -w @easydraw/diagram-import && npm run build -w @easydraw/objects-3d && npm run build -w @easydraw/pack-whiteboard",
+    "typecheck:packages": "npm run typecheck -w @easydraw/shared-types && npm run typecheck -w @easydraw/diagram-schema && npm run typecheck -w @easydraw/diagram-import && npm run typecheck -w @easydraw/objects-3d && npm run typecheck -w @easydraw/pack-whiteboard",
+    "test:packages": "npm run build:packages && npm run test -w @easydraw/diagram-schema && npm run test -w @easydraw/diagram-import && npm run test -w @easydraw/objects-3d && npm run test -w @easydraw/pack-whiteboard",
+    "test": "npm run test:packages && npm run test -w easydraw",
+    "test:diagram3d": "node --test scripts/test-diagram3d.mjs scripts/test-diagram3d-editing.mjs scripts/test-graph-actions.mjs scripts/test-save-queue.mjs scripts/test-ungroup-graph.mjs",
+    "dev:client": "npm run build:packages && npm run dev -w easydraw",
+    "build:client": "npm run build:packages && npm run build -w easydraw",
+    "build:server": "npm run build -w backend",
+    "test:client": "npm run build:packages && npm run test -w easydraw"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.8.0": true,
+    "prisma@7.8.0": true,
+    "@scarf/scarf": false,
+    "core-js": false,
+    "unrs-resolver": false
+  }
+}

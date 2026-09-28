@@ -18,17 +18,10 @@ import type { ComponentType } from 'react';
 import type { Node, NodeProps } from '@xyflow/react';
 
 /** Sidebar palette grouping. Add new values here as new categories appear. */
-export type NodeCategory = 'basic' | 'arrows' | 'flowchart' | 'entity-relation' | 'uml' | 'network';
+export type NodeCategory = 'basic' | 'arrows' | 'flowchart' | 'entity-relation' | 'uml';
 
 /** Stable ids for nested palette groups. Display labels live in Sidebar. */
-export type PaletteGroupId =
-	| 'network-devices'
-	| 'security-traffic'
-	| 'end-devices'
-	| 'servers-storage'
-	| 'wan-cloud'
-	| 'zones-containers'
-	| 'connections';
+export type PaletteGroupId = never;
 
 /**
  * Optional StylePanel surface that's only relevant to specific shapes.
@@ -77,7 +70,7 @@ export interface NodeShape {
 	 */
 	component?: ComponentType<NodeProps>;
 	/** SVG icon component rendered inside the sidebar palette tile. */
-	icon: ComponentType<any>;
+	icon: ComponentType<Record<string, unknown>>;
 	/** Optional props forwarded only to the sidebar palette icon. */
 	paletteIconProps?: Record<string, unknown>;
 	/** Returns the initial data payload when a tile of this shape is dropped. */

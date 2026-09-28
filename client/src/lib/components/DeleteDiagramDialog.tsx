@@ -7,11 +7,14 @@ export default function DeleteDiagramDialog({
   open,
   onClose,
   name = '',
+  noun = 'diagram',
   onConfirm,
 }: {
   open: boolean;
   onClose: () => void;
   name?: string;
+  /** What kind of document this is, for the copy: "diagram", "whiteboard". */
+  noun?: string;
   onConfirm: () => Promise<void>;
 }) {
   const [loading, setLoading] = useState(false);
@@ -55,7 +58,7 @@ export default function DeleteDiagramDialog({
       <div className="relative z-10 w-full max-w-md rounded-2xl border border-line bg-white p-6 shadow-xl">
         <div className="mb-2 flex items-start justify-between">
           <h2 id="delete-diagram-title" className="text-lg font-semibold text-ink">
-            Delete diagram?
+            Delete {noun}?
           </h2>
           <button
             onClick={close}
@@ -68,7 +71,7 @@ export default function DeleteDiagramDialog({
         </div>
 
         <p className="text-sm text-ink-muted">
-          Are you sure you want to permanently delete this diagram?
+          Are you sure you want to permanently delete this {noun}?
         </p>
         <p className="mt-4 text-sm font-semibold text-ink">“{name}”</p>
         <p className="mt-3 text-sm text-ink-muted">This action cannot be undone.</p>

@@ -12,6 +12,8 @@ import {
 } from '@xyflow/react';
 import { toFiniteRotation } from '@/lib/flow/nodes/style-utils';
 import { VARIANTS, SHAPE_GEOMETRY, type Variant } from './shape-geometry';
+import PlanGlyph from '@/lib/diagram3d/PlanGlyph';
+import { getVisual3DRecipe } from '@/lib/diagram3d/visual3d';
 import { useFontPreviewStore } from '@/lib/flow/font-preview-store';
 
 // String → Position lookup so the VARIANTS config stays plain data.
@@ -50,12 +52,15 @@ function cssStringToStyle(css?: string): CSSProperties | undefined {
 export default function ShapeNode({ id, type, data, selected, isConnectable }: NodeProps) {
   const { updateNodeData } = useReactFlow();
   const d = (data ?? {}) as Record<string, unknown>;
+  // A node carrying a 3D object is drawn as that object's plan view, not its shape.
+  const recipe = getVisual3DRecipe(type ?? '', d);
 
   const variant: Variant = VARIANTS[type ?? ''] ?? { kind: 'svg' };
   // The variant's geometry alias when set, else the node's own type.
   const shapeType = variant.geometry ?? type ?? '';
   const geometry = SHAPE_GEOMETRY[shapeType] ?? null;
-  const labelPlacement = variant.labelPlacement ?? (geometry?.kind === 'actor' ? 'below' : 'center');
+  // Objects are captioned under their footprint, like actors and icons, so the drawing stays legible.
+  const labelPlacement = recipe ? 'below' : variant.labelPlacement ?? (geometry?.kind === 'actor' ? 'below' : 'center');
 
   // Style fields populated by StylePanel. Defaults match the design ref.
   const fillColor = (d.fillColor as string) ?? '#ffffff';
@@ -97,6 +102,9 @@ export default function ShapeNode({ id, type, data, selected, isConnectable }: N
     shapeType === 'RectangleNode' && rounded === false ? '0' : variant.boxRadius ?? '0';
 
   const containerStyle: CSSProperties = {
+    // Recognized V2 symbols/text keep the same footprint in preview and editor.
+    // Existing hand-created/legacy shapes retain their original minimum height.
+    minHeight: d.preserveBounds === true ? 0 : undefined,
     filter: shadow ? 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.18))' : 'none',
     transform: `rotate(${rotation}deg)`,
     transformOrigin: 'center',
@@ -191,7 +199,6 @@ export default function ShapeNode({ id, type, data, selected, isConnectable }: N
             : 'relative w-full px-3 py-2';
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className={`group relative flex h-full min-h-[30px] w-full items-center justify-center ${selected ? 'selected' : ''}`}
       style={containerStyle}
@@ -201,7 +208,14 @@ export default function ShapeNode({ id, type, data, selected, isConnectable }: N
       }}
     >
       {/* Paint the shape fill FIRST so handles + resize anchors render on top. */}
-      {variant.kind === 'boxed' ? (
+      {recipe ? (
+        <PlanGlyph
+          recipe={recipe}
+          fill={fillColor}
+          opacity={visualOpacity}
+          className="pointer-events-none absolute inset-0 h-full w-full overflow-visible group-[.selected]:shadow-[0_0_0_2px_#a6192e]"
+        />
+      ) : variant.kind === 'boxed' ? (
         <div
           className="pointer-events-none absolute inset-0 h-full w-full overflow-visible group-[.selected]:shadow-[0_0_0_2px_#a6192e]"
           style={{
@@ -258,16 +272,16 @@ export default function ShapeNode({ id, type, data, selected, isConnectable }: N
                 position={anchor.position}
                 variant={ResizeControlVariant.Handle}
                 className="shape-resize-anchor"
-                minWidth={60}
-                minHeight={30}
+                minWidth={d.preserveBounds === true ? 1 : 60}
+                minHeight={d.preserveBounds === true ? 1 : 30}
               />
             ))
           : null
       ) : (
         <NodeResizer
           isVisible={selected}
-          minWidth={variant.kind === 'text-only' ? 10 : 20}
-          minHeight={variant.kind === 'text-only' ? 2 : 5}
+          minWidth={d.preserveBounds === true ? 1 : variant.kind === 'text-only' ? 10 : 20}
+          minHeight={d.preserveBounds === true ? 1 : variant.kind === 'text-only' ? 2 : 5}
           handleClassName="shape-resize-anchor"
           lineClassName="shape-resize-line"
         />

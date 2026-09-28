@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="256" height="205">
+  <title>Laptop</title>
+  <rect x="18" y="7" width="64" height="45" rx="5" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8"/>
+  <rect x="24" y="13" width="52" height="32" rx="2" fill="#f5e6e8" stroke="#9a9a99" stroke-width="1.2"/>
+  <polygon points="12,58 88,58 94,70 6,70" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8" stroke-linejoin="round"/>
+  <line x1="38" y1="64" x2="62" y2="64" fill="none" stroke="#9a9a99" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "outcome": "unrecognized",
+  "nodes": [],
+  "edges": [],
+  "warnings": [
+    { "code": "unsupported-content", "message": "Chưa nhận ra sơ đồ. Hãy vẽ các thành phần, nhãn và đường nối rõ hơn rồi thử lại.", "elementId": null }
+  ]
+}

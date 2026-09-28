@@ -12,10 +12,10 @@ export default function Icon() {
     		x="30"
     		y="14.5"
     		textAnchor="middle"
-    		font-size="6"
+        fontSize="6"
     		fill="#A6192E"
-    		font-weight="700"
-    		font-family="system-ui, sans-serif">Weak Entity</text
+        fontWeight="700"
+        fontFamily="system-ui, sans-serif">Weak Entity</text
     	>
     	
     	<rect x="10.5" y="21.5" width="39" height="7.5" rx="1" fill="#f3f3f3" />

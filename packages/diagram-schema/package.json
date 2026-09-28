@@ -1,0 +1,30 @@
+{
+  "name": "@easydraw/diagram-schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./fixtures/flowchart.json": "./fixtures/whiteboard-generation-flowchart.json",
+    "./fixtures/warnings.json": "./fixtures/whiteboard-generation-warnings.json",
+    "./fixtures/unrecognized.json": "./fixtures/whiteboard-generation-unrecognized.json",
+    "./fixtures/parabola.json": "./fixtures/whiteboard-generation-parabola.json"
+  },
+  "files": [
+    "dist",
+    "fixtures/*.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test dist/index.test.js dist/visual3d.test.js dist/whiteboard-generation.test.js dist/vector.test.js dist/whiteboard-generation-v2.test.js"
+  },
+  "dependencies": {
+    "@easydraw/shared-types": "0.1.0"
+  }
+}

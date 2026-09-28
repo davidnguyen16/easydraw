@@ -1,0 +1,170 @@
+{
+  "id": "wifi-controller",
+  "name": "Wireless controller",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 80,
+      "height": 60,
+      "depth": 0.4
+    },
+    "fill": "#8799a7",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.9,
+          1,
+          0.9
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.08,
+          1
+        ],
+        "position": [
+          0,
+          0.46,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.08,
+          1
+        ],
+        "position": [
+          0,
+          -0.46,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.04,
+          0.12,
+          0.02
+        ],
+        "position": [
+          -0.3,
+          0.1,
+          0.46
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.04,
+          0.12,
+          0.02
+        ],
+        "position": [
+          -0.18,
+          0.1,
+          0.46
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.04,
+          0.12,
+          0.02
+        ],
+        "position": [
+          -0.06,
+          0.1,
+          0.46
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.04,
+          0.12,
+          0.02
+        ],
+        "position": [
+          0.06,
+          0.1,
+          0.46
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.04,
+          0.12,
+          0.02
+        ],
+        "position": [
+          0.18,
+          0.1,
+          0.46
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.04,
+          0.12,
+          0.02
+        ],
+        "position": [
+          0.3,
+          0.1,
+          0.46
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "silver",
+        "size": [
+          0.12,
+          0.5,
+          0.12
+        ],
+        "position": [
+          -0.6,
+          0.1,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "silver",
+        "size": [
+          0.12,
+          0.5,
+          0.12
+        ],
+        "position": [
+          0.6,
+          0.1,
+          0
+        ]
+      }
+    ]
+  }
+}

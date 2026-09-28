@@ -3,11 +3,23 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
+  "testTimeout": 30000,
   "setupFiles": ["<rootDir>/setup-e2e.ts"],
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        "tsconfig": {
+          "module": "CommonJS",
+          "moduleResolution": "Node",
+          "resolvePackageJsonExports": false
+        }
+      }
+    ]
   },
   "moduleNameMapper": {
+    "^@easydraw/diagram-schema$": "<rootDir>/../../packages/diagram-schema/src/index.ts",
+    "^@easydraw/shared-types$": "<rootDir>/../../packages/shared-types/src/index.ts",
     "^(\\.{1,2}/.*)\\.js$": "$1"
   }
 }

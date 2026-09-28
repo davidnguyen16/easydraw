@@ -1,0 +1,230 @@
+{
+  "id": "plant",
+  "name": "Plant",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 90,
+      "height": 90,
+      "depth": 1.5
+    },
+    "fill": "#94a790",
+    "parts": [
+      {
+        "shape": "cylinder",
+        "material": "body",
+        "size": [
+          0.43,
+          0.38,
+          0.43
+        ],
+        "position": [
+          0,
+          -0.31,
+          0
+        ],
+        "taper": 0.71
+      },
+      {
+        "shape": "torus",
+        "material": "silver",
+        "size": [
+          0.435,
+          0.435,
+          0.2
+        ],
+        "position": [
+          0,
+          -0.126,
+          0
+        ],
+        "rotation": [
+          1.571,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "dark",
+        "size": [
+          0.39,
+          0.012,
+          0.39
+        ],
+        "position": [
+          0,
+          -0.119,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "green",
+        "size": [
+          0.035,
+          0.56,
+          0.035
+        ],
+        "position": [
+          0,
+          0.115,
+          0
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "green",
+        "size": [
+          0.38,
+          0.105,
+          0.18
+        ],
+        "position": [
+          0.125,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          -0.46
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "leaf",
+        "size": [
+          0.38,
+          0.105,
+          0.18
+        ],
+        "position": [
+          -0.094,
+          0.043,
+          0.083
+        ],
+        "rotation": [
+          0,
+          -2.419,
+          0.46
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "green",
+        "size": [
+          0.38,
+          0.105,
+          0.18
+        ],
+        "position": [
+          0.016,
+          0.086,
+          -0.124
+        ],
+        "rotation": [
+          0,
+          -4.838,
+          -0.46
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "leaf",
+        "size": [
+          0.38,
+          0.105,
+          0.18
+        ],
+        "position": [
+          0.07,
+          0.129,
+          0.103
+        ],
+        "rotation": [
+          0,
+          -7.257,
+          0.46
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "green",
+        "size": [
+          0.38,
+          0.105,
+          0.18
+        ],
+        "position": [
+          -0.121,
+          0.172,
+          -0.031
+        ],
+        "rotation": [
+          0,
+          -9.676,
+          -0.46
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "leaf",
+        "size": [
+          0.38,
+          0.105,
+          0.18
+        ],
+        "position": [
+          0.111,
+          0.215,
+          -0.057
+        ],
+        "rotation": [
+          0,
+          -12.095,
+          0.46
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "green",
+        "size": [
+          0.38,
+          0.105,
+          0.18
+        ],
+        "position": [
+          -0.046,
+          0.258,
+          0.116
+        ],
+        "rotation": [
+          0,
+          -14.514,
+          -0.46
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "leaf",
+        "size": [
+          0.38,
+          0.105,
+          0.18
+        ],
+        "position": [
+          -0.042,
+          0.301,
+          -0.118
+        ],
+        "rotation": [
+          0,
+          -16.933,
+          0.46
+        ]
+      }
+    ]
+  }
+}

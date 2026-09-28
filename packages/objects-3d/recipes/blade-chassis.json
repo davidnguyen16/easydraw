@@ -1,0 +1,282 @@
+{
+  "id": "blade-chassis",
+  "name": "Blade chassis",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 60,
+      "height": 90,
+      "depth": 0.5
+    },
+    "fill": "#2e3d4d",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          1,
+          1
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.09,
+          0.78,
+          0.02
+        ],
+        "position": [
+          -0.42,
+          0.05,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "amber",
+        "size": [
+          0.03,
+          0.03,
+          0.02
+        ],
+        "position": [
+          -0.42,
+          -0.42,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.09,
+          0.78,
+          0.02
+        ],
+        "position": [
+          -0.3,
+          0.05,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.03,
+          0.03,
+          0.02
+        ],
+        "position": [
+          -0.3,
+          -0.42,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.09,
+          0.78,
+          0.02
+        ],
+        "position": [
+          -0.18,
+          0.05,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.03,
+          0.03,
+          0.02
+        ],
+        "position": [
+          -0.18,
+          -0.42,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.09,
+          0.78,
+          0.02
+        ],
+        "position": [
+          -0.06,
+          0.05,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "amber",
+        "size": [
+          0.03,
+          0.03,
+          0.02
+        ],
+        "position": [
+          -0.06,
+          -0.42,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.09,
+          0.78,
+          0.02
+        ],
+        "position": [
+          0.06,
+          0.05,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.03,
+          0.03,
+          0.02
+        ],
+        "position": [
+          0.06,
+          -0.42,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.09,
+          0.78,
+          0.02
+        ],
+        "position": [
+          0.18,
+          0.05,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.03,
+          0.03,
+          0.02
+        ],
+        "position": [
+          0.18,
+          -0.42,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.09,
+          0.78,
+          0.02
+        ],
+        "position": [
+          0.3,
+          0.05,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "amber",
+        "size": [
+          0.03,
+          0.03,
+          0.02
+        ],
+        "position": [
+          0.3,
+          -0.42,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.09,
+          0.78,
+          0.02
+        ],
+        "position": [
+          0.42,
+          0.05,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.03,
+          0.03,
+          0.02
+        ],
+        "position": [
+          0.42,
+          -0.42,
+          0.52
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1.02,
+          0.06,
+          0.03
+        ],
+        "position": [
+          0,
+          0.49,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1.02,
+          0.06,
+          0.03
+        ],
+        "position": [
+          0,
+          -0.49,
+          0.5
+        ]
+      }
+    ]
+  }
+}

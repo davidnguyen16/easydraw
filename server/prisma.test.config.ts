@@ -23,7 +23,8 @@ if (
   parsedDatabaseUrl.pathname !== '/easydraw_test'
 ) {
   throw new Error(
-    `Refusing to use a non-test database: ${databaseUrl}`,
+    // Host, port and name only: the full URL carries the password.
+    `Refusing to use a non-test database: ${parsedDatabaseUrl.hostname}:${parsedDatabaseUrl.port}${parsedDatabaseUrl.pathname}`,
   );
 }
 

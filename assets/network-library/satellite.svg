@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="256" height="205">
+  <title>Satellite</title>
+  <rect x="39" y="29" width="22" height="22" rx="4" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8"/>
+  <rect x="9" y="25" width="25" height="30" rx="2" fill="#f5e6e8" stroke="#a6192e" stroke-width="1.5"/>
+  <rect x="66" y="25" width="25" height="30" rx="2" fill="#f5e6e8" stroke="#a6192e" stroke-width="1.5"/>
+  <line x1="34" y1="40" x2="39" y2="40" fill="none" stroke="#2c2c2a" stroke-width="2" stroke-linecap="round"/>
+  <line x1="61" y1="40" x2="66" y2="40" fill="none" stroke="#2c2c2a" stroke-width="2" stroke-linecap="round"/>
+  <path d="M47 51 L42 65" fill="none" stroke="#2c2c2a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M42 65 Q50 71 58 65" fill="none" stroke="#a6192e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M62 12 Q77 17 82 31" fill="none" stroke="#a6192e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 6 Q86 13 92 33" fill="none" stroke="#a6192e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

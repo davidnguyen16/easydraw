@@ -1,18 +1,22 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
+import { pgConnection } from './database-url';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor() {
-    const raw = process.env.DATABASE_URL ?? '';
-    const needsSsl = raw.includes('sslmode=');
-    const connectionString = raw.replace(/[?&]sslmode=[^&]*/g, '');
+    const { connectionString, ssl, schema } = pgConnection(
+      process.env.DATABASE_URL,
+    );
     super({
-      adapter: new PrismaPg({
-        connectionString,
-        ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
-      }),
+      adapter: new PrismaPg(
+        { connectionString, ssl },
+        schema ? { schema } : undefined,
+      ),
     });
   }
 

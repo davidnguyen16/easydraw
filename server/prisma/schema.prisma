@@ -1,11 +1,22 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// EasyDraw database schema.
+//
+// Design notes live in docs/database.md. In short:
+//   - Identity (User) is separate from how a user proves it (OAuthAccount,
+//     passwordHash) and from the short-lived secrets that flow through auth
+//     (PasswordResetToken, EmailVerificationToken, Session).
+//   - Secrets are stored hashed, one row per issued token, with an expiry
+//     and a used/revoked timestamp, so they can be audited and revoked.
+//   - Diagram content stays one JSONB document per diagram; the pack that
+//     owns the document is named by `type`.
+//
+// Migration strategy is expand → migrate → contract. The identity columns
+// that once lived on User (googleId, passwordResetTokenHash,
+// passwordResetExpiresAt) were backfilled into OAuthAccount and
+// PasswordResetToken, and dropped once auth.service read those tables.
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
 
@@ -13,26 +24,412 @@ datasource db {
   provider = "postgresql"
 }
 
+// ── Identity ────────────────────────────────────────────────────────────
+
+/// A person with an account. Reachable by password, by a linked OAuth
+/// account, or both — either credential may be absent, never both at once
+/// for an active account.
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String?
-  googleId     String?   @unique
-  name         String?
-  createdAt    DateTime  @default(now())
-  passwordResetTokenHash String?
-  passwordResetExpiresAt DateTime?
-  diagrams     Diagram[]
+  id              String    @id @default(uuid())
+  email           String    @unique
+  name            String?
+  avatarUrl       String?
+  /// bcrypt hash; null for OAuth-only accounts.
+  passwordHash    String?
+  /// When the address was confirmed. Null until the verification flow runs;
+  /// accounts created through Google are verified by the provider.
+  emailVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+  /// 'user' | 'admin' — admins publish the sample diagrams every account can start from.
+  role            String    @default("user")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
+
+  diagrams                Diagram[]
+  oauthAccounts           OAuthAccount[]
+  sessions                Session[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  customNodeSections      CustomNodeSection[]
+  assets                  Asset[]
+  objects3d               CustomObject3D[]
+  publishedTemplates      DiagramTemplate[]
+  diagramPreviews         DiagramPreview[]
+  previewSnapshots        PreviewSourceSnapshot[]
+  visualDocuments         VisualDocument[]
+  diagramConversions      DiagramConversion[]
 }
 
+enum AuthProvider {
+  GOOGLE
+}
+
+/// A third-party login linked to a User. One user may link several
+/// providers; one provider account links to exactly one user.
+model OAuthAccount {
+  id                String       @id @default(uuid())
+  provider          AuthProvider
+  /// The provider's stable subject id (Google `sub`), never the email.
+  providerAccountId String
+  /// The address the provider reported at link time, for support and audit.
+  email             String?
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @default(now()) @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// ── Auth secrets: hashed, expiring, single-use ──────────────────────────
+
+/// A browser session. The cookie carries a random token; only its SHA-256
+/// is stored, so a database leak does not yield live sessions. Revoking a
+/// row logs that device out; deleting the user cascades every session.
+model Session {
+  id         String    @id @default(uuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  tokenHash  String    @unique
+  userAgent  String?
+  ipAddress  String?
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+
+  @@index([userId, expiresAt])
+}
+
+/// One row per "forgot password" request. Valid while unexpired and unused;
+/// issuing a new one does not invalidate older ones by itself, so the
+/// service should mark them used when a reset succeeds.
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+/// Proof-of-address for registration and for changing email. `email` is
+/// the address being verified, which may differ from User.email while a
+/// change is pending.
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  email     String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+// ── Diagrams ────────────────────────────────────────────────────────────
+
+/// One diagram of any kind. `type` names the editor that opens the document
+/// in `data`: diagram | whiteboard (the API validates the set; see
+/// CreateDiagramDto). `status` is draft | complete | archived. `data` is the
+/// whole document — the 2D editor state for the canvas, a painted board for a
+/// whiteboard. Read and written whole.
+///
+/// The CHECK constraint still admits 'terrain', a removed editor, so rows
+/// written before its removal stay valid; drop it from the constraint once
+/// none remain (expand → migrate → contract).
 model Diagram {
-  id        String   @id @default(uuid())
-  title     String
-  type      String   @default("erd")
-  status    String   @default("draft")
-  data      Json
-  owner     User     @relation(fields: [ownerId], references: [id])
+  id                String              @id @default(uuid())
+  title             String
+  /// Which editor opens it: 'diagram' | 'whiteboard'.
+  type              String              @default("diagram")
+  /// Free label the owner gives a diagram ("ERD", "Network", …); 1–40 chars.
+  category          String?
+  status            String              @default("draft")
+  data              Json
+  /// Small 2D render of the canvas for the dashboard card, refreshed by the editor after saves.
+  thumbnail         Bytes?
+  thumbnailType     String?
+  thumbnailAt       DateTime?
+  owner             User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId           String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  assets            DiagramAsset[]
+  previews          DiagramPreview[]
+  /// Optional grouping created lazily when a whiteboard preview is approved.
+  visualDocumentId  String?
+  visualDocument    VisualDocument?     @relation(fields: [visualDocumentId], references: [id], onDelete: SetNull)
+  conversion        DiagramConversion?  @relation("ConversionOutput")
+  sourceConversions DiagramConversion[] @relation("ConversionSource")
+
+  /// The dashboard lists a user's diagrams newest first.
+  @@index([ownerId, updatedAt(sort: Desc)])
+  @@index([ownerId, type])
+  @@index([visualDocumentId])
+}
+
+/// Groups independently editable whiteboards and their confirmed diagrams.
+/// Removing the group unlinks members; it never deletes drawing content.
+model VisualDocument {
+  id        String    @id @default(uuid())
   ownerId   String
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  diagrams  Diagram[]
+
+  @@index([ownerId, updatedAt(sort: Desc)])
+}
+
+/// A sample diagram every account can start from. Published by an admin from
+/// one of their own diagrams (a snapshot: later edits do not follow), used by
+/// anyone as a fresh copy in their workspace.
+model DiagramTemplate {
+  id            String    @id @default(uuid())
+  title         String
+  category      String?
+  type          String    @default("diagram")
+  data          Json
+  thumbnail     Bytes?
+  thumbnailType String?
+  thumbnailAt   DateTime?
+  sortOrder     Int       @default(0)
+  publishedById String?
+  publishedBy   User?     @relation(fields: [publishedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([sortOrder, createdAt])
+}
+
+// Private libraries are separate from the built-in, code-owned palette.
+model CustomNodeSection {
+  id        String                 @id @default(uuid())
+  ownerId   String
+  owner     User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int                    @default(0)
+  deletedAt DateTime?
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  nodes     CustomNodeDefinition[]
+  objects   CustomObject3D[]
+
+  @@index([ownerId, deletedAt, sortOrder])
+}
+
+// A reusable palette template, NOT an instance placed on a diagram.
+model CustomNodeDefinition {
+  id            String            @id @default(uuid())
+  sectionId     String
+  section       CustomNodeSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  assetId       String
+  asset         Asset             @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  name          String
+  defaultWidth  Float             @default(120)
+  defaultHeight Float             @default(120)
+  sortOrder     Int               @default(0)
+  deletedAt     DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([sectionId, deletedAt, sortOrder])
+  @@index([assetId])
+}
+
+/// A 3D look a user designed (a Visual3D recipe: primitive parts inside a
+/// unit box) and saved to reuse on other cubes. Validated by
+/// @easydraw/diagram-schema on write; the JSON is data, never geometry code.
+model CustomObject3D {
+  id        String            @id @default(uuid())
+  ownerId   String
+  owner     User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  // Lives in one of the owner's private libraries, next to image nodes.
+  sectionId String
+  section   CustomNodeSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  name      String
+  recipe    Json
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([ownerId, updatedAt(sort: Desc)])
+  @@index([sectionId])
+}
+
+enum AssetStatus {
+  PENDING
+  PROCESSING
+  READY
+  REJECTED
+  DELETING
+}
+
+// Immutable processed image and thumbnail on private S3. Never store signed URLs.
+// uploadKey belongs to quarantine; only the server can write final s3Key.
+model Asset {
+  id               String                 @id @default(uuid())
+  // Keep object keys after account deletion for eventual S3 cleanup.
+  ownerId          String?
+  owner            User?                  @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  originalName     String
+  originalMimeType String
+  mimeType         String
+  byteSize         Int
+  storedBytes      Int                    @default(0)
+  uploadKey        String                 @unique
+  s3Key            String?                @unique
+  thumbnailKey     String?                @unique
+  // Durable keys for attempts that have not committed READY. Recorded before PUT.
+  unpublishedKeys  String[]               @default([])
+  width            Int?
+  height           Int?
+  checksum         String?
+  status           AssetStatus            @default(PENDING)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  definitions      CustomNodeDefinition[]
+  diagramAssets    DiagramAsset[]
+
+  @@index([ownerId, status])
+  @@index([status, updatedAt])
+}
+
+// Materialized references from ALL pages in Diagram.data. Updated atomically
+// with the JSON; Restrict prevents deleting assets still used by a diagram.
+model DiagramAsset {
+  diagramId String
+  diagram   Diagram  @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  assetId   String
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Restrict)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@id([diagramId, assetId])
+  @@index([assetId])
+}
+
+// AI attempts are not official diagrams. No mutation of Diagram.data occurs.
+enum DiagramPreviewStatus {
+  PROCESSING
+  READY
+  UNRECOGNIZED
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum PreviewSnapshotStatus {
+  PENDING
+  READY
+  DELETING
+}
+
+// Durable cleanup journal survives account deletion. Never store signed URLs.
+model PreviewSourceSnapshot {
+  id                  String                @id @default(uuid())
+  ownerId             String?
+  owner               User?                 @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  sourceObjectKey     String                @unique
+  modelInputObjectKey String                @unique
+  unpublishedKeys     String[]              @default([])
+  sourceSHA256        String
+  modelInputSHA256    String
+  width               Int
+  height              Int
+  byteSize            Int
+  modelInputWidth     Int
+  modelInputHeight    Int
+  status              PreviewSnapshotStatus @default(PENDING)
+  cleanupAfter        DateTime
+  leaseUntil          DateTime
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  previews            DiagramPreview[]
+  conversions         DiagramConversion[]
+
+  @@index([cleanupAfter, leaseUntil])
+  @@index([ownerId])
+}
+
+// Keep minimal request tombstones while the account exists: retrying an old
+// request must never start another paid call. Large payloads expire after 24h.
+model DiagramPreview {
+  id                   String                 @id @default(uuid())
+  ownerId              String
+  owner                User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  sourceWhiteboardId   String?
+  sourceWhiteboard     Diagram?               @relation(fields: [sourceWhiteboardId], references: [id], onDelete: SetNull)
+  sourceSnapshotId     String?
+  sourceSnapshot       PreviewSourceSnapshot? @relation(fields: [sourceSnapshotId], references: [id], onDelete: SetNull)
+  clientRequestId      String
+  // Null only for a cancellation that arrived before its POST reservation.
+  requestFingerprint   String?
+  clientRevision       Int?
+  sourceSHA256         String?
+  sourceWidth          Int?
+  sourceHeight         Int?
+  status               DiagramPreviewStatus   @default(PROCESSING)
+  errorCode            String?
+  warnings             Json?
+  requestedModel       String
+  resolvedModel        String?
+  inputPipelineVersion String
+  promptVersion        String
+  outputSchemaVersion  String
+  converterVersion     String
+  convertedDocument    Json?
+  documentHash         String?
+  createdAt            DateTime               @default(now())
+  dispatchedAt         DateTime?
+  readyAt              DateTime?
+  expiresAt            DateTime
+  leaseUntil           DateTime
+
+  @@unique([ownerId, clientRequestId])
+  @@index([ownerId, createdAt])
+  @@index([ownerId, dispatchedAt])
+  @@index([status, leaseUntil])
+  @@index([sourceWhiteboardId])
+  @@index([sourceSnapshotId])
+}
+
+/// Durable approval and idempotency receipt, independent of preview expiry.
+/// Deleted outputs retain only their receipt identity/hash, not source pixels
+/// or graph payloads. Account deletion removes receipts but keeps S3 journals.
+model DiagramConversion {
+  id                   String                 @id @default(uuid())
+  ownerId              String
+  owner                User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  /// Logical identifier, deliberately not a foreign key to the temporary preview.
+  previewId            String                 @unique
+  diagramId            String?                @unique
+  diagram              Diagram?               @relation("ConversionOutput", fields: [diagramId], references: [id], onDelete: SetNull)
+  sourceWhiteboardId   String?
+  sourceWhiteboard     Diagram?               @relation("ConversionSource", fields: [sourceWhiteboardId], references: [id], onDelete: SetNull)
+  sourceSnapshotId     String?
+  sourceSnapshot       PreviewSourceSnapshot? @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+  sourceSHA256         String
+  /// Exact unwrapped graph accepted by the user, never the private prompt envelope.
+  approvedDocument     Json?
+  documentHash         String
+  requestedModel       String
+  resolvedModel        String?
+  inputPipelineVersion String
+  promptVersion        String
+  outputSchemaVersion  String
+  converterVersion     String
+  acknowledgedStale    Boolean                @default(false)
+  createdAt            DateTime               @default(now())
+  diagramDeletedAt     DateTime?
+
+  @@index([ownerId, createdAt])
+  @@index([sourceWhiteboardId])
+  @@index([sourceSnapshotId])
 }

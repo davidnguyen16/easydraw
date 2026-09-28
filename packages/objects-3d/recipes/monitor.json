@@ -1,0 +1,72 @@
+{
+  "id": "monitor",
+  "name": "Monitor",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 50,
+      "height": 12,
+      "depth": 0.45
+    },
+    "fill": "#1b2733",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.6,
+          0.06,
+          0.4
+        ],
+        "position": [
+          0,
+          -0.47,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.08,
+          0.3,
+          0.06
+        ],
+        "position": [
+          0,
+          -0.3,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.66,
+          0.06
+        ],
+        "position": [
+          0,
+          0.17,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "screen",
+        "size": [
+          0.92,
+          0.58,
+          0.01
+        ],
+        "position": [
+          0,
+          0.17,
+          0.035
+        ]
+      }
+    ]
+  }
+}

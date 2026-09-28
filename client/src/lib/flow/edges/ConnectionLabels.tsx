@@ -28,12 +28,14 @@ export default function ConnectionLabels({
   selected = false,
   labelStyle,
   pointAtT,
-  editor,
+  // Destructured so the ref and handlers are passed through rather than read
+  // off an object that holds a ref.
+  editor: { editingId, editingT, startEditing, editorRef, onEditorInput, onEditorKeydown, onEditorBlur },
 }: Props) {
   return (
     <EdgeLabelRenderer>
       {labels.map((label) => {
-        if (label.id === editor.editingId) return null;
+        if (label.id === editingId) return null;
         const point = pointAtT(label.t);
         return (
           <div key={label.id} style={hostStyle(point)} className="conn-label-host">
@@ -46,7 +48,7 @@ export default function ConnectionLabels({
               aria-label="Connection label, double-click to edit"
               onDoubleClick={(event) => {
                 event.stopPropagation();
-                editor.startEditing(label.id);
+                startEditing(label.id);
               }}
               onPointerDown={(event) => event.stopPropagation()}
               style={labelStyle}
@@ -57,8 +59,8 @@ export default function ConnectionLabels({
         );
       })}
 
-      {editor.editingId !== null ? (
-        <div style={hostStyle(pointAtT(editor.editingT))} className="conn-label-host">
+      {editingId !== null ? (
+        <div style={hostStyle(pointAtT(editingT))} className="conn-label-host">
           <div
             className="nodrag nopan nowheel min-w-1.5 cursor-text rounded-[2px] bg-[#b3d4f5] px-1.5 py-0.5
               text-[13px] font-semibold leading-[1.25] whitespace-nowrap text-[#1f1d1a] outline-none
@@ -69,10 +71,10 @@ export default function ConnectionLabels({
             contentEditable
             suppressContentEditableWarning
             spellCheck={false}
-            ref={editor.editorRef}
-            onInput={editor.onEditorInput}
-            onKeyDown={editor.onEditorKeydown}
-            onBlur={editor.onEditorBlur}
+            ref={editorRef}
+            onInput={onEditorInput}
+            onKeyDown={onEditorKeydown}
+            onBlur={onEditorBlur}
             onPointerDown={(event) => event.stopPropagation()}
             style={labelStyle}
           />

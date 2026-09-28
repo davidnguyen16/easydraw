@@ -16,6 +16,12 @@ import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { parseEasyDraw } from '@/lib/exporters/easydraw';
 import { useEditorMeta, type DiagramStatus } from '@/lib/stores/editor-meta.store';
+import {
+  isDiagramCamera3D,
+  isDiagramView3D,
+  type DiagramCamera3D,
+  type DiagramView3D,
+} from '@easydraw/diagram-schema';
 
 const browser = typeof window !== 'undefined';
 
@@ -25,10 +31,13 @@ export interface EditorPage {
   name: string;
   nodes: Node[];
   edges: Edge[];
+  view3d?: DiagramView3D;
 }
 
 // Global editor state: all pages + currently active page id.
 export interface EditorState {
+  /** Missing on legacy documents; new writes use the shared DiagramData v1 shape. */
+  schemaVersion?: 1;
   pages: EditorPage[];
   activePageId: string;
   fileName?: string;
@@ -59,20 +68,25 @@ function parseStyleString(style: string): Record<string, string> {
 }
 
 function normalizePageNodes(page: EditorPage): EditorPage {
-  if (!page.nodes.some((node) => typeof node.style === 'string')) return page;
+  const view3d = isDiagramView3D(page.view3d) ? page.view3d : undefined;
   return {
     ...page,
-    nodes: page.nodes.map((node) =>
-      typeof node.style === 'string'
-        ? { ...node, style: parseStyleString(node.style) as Node['style'] }
-        : node,
-    ),
+    view3d,
+    nodes: page.nodes.map((node) => ({
+      ...node,
+      // Network nodes were retired from the catalog. Keep old documents
+      // editable by preserving their content as a generic shape.
+      ...(/^Network.+Node$/.test(node.type ?? '') ? { type: 'RectangleNode' } : {}),
+      ...(typeof node.style === 'string'
+        ? { style: parseStyleString(node.style) as Node['style'] }
+        : {}),
+    })),
   };
 }
 
 // Creates a stable string signature for dirty-checking a page against a snapshot.
 export function getPageSignature(page: EditorPage) {
-  return JSON.stringify({ name: page.name, nodes: page.nodes, edges: page.edges });
+  return JSON.stringify({ name: page.name, nodes: page.nodes, edges: page.edges, view3d: page.view3d });
 }
 
 function buildPageSignatures(pages: EditorPage[]) {
@@ -96,6 +110,7 @@ function isEditorPage(value: unknown): value is EditorPage {
 function isEditorState(value: unknown): value is EditorState {
   if (!value || typeof value !== 'object') return false;
   const state = value as Partial<EditorState>;
+  if (state.schemaVersion !== undefined && state.schemaVersion !== 1) return false;
   if (!Array.isArray(state.pages) || typeof state.activePageId !== 'string') return false;
   if (!state.pages.every(isEditorPage)) return false;
   if (state.pages.length === 0) return false;
@@ -108,11 +123,13 @@ function isDiagramStatus(value: unknown): value is DiagramStatus {
 
 // Bootstraps the editor with one empty default page (no starter/demo node).
 export const initialEditorState: EditorState = {
+  schemaVersion: 1,
   pages: [{ id: 'page-1', name: 'Page 1', nodes: [], edges: [] }],
   activePageId: 'page-1',
 };
 
 type EditorDocStore = {
+  schemaVersion: 1;
   pages: EditorPage[];
   activePageId: string;
   savedPageSignatures: Record<string, string>;
@@ -125,6 +142,8 @@ type EditorDocStore = {
   switchPage: (pageId: string) => void;
   createPage: (name?: string) => string | null;
   updateActiveGraph: (nodes: Node[], edges: Edge[]) => void;
+  setPageCamera3D: (pageId: string, camera: DiagramCamera3D, origin?: [number, number, number]) => void;
+  setPagePresentation3D: (pageId: string, options: Pick<DiagramView3D, 'orientation' | 'showGrid'>) => void;
   renamePage: (pageId: string, nextName: string) => void;
   deletePage: (pageId: string) => void;
   duplicatePage: (pageId: string) => string | null;
@@ -134,6 +153,7 @@ type EditorDocStore = {
 };
 
 export const useEditorDoc = create<EditorDocStore>((set, get) => ({
+  schemaVersion: 1,
   pages: initialEditorState.pages,
   activePageId: initialEditorState.activePageId,
   savedPageSignatures: {},
@@ -170,6 +190,40 @@ export const useEditorDoc = create<EditorDocStore>((set, get) => ({
         ),
       };
     }),
+
+  setPageCamera3D: (pageId, camera, origin) => {
+    if (!isDiagramCamera3D(camera)) return;
+    set((s) => {
+      const page = s.pages.find((item) => item.id === pageId);
+      if (!page) return s;
+      const view3d: DiagramView3D = {
+        ...page.view3d,
+        version: 1,
+        camera: { position: [...camera.position], target: [...camera.target] },
+        ...((origin ?? page.view3d?.origin) ? { origin: [...(origin ?? page.view3d!.origin!)] as [number, number, number] } : {}),
+      };
+      if (!isDiagramView3D(view3d) || JSON.stringify(page.view3d) === JSON.stringify(view3d)) return s;
+      return { pages: s.pages.map((item) => item.id === pageId ? { ...item, view3d } : item) };
+    });
+  },
+
+  setPagePresentation3D: (pageId, options) => {
+    set((s) => {
+      const page = s.pages.find((item) => item.id === pageId);
+      if (!page) return s;
+      const view3d: DiagramView3D = { ...page.view3d, version: 1,
+        ...(options.orientation !== undefined ? { orientation: options.orientation } : {}),
+        ...(options.showGrid !== undefined ? { showGrid: options.showGrid } : {}),
+      };
+      // A saved camera belongs to its presentation orientation. The scene will
+      // fit and report a new camera after this explicit view change.
+      if (options.orientation !== undefined && options.orientation !== (page.view3d?.orientation ?? 'floor')) {
+        delete view3d.camera;
+      }
+      if (!isDiagramView3D(view3d) || JSON.stringify(page.view3d) === JSON.stringify(view3d)) return s;
+      return { pages: s.pages.map((item) => item.id === pageId ? { ...item, view3d } : item) };
+    });
+  },
 
   renamePage: (pageId, nextName) =>
     set((s) => ({
@@ -211,6 +265,7 @@ export const useEditorDoc = create<EditorDocStore>((set, get) => ({
         name: `${source.name} (${maxSuffix + 1})`,
         nodes: JSON.parse(JSON.stringify(source.nodes ?? [])) as Node[],
         edges: JSON.parse(JSON.stringify(source.edges ?? [])) as Edge[],
+        ...(source.view3d ? { view3d: JSON.parse(JSON.stringify(source.view3d)) as DiagramView3D } : {}),
       };
       newPageId = clone.id;
 
@@ -228,7 +283,13 @@ export const useEditorDoc = create<EditorDocStore>((set, get) => ({
 
   resetEditorState: () => {
     const page: EditorPage = { id: nanoid(), name: 'Page 1', nodes: [], edges: [] };
-    set({ pages: [page], activePageId: page.id, savedPageSignatures: {}, canvasDirtyPageIds: [] });
+    set({
+      schemaVersion: 1,
+      pages: [page],
+      activePageId: page.id,
+      savedPageSignatures: {},
+      canvasDirtyPageIds: [],
+    });
     const meta = useEditorMeta.getState();
     meta.setFileName('Untitled');
     meta.setStatus('draft');
@@ -242,6 +303,7 @@ export const useEditorDoc = create<EditorDocStore>((set, get) => ({
 
       const pages = parsedState.pages.map(normalizePageNodes);
       set({
+        schemaVersion: 1,
         pages,
         activePageId: parsedState.activePageId,
         savedPageSignatures: buildPageSignatures(pages),
@@ -283,14 +345,20 @@ export function getActivePage(s: Pick<EditorDocStore, 'pages' | 'activePageId'>)
 
 // Saves only the currently active page into localStorage.
 export function saveActivePageToStorage(): boolean {
+  return savePageToStorage(useEditorDoc.getState().activePageId);
+}
+
+/** A queued autosave can finish after the user switches to another page. */
+export function savePageToStorage(pageId: string): boolean {
   if (!browser) return false;
   const state = useEditorDoc.getState();
   const meta = useEditorMeta.getState();
-  const activePage = state.pages.find((page) => page.id === state.activePageId);
+  const activePage = state.pages.find((page) => page.id === pageId);
   if (!activePage) return false;
 
   let storedState: EditorState | null = null;
-  const rawState = localStorage.getItem(STORAGE_KEY);
+  let rawState: string | null;
+  try { rawState = localStorage.getItem(STORAGE_KEY); } catch { return false; }
   if (rawState) {
     try {
       const parsedState = JSON.parse(rawState) as unknown;
@@ -307,13 +375,14 @@ export function saveActivePageToStorage(): boolean {
     : [{ ...activePage }];
 
   const nextState: EditorState = {
+    schemaVersion: state.schemaVersion,
     pages: nextPages,
     activePageId: activePage.id,
     fileName: meta.fileName,
     status: meta.status,
   };
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState)); } catch { return false; }
   useEditorDoc.setState((s) => ({
     savedPageSignatures: { ...s.savedPageSignatures, [activePage.id]: getPageSignature(activePage) },
   }));
@@ -327,12 +396,13 @@ export function saveFullStateToStorage(): boolean {
   const state = useEditorDoc.getState();
   const meta = useEditorMeta.getState();
   const nextState: EditorState = {
+    schemaVersion: state.schemaVersion,
     pages: state.pages,
     activePageId: state.activePageId,
     fileName: meta.fileName,
     status: meta.status,
   };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState)); } catch { return false; }
   useEditorDoc.setState({ savedPageSignatures: buildPageSignatures(state.pages) });
   return true;
 }
@@ -340,7 +410,8 @@ export function saveFullStateToStorage(): boolean {
 // Loads the full editor snapshot from localStorage and hydrates the store.
 export function loadEditorStateFromStorage(): boolean {
   if (!browser) return false;
-  const rawState = localStorage.getItem(STORAGE_KEY);
+  let rawState: string | null;
+  try { rawState = localStorage.getItem(STORAGE_KEY); } catch { return false; }
   if (!rawState) return false;
   return useEditorDoc.getState().loadEditorStateFromJSON(rawState);
 }
@@ -351,6 +422,7 @@ export function exportEditorStateAsJSON(): string {
   const meta = useEditorMeta.getState();
   return JSON.stringify(
     {
+      schemaVersion: state.schemaVersion,
       pages: state.pages,
       activePageId: state.activePageId,
       fileName: meta.fileName,

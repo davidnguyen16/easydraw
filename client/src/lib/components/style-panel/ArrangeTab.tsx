@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { RotateCcw, RotateCw } from 'lucide-react';
 import type { Node } from '@xyflow/react';
 import {
@@ -57,11 +57,20 @@ export default function ArrangeTab({
   const [wInput, setWInput] = useState(nodeW);
   const [hInput, setHInput] = useState(nodeH);
 
-  // Seed and re-seed inputs from the selected node's live geometry.
-  useEffect(() => setXInput(nodeX), [nodeX]);
-  useEffect(() => setYInput(nodeY), [nodeY]);
-  useEffect(() => setWInput(nodeW), [nodeW]);
-  useEffect(() => setHInput(nodeH), [nodeH]);
+  // Re-seed each input when its own live value changes (drag, resize, another
+  // node selected), adjusted while rendering. Object.is keeps a NaN from
+  // corrupt geometry from re-seeding on every render.
+  const [seeded, setSeeded] = useState({ x: nodeX, y: nodeY, w: nodeW, h: nodeH });
+  if (
+    !Object.is(seeded.x, nodeX) || !Object.is(seeded.y, nodeY) ||
+    !Object.is(seeded.w, nodeW) || !Object.is(seeded.h, nodeH)
+  ) {
+    if (!Object.is(seeded.x, nodeX)) setXInput(nodeX);
+    if (!Object.is(seeded.y, nodeY)) setYInput(nodeY);
+    if (!Object.is(seeded.w, nodeW)) setWInput(nodeW);
+    if (!Object.is(seeded.h, nodeH)) setHInput(nodeH);
+    setSeeded({ x: nodeX, y: nodeY, w: nodeW, h: nodeH });
+  }
 
   const commitPosition = () => onPositionChange(xInput, yInput);
   const commitSize = () => onSizeChange(Math.max(1, wInput), Math.max(1, hInput));

@@ -1,0 +1,141 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  color: var(--color-ink, #2c2c2a);
+  background: rgb(252 248 247 / 86%);
+  border-bottom: 1px solid rgb(166 25 46 / 10%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.navInner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 88px;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 32px;
+  gap: 24px;
+}
+
+.logo { display: inline-flex; width: fit-content; border-radius: 10px; text-decoration: none; }
+.desktopLinks { display: flex; align-items: center; gap: 30px; }
+.navLink { color: #715c61; font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: color 150ms ease; }
+.navLink:hover { color: var(--color-mq-red, #a6192e); }
+.actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+
+.primaryButton,
+.signIn,
+.accountButton,
+.mobileToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: box-shadow 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.primaryButton {
+  padding: 0 17px;
+  color: #fff;
+  background: linear-gradient(120deg, var(--color-mq-red, #a6192e), var(--color-mq-maroon, #76232f));
+  box-shadow: 0 5px 15px rgb(166 25 46 / 18%);
+}
+.primaryButton:hover { background: linear-gradient(120deg, var(--color-mq-red-hover, #c01933), var(--color-mq-maroon, #76232f)); transform: translateY(-1px); box-shadow: 0 7px 19px rgb(166 25 46 / 24%); }
+.primaryButton:active { transform: translateY(0); box-shadow: 0 2px 7px rgb(166 25 46 / 16%); }
+.signIn { padding: 0 14px; color: #5f464c; }
+.signIn:hover { background: rgb(255 255 255 / 70%); border-color: rgb(166 25 46 / 12%); }
+
+.account { position: relative; }
+.accountButton,
+.mobileToggle {
+  width: 42px;
+  padding: 0;
+  color: var(--color-mq-red, #a6192e);
+  background: rgb(255 255 255 / 75%);
+  border-color: rgb(166 25 46 / 13%);
+  box-shadow: 0 3px 10px rgb(118 35 47 / 6%);
+}
+.accountButton:hover,
+.accountButton[aria-expanded='true'],
+.mobileToggle[aria-expanded='true'] { background: var(--color-mq-pink, #fbeef0); border-color: rgb(166 25 46 / 24%); box-shadow: 0 3px 10px rgb(166 25 46 / 9%); }
+.accountMenu {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  min-width: 216px;
+  max-width: min(280px, calc(100vw - 40px));
+  padding: 8px;
+  border: 1px solid rgb(166 25 46 / 13%);
+  border-radius: 18px;
+  background: rgb(255 252 252 / 96%);
+  box-shadow: 0 14px 38px rgb(118 35 47 / 14%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.accountName { margin: 0 0 5px; padding: 8px 10px; color: #715c61; font-size: 11px; overflow-wrap: anywhere; }
+.menuItem { display: flex; width: 100%; min-height: 42px; align-items: center; gap: 10px; padding: 10px; border: 0; border-radius: 10px; background: transparent; color: var(--color-ink, #2c2c2a); font-size: 13px; text-align: left; text-decoration: none; cursor: pointer; }
+.menuItem:hover,
+.menuItem:focus-visible { background: var(--color-mq-pink, #fbeef0); }
+.logout { color: var(--color-mq-red, #a6192e); }
+.mobileToggle { display: none; flex-shrink: 0; color: var(--color-ink, #2c2c2a); }
+.mobileLinks { display: none; }
+.skeleton { width: 160px; height: 42px; border: 1px solid rgb(166 25 46 / 8%); border-radius: 14px; background: linear-gradient(110deg, #f6e7eb, #fbf1e9); }
+
+.header :is(a, button):focus-visible,
+.footer a:focus-visible { outline: 2px solid var(--color-mq-red, #a6192e); outline-offset: 5px; }
+
+.footer { color: var(--color-ink, #2c2c2a); background: radial-gradient(ellipse at 12% 100%, #f4e1e6, transparent 55%), radial-gradient(ellipse at 88% 100%, #faf0e4, transparent 55%), #fcf8f7; }
+.footerInner { display: flex; justify-content: space-between; align-items: center; gap: 28px; max-width: 1320px; margin: 0 auto; padding: 36px 32px 40px; border-top: 1px solid rgb(166 25 46 / 12%); }
+.footerBrand { display: flex; flex-direction: column; gap: 12px; }
+.footerBrand p { margin: 0; color: #715c61; font-size: 12px; }
+.footerMeta { display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+.footerMeta p { margin: 0; color: #715c61; font-size: 11px; }
+.footerLinks { display: flex; gap: 24px; }
+.footerLinks a { color: #5f464c; font-size: 12px; text-decoration: none; }
+.footerLinks a:hover { color: var(--color-mq-red, #a6192e); text-decoration: underline; text-underline-offset: 4px; }
+
+@media (max-width: 979px) {
+  .navInner { display: flex; justify-content: space-between; gap: 16px; padding-inline: 24px; }
+  .desktopLinks { display: none; }
+  .mobileToggle { display: inline-flex; }
+  .mobileLinks:not([hidden]) { display: flex; flex-direction: column; gap: 4px; margin: 0 24px 18px; padding: 8px; border: 1px solid rgb(166 25 46 / 12%); border-radius: 16px; background: rgb(255 255 255 / 78%); box-shadow: 0 7px 20px rgb(118 35 47 / 6%); }
+  .mobileLinks a { display: flex; min-height: 44px; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; color: #5f464c; font-size: 14px; text-decoration: none; }
+  .mobileLinks a:hover { color: var(--color-mq-red, #a6192e); background: var(--color-mq-pink, #fbeef0); }
+}
+
+@media (max-width: 580px) {
+  .navInner { height: 80px; padding-inline: 18px; gap: 10px; }
+  .actions { gap: 9px; }
+  .primaryButton { padding-inline: 12px; font-size: 11px; }
+  .primaryButton > svg { display: none; }
+  .signIn { display: none; }
+  .workspaceButton { display: none; }
+  .skeleton { width: 112px; }
+  .mobileLinks:not([hidden]) { margin-inline: 18px; }
+  .footerInner { align-items: flex-start; flex-direction: column; padding: 30px 22px; gap: 24px; }
+  .footerMeta { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; gap: 18px; }
+}
+
+@media (max-width: 359px) {
+  .navInner { padding-inline: 12px; gap: 8px; }
+  .actions { gap: 7px; }
+  .primaryButton { padding-inline: 9px; }
+  .mobileToggle { width: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primaryButton, .signIn, .accountButton, .mobileToggle, .navLink { transition: none; }
+  .primaryButton:hover { transform: none; }
+}

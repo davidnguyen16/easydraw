@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useEditor } from '@/lib/flow/EditorContext';
 import { useFlowStore } from '@/lib/flow/flow-store';
 import { createEditorKeyboardHandler } from '@/lib/flow/keyboard-shortcuts';
-import { selectAllGraph, groupSelectedNodes, ungroupSelectedNodes } from '@/lib/flow/graph-actions';
 import { ANCHOR_NODE_TYPE } from '@/lib/flow/nodes/anchor/anchor';
 
 // Registers the global editor keyboard shortcuts (Ctrl+Z/Y/C/X/D/A/G, Delete,
@@ -13,7 +12,7 @@ import { ANCHOR_NODE_TYPE } from '@/lib/flow/nodes/anchor/anchor';
 export default function KeyboardShortcuts() {
   const editor = useEditor();
   const editorRef = useRef(editor);
-  editorRef.current = editor;
+  useLayoutEffect(() => { editorRef.current = editor; }, [editor]);
 
   useEffect(() => {
     const anySelected = () => {
@@ -26,7 +25,7 @@ export default function KeyboardShortcuts() {
 
     const handler = createEditorKeyboardHandler({
       save: () => editorRef.current.save(),
-      saveAs: () => editorRef.current.save(),
+      saveAs: () => editorRef.current.saveAs(),
       undo: () => editorRef.current.undo(),
       redo: () => editorRef.current.redo(),
       duplicate: () => editorRef.current.duplicate(),
@@ -39,22 +38,9 @@ export default function KeyboardShortcuts() {
       fitView: () => editorRef.current.fitView(),
       zoomIn: () => editorRef.current.zoomIn(),
       zoomOut: () => editorRef.current.zoomOut(),
-      selectAll: () => {
-        const s = useFlowStore.getState();
-        const next = selectAllGraph(s.nodes, s.edges);
-        s.setNodes(next.nodes);
-        s.setEdges(next.edges);
-      },
-      group: () => {
-        const s = useFlowStore.getState();
-        const result = groupSelectedNodes(s.nodes);
-        if (result.grouped) s.setNodes(result.nodes);
-      },
-      ungroup: () => {
-        const s = useFlowStore.getState();
-        const result = ungroupSelectedNodes(s.nodes);
-        if (result.ungrouped) s.setNodes(result.nodes);
-      },
+      selectAll: () => editorRef.current.selectAll(),
+      group: () => editorRef.current.group(),
+      ungroup: () => editorRef.current.ungroup(),
       toggleTextStyle: (field) => {
         const st = editorRef.current.nodeStyle;
         if (!st) return;

@@ -1,33 +1,22 @@
 import type { Metadata } from 'next';
 import LandingNav from '@/lib/components/landing/LandingNav';
-import Hero from '@/lib/components/landing/Hero';
-import DiagramTypes from '@/lib/components/landing/DiagramTypes';
-import Features from '@/lib/components/landing/Features';
-import HowItWorks from '@/lib/components/landing/HowItWorks';
-import FinalCTA from '@/lib/components/landing/FinalCTA';
 import LandingFooter from '@/lib/components/landing/LandingFooter';
+import HomeExperience from '@/lib/components/landing/HomeExperience';
+import styles from '@/lib/components/landing/HomeExperience.module.css';
 
 export const metadata: Metadata = {
-  title: 'EasyDraw — Design technical diagrams with ease',
+  title: 'EasyDraw — Give your ideas another dimension',
   description:
-    'ERDs and flowcharts in a clean, intuitive canvas — with flexible shapes for UML and data-flow diagrams. Free to use.',
+    'Sketch on a whiteboard, refine an AI diagram preview, and explore your ideas in editable 2D and 3D. Try an interactive data centre in EasyDraw.',
 };
 
 export default function Home() {
-  // Warm cream page ground under the glassy white/80 sticky header — scrolled
-  // content shows through the header's backdrop blur, everything below sits on
-  // cream.
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf8f3]">
+    <div className={styles.home}>
+      <a href="#home-main" className={styles.skip}>Skip to content</a>
       <LandingNav />
-      <main className="flex-1">
-        <Hero />
-        <DiagramTypes />
-        <Features />
-        <HowItWorks />
-        <FinalCTA />
-      </main>
-      <LandingFooter />
+      <HomeExperience />
+      <LandingFooter variant="home" />
     </div>
   );
 }

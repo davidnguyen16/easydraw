@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="256" height="205">
+  <title>Internet</title>
+  <circle cx="50" cy="40" r="31" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8"/>
+  <ellipse cx="50" cy="40" rx="14" ry="31" fill="none" stroke="#a6192e" stroke-width="1.6"/>
+  <line x1="19" y1="40" x2="81" y2="40" fill="none" stroke="#a6192e" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M25 25 C39 34 61 34 75 25" fill="none" stroke="#a6192e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M25 55 C39 46 61 46 75 55" fill="none" stroke="#a6192e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

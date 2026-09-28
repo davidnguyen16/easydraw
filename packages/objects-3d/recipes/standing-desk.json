@@ -1,0 +1,156 @@
+{
+  "id": "standing-desk",
+  "name": "Standing desk",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 140,
+      "height": 70,
+      "depth": 1.1
+    },
+    "fill": "#f0ede6",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.05,
+          1
+        ],
+        "position": [
+          0,
+          0.475,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.08,
+          0.95,
+          0.08
+        ],
+        "position": [
+          -0.4,
+          -0.025,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.08,
+          0.95,
+          0.08
+        ],
+        "position": [
+          0.4,
+          -0.025,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.14,
+          0.03,
+          0.8
+        ],
+        "position": [
+          -0.4,
+          -0.485,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.14,
+          0.03,
+          0.8
+        ],
+        "position": [
+          0.4,
+          -0.485,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.76,
+          0.05,
+          0.05
+        ],
+        "position": [
+          0,
+          0.4,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.06,
+          0.16,
+          0.06
+        ],
+        "position": [
+          0,
+          0.58,
+          -0.22
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.44,
+          0.26,
+          0.03
+        ],
+        "position": [
+          0,
+          0.77,
+          -0.22
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "screen",
+        "size": [
+          0.4,
+          0.22,
+          0.01
+        ],
+        "position": [
+          0,
+          0.77,
+          -0.2
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.34,
+          0.02,
+          0.14
+        ],
+        "position": [
+          0,
+          0.51,
+          0.15
+        ]
+      }
+    ]
+  }
+}

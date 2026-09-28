@@ -1,0 +1,352 @@
+{
+  "id": "bookshelf",
+  "name": "Bookshelf",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 90,
+      "height": 35,
+      "depth": 1.8
+    },
+    "fill": "#bd9871",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.05,
+          1,
+          1
+        ],
+        "position": [
+          -0.475,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.05,
+          1,
+          1
+        ],
+        "position": [
+          0.475,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.04,
+          1
+        ],
+        "position": [
+          0,
+          -0.48,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.04,
+          1
+        ],
+        "position": [
+          0,
+          0.48,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.9,
+          0.03,
+          1
+        ],
+        "position": [
+          0,
+          -0.16,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.9,
+          0.03,
+          1
+        ],
+        "position": [
+          0,
+          0.16,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.9,
+          0.96,
+          0.03
+        ],
+        "position": [
+          0,
+          0,
+          -0.485
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "red",
+        "size": [
+          0.07,
+          0.24,
+          0.8
+        ],
+        "position": [
+          -0.36,
+          -0.34,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.07,
+          0.26,
+          0.8
+        ],
+        "position": [
+          -0.28,
+          -0.33,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "amber",
+        "size": [
+          0.07,
+          0.28,
+          0.8
+        ],
+        "position": [
+          -0.2,
+          -0.32,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.07,
+          0.24,
+          0.8
+        ],
+        "position": [
+          -0.1,
+          -0.34,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.07,
+          0.26,
+          0.8
+        ],
+        "position": [
+          0.02,
+          -0.33,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.07,
+          0.28,
+          0.8
+        ],
+        "position": [
+          0.1,
+          -0.32,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "red",
+        "size": [
+          0.07,
+          0.24,
+          0.8
+        ],
+        "position": [
+          0.2,
+          -0.34,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.08,
+          0.22,
+          0.8
+        ],
+        "position": [
+          -0.34,
+          -0.03,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "amber",
+        "size": [
+          0.08,
+          0.25,
+          0.8
+        ],
+        "position": [
+          -0.24,
+          -0.015,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.08,
+          0.22,
+          0.8
+        ],
+        "position": [
+          -0.14,
+          -0.03,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "red",
+        "size": [
+          0.08,
+          0.25,
+          0.8
+        ],
+        "position": [
+          0,
+          -0.015,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.08,
+          0.22,
+          0.8
+        ],
+        "position": [
+          0.12,
+          -0.03,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.08,
+          0.25,
+          0.8
+        ],
+        "position": [
+          0.26,
+          -0.015,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "green",
+        "size": [
+          0.09,
+          0.2,
+          0.8
+        ],
+        "position": [
+          -0.3,
+          0.28,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.09,
+          0.2,
+          0.8
+        ],
+        "position": [
+          -0.18,
+          0.28,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "amber",
+        "size": [
+          0.09,
+          0.2,
+          0.8
+        ],
+        "position": [
+          -0.06,
+          0.28,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "leaf",
+        "size": [
+          0.2,
+          0.16,
+          0.2
+        ],
+        "position": [
+          0.25,
+          0.26,
+          0
+        ]
+      }
+    ]
+  }
+}

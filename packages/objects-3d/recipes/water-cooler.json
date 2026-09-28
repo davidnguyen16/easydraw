@@ -1,0 +1,102 @@
+{
+  "id": "water-cooler",
+  "name": "Water cooler",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 35,
+      "height": 35,
+      "depth": 1.2
+    },
+    "fill": "#dfe6ea",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.9,
+          0.7,
+          0.9
+        ],
+        "position": [
+          0,
+          -0.15,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.5,
+          0.15,
+          0.2
+        ],
+        "position": [
+          0,
+          -0.275,
+          0.45
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "custom",
+        "color": "#8fc4dc",
+        "size": [
+          0.7,
+          0.28,
+          0.7
+        ],
+        "position": [
+          0,
+          0.34,
+          0
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "custom",
+        "color": "#8fc4dc",
+        "size": [
+          0.7,
+          0.2,
+          0.7
+        ],
+        "position": [
+          0,
+          0.42,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.08,
+          0.06,
+          0.08
+        ],
+        "position": [
+          -0.15,
+          -0.27,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "red",
+        "size": [
+          0.08,
+          0.06,
+          0.08
+        ],
+        "position": [
+          0.15,
+          -0.27,
+          0.5
+        ]
+      }
+    ]
+  }
+}

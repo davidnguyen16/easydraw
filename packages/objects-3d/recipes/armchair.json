@@ -1,0 +1,143 @@
+{
+  "id": "armchair",
+  "name": "Armchair",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 75,
+      "height": 75,
+      "depth": 0.8
+    },
+    "fill": "#8c6f5a",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.3,
+          0.9
+        ],
+        "position": [
+          0,
+          0.23,
+          0.03
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.48,
+          0.2
+        ],
+        "position": [
+          0,
+          0.54,
+          -0.4
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.16,
+          0.34,
+          0.9
+        ],
+        "position": [
+          -0.42,
+          0.55,
+          0.03
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.16,
+          0.34,
+          0.9
+        ],
+        "position": [
+          0.42,
+          0.55,
+          0.03
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "custom",
+        "color": "#a58a74",
+        "size": [
+          0.6,
+          0.1,
+          0.62
+        ],
+        "position": [
+          0,
+          0.43,
+          0.08
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.08,
+          0.08,
+          0.08
+        ],
+        "position": [
+          -0.4,
+          -0.46,
+          -0.36
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.08,
+          0.08,
+          0.08
+        ],
+        "position": [
+          0.4,
+          -0.46,
+          -0.36
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.08,
+          0.08,
+          0.08
+        ],
+        "position": [
+          -0.4,
+          -0.46,
+          0.4
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.08,
+          0.08,
+          0.08
+        ],
+        "position": [
+          0.4,
+          -0.46,
+          0.4
+        ]
+      }
+    ]
+  }
+}

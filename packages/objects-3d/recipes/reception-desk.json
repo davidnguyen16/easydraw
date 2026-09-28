@@ -1,0 +1,142 @@
+{
+  "id": "reception-desk",
+  "name": "Reception desk",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 220,
+      "height": 120,
+      "depth": 1.1
+    },
+    "fill": "#e7e2d8",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.95,
+          0.35
+        ],
+        "position": [
+          0,
+          -0.025,
+          -0.325
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.35,
+          0.95,
+          1
+        ],
+        "position": [
+          -0.325,
+          -0.025,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "wood",
+        "size": [
+          1.02,
+          0.05,
+          0.4
+        ],
+        "position": [
+          0,
+          0.475,
+          -0.32
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "wood",
+        "size": [
+          0.4,
+          0.05,
+          1.02
+        ],
+        "position": [
+          -0.32,
+          0.475,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "wood",
+        "size": [
+          0.7,
+          0.05,
+          0.3
+        ],
+        "position": [
+          0.15,
+          0.185,
+          -0.05
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.3,
+          0.2,
+          0.03
+        ],
+        "position": [
+          0.2,
+          0.6,
+          -0.25
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "screen",
+        "size": [
+          0.27,
+          0.17,
+          0.01
+        ],
+        "position": [
+          0.2,
+          0.6,
+          -0.23
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.98,
+          0.04,
+          0.005
+        ],
+        "position": [
+          0,
+          -0.2,
+          -0.15
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "teal",
+        "size": [
+          0.005,
+          0.04,
+          0.98
+        ],
+        "position": [
+          -0.15,
+          -0.2,
+          0
+        ]
+      }
+    ]
+  }
+}

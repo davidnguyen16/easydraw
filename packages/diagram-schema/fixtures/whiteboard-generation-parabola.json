@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "outcome": "diagram",
+  "nodes": [
+    {"id":"axis-label-x","shape":"text","label":"x","bounds":{"x":895,"y":830,"width":40,"height":50},"style":{"stroke":"#111827","fill":"none","textColor":"#111827","strokeWidth":0,"fontSize":24}},
+    {"id":"axis-label-y","shape":"text","label":"y","bounds":{"x":80,"y":110,"width":40,"height":50},"style":{"stroke":"#111827","fill":"none","textColor":"#111827","strokeWidth":0,"fontSize":24}},
+    {"id":"height-label","shape":"text","label":"h","bounds":{"x":510,"y":600,"width":40,"height":50},"style":{"stroke":"#111827","fill":"none","textColor":"#111827","strokeWidth":0,"fontSize":24}},
+    {"id":"equation","shape":"text","label":"y = h − a(x − x₀)²","bounds":{"x":340,"y":260,"width":390,"height":70},"style":{"stroke":"#111827","fill":"none","textColor":"#111827","strokeWidth":0,"fontSize":26}}
+  ],
+  "edges": [],
+  "paths": [
+    {"id":"x-axis","label":"","bounds":{"x":150,"y":849,"width":750,"height":2},"geometry":{"version":1,"commands":[{"op":"M","values":[0,500]},{"op":"L","values":[1000,500]}],"stroke":"#111827","fill":"none","strokeWidth":2,"dash":"solid","startArrow":false,"endArrow":true}},
+    {"id":"y-axis","label":"","bounds":{"x":149,"y":150,"width":2,"height":700},"geometry":{"version":1,"commands":[{"op":"M","values":[500,1000]},{"op":"L","values":[500,0]}],"stroke":"#111827","fill":"none","strokeWidth":2,"dash":"solid","startArrow":false,"endArrow":true}},
+    {"id":"parabola","label":"","bounds":{"x":200,"y":50,"width":600,"height":800},"geometry":{"version":1,"commands":[{"op":"M","values":[0,1000]},{"op":"Q","values":[500,0,1000,1000]}],"stroke":"#2563EB","fill":"none","strokeWidth":3,"dash":"solid","startArrow":false,"endArrow":false}},
+    {"id":"height-guide","label":"","bounds":{"x":499,"y":450,"width":2,"height":400},"geometry":{"version":1,"commands":[{"op":"M","values":[500,0]},{"op":"L","values":[500,1000]}],"stroke":"#6B7280","fill":"none","strokeWidth":2,"dash":"dashed","startArrow":false,"endArrow":false}}
+  ],
+  "crops": [],
+  "warnings": []
+}

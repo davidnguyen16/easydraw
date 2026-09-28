@@ -1,0 +1,156 @@
+{
+  "id": "whiteboard",
+  "name": "Whiteboard",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 120,
+      "height": 20,
+      "depth": 1.9
+    },
+    "fill": "#eef1f3",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1,
+          0.62,
+          0.12
+        ],
+        "position": [
+          0,
+          0.61,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          0.94,
+          0.56,
+          0.02
+        ],
+        "position": [
+          0,
+          0.61,
+          0.07
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.9,
+          0.02,
+          0.2
+        ],
+        "position": [
+          0,
+          0.31,
+          0.1
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.05,
+          0.3,
+          0.05
+        ],
+        "position": [
+          -0.42,
+          -0.35,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.05,
+          0.3,
+          0.05
+        ],
+        "position": [
+          0.42,
+          -0.35,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.1,
+          0.03,
+          0.9
+        ],
+        "position": [
+          -0.42,
+          -0.485,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.1,
+          0.03,
+          0.9
+        ],
+        "position": [
+          0.42,
+          -0.485,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.34,
+          0.01,
+          0.005
+        ],
+        "position": [
+          -0.2,
+          0.34,
+          0.09
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.24,
+          0.01,
+          0.005
+        ],
+        "position": [
+          -0.25,
+          0.26,
+          0.09
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "red",
+        "size": [
+          0.18,
+          0.01,
+          0.005
+        ],
+        "position": [
+          0.22,
+          0.2,
+          0.09
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,254 @@
+{
+  "id": "lockers",
+  "name": "Lockers",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 120,
+      "height": 45,
+      "depth": 1.8
+    },
+    "fill": "#5b8fb0",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          1,
+          1
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.22,
+          0.44,
+          0.01
+        ],
+        "position": [
+          -0.375,
+          0.26,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.22,
+          0.44,
+          0.01
+        ],
+        "position": [
+          -0.375,
+          -0.24,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.02,
+          0.08,
+          0.02
+        ],
+        "position": [
+          -0.295,
+          0.26,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.02,
+          0.08,
+          0.02
+        ],
+        "position": [
+          -0.295,
+          -0.24,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.22,
+          0.44,
+          0.01
+        ],
+        "position": [
+          -0.125,
+          0.26,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.22,
+          0.44,
+          0.01
+        ],
+        "position": [
+          -0.125,
+          -0.24,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.02,
+          0.08,
+          0.02
+        ],
+        "position": [
+          -0.045,
+          0.26,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.02,
+          0.08,
+          0.02
+        ],
+        "position": [
+          -0.045,
+          -0.24,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.22,
+          0.44,
+          0.01
+        ],
+        "position": [
+          0.125,
+          0.26,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.22,
+          0.44,
+          0.01
+        ],
+        "position": [
+          0.125,
+          -0.24,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.02,
+          0.08,
+          0.02
+        ],
+        "position": [
+          0.205,
+          0.26,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.02,
+          0.08,
+          0.02
+        ],
+        "position": [
+          0.205,
+          -0.24,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.22,
+          0.44,
+          0.01
+        ],
+        "position": [
+          0.375,
+          0.26,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.22,
+          0.44,
+          0.01
+        ],
+        "position": [
+          0.375,
+          -0.24,
+          0.5
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.02,
+          0.08,
+          0.02
+        ],
+        "position": [
+          0.455,
+          0.26,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.02,
+          0.08,
+          0.02
+        ],
+        "position": [
+          0.455,
+          -0.24,
+          0.51
+        ]
+      }
+    ]
+  }
+}

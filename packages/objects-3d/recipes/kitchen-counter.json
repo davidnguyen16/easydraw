@@ -1,0 +1,186 @@
+{
+  "id": "kitchen-counter",
+  "name": "Kitchen counter",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 200,
+      "height": 60,
+      "depth": 0.9
+    },
+    "fill": "#eceae4",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.94,
+          1
+        ],
+        "position": [
+          0,
+          -0.03,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1.02,
+          0.06,
+          1.02
+        ],
+        "position": [
+          0,
+          0.47,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "custom",
+        "color": "#6b7680",
+        "size": [
+          0.22,
+          0.04,
+          0.5
+        ],
+        "position": [
+          -0.3,
+          0.49,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "silver",
+        "size": [
+          0.03,
+          0.22,
+          0.03
+        ],
+        "position": [
+          -0.3,
+          0.61,
+          -0.2
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.12,
+          0.03,
+          0.03
+        ],
+        "position": [
+          -0.27,
+          0.7,
+          -0.2
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.14,
+          0.24,
+          0.2
+        ],
+        "position": [
+          0.3,
+          0.62,
+          -0.1
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "red",
+        "size": [
+          0.04,
+          0.03,
+          0.03
+        ],
+        "position": [
+          0.3,
+          0.64,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "custom",
+        "color": "#f4efe6",
+        "size": [
+          0.06,
+          0.05,
+          0.06
+        ],
+        "position": [
+          0.32,
+          0.525,
+          0.05
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.14,
+          0.01,
+          0.02
+        ],
+        "position": [
+          -0.35,
+          0.1,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.14,
+          0.01,
+          0.02
+        ],
+        "position": [
+          -0.1,
+          0.1,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.14,
+          0.01,
+          0.02
+        ],
+        "position": [
+          0.15,
+          0.1,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.14,
+          0.01,
+          0.02
+        ],
+        "position": [
+          0.4,
+          0.1,
+          0.51
+        ]
+      }
+    ]
+  }
+}

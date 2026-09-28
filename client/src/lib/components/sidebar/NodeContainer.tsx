@@ -43,6 +43,7 @@ function ShapeGrid({ items }: { items: readonly NodeShape[] }) {
             title={shape.label}
             draggable
             onDragStart={(event) => onDragStart(event, shape.id)}
+            onDragEnd={() => { dndState.current = null; }}
           >
             <Icon {...iconProps} />
           </button>

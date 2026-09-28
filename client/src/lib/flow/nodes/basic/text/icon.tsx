@@ -6,9 +6,9 @@ export default function Icon() {
     		x="12"
     		y="16"
     		textAnchor="middle"
-    		font-family="inherit"
-    		font-size="11"
-    		font-weight="600"
+        fontFamily="inherit"
+        fontSize="11"
+        fontWeight="600"
     		fill="currentColor">Text</text
     	>
     </svg>

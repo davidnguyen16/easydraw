@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import NodeContainer from './NodeContainer';
 import CollapseButton from './CollapseButton';
 import ResizeHandle from './ResizeHandle';
+import CustomLibraries from '@/lib/node-library/CustomLibraries';
 import { useSidebarStore } from '@/lib/stores/sidebar.store';
 import {
   getShapesByCategory,
@@ -28,19 +29,6 @@ const PALETTE_CATEGORIES: readonly PaletteCategoryDefinition[] = [
   { id: 'flowchart', title: 'FLOWCHART' },
   { id: 'entity-relation', title: 'ENTITY RELATION' },
   { id: 'uml', title: 'UML' },
-  {
-    id: 'network',
-    title: 'NETWORK',
-    groups: [
-      { id: 'network-devices', title: 'Network Devices' },
-      { id: 'security-traffic', title: 'Security & Traffic' },
-      { id: 'end-devices', title: 'End Devices' },
-      { id: 'servers-storage', title: 'Servers & Storage' },
-      { id: 'wan-cloud', title: 'WAN & Cloud' },
-      { id: 'zones-containers', title: 'Zones & Containers' },
-      { id: 'connections', title: 'Connections' },
-    ],
-  },
 ];
 
 export default function Sidebar() {
@@ -143,6 +131,7 @@ export default function Sidebar() {
             onGroupToggle={(group) => toggleGroup(section.category, group)}
           />
         ))}
+        <CustomLibraries searchQuery={searchQuery} />
       </div>
 
       <CollapseButton />

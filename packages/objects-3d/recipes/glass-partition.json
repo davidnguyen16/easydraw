@@ -1,0 +1,101 @@
+{
+  "id": "glass-partition",
+  "name": "Glass partition",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 300,
+      "height": 8,
+      "depth": 3
+    },
+    "fill": "#dbe8f0",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "custom",
+        "size": [
+          1,
+          0.94,
+          0.16
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "color": "#bfe3ef"
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1.02,
+          0.04,
+          1
+        ],
+        "position": [
+          0,
+          0.49,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1.02,
+          0.04,
+          1
+        ],
+        "position": [
+          0,
+          -0.49,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.03,
+          1,
+          1
+        ],
+        "position": [
+          -0.49,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.03,
+          1,
+          1
+        ],
+        "position": [
+          0.49,
+          0,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.02,
+          1,
+          1.02
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  }
+}

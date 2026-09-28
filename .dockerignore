@@ -1,0 +1,21 @@
+# The API image builds from the repository root (see server/Dockerfile).
+# Allow-list: only what the image needs, so secrets, local builds and the
+# client app never enter the build context.
+*
+!package.json
+!package-lock.json
+!tsconfig.base.json
+!client/package.json
+!packages/*/package.json
+!packages/shared-types/
+!packages/diagram-schema/
+!server/
+
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+server/src/generated
+server/test

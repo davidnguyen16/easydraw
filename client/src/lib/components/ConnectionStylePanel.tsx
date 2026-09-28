@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Edge } from '@xyflow/react';
 import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import LineEndingsDialog from '@/lib/components/LineEndingsDialog';
@@ -23,6 +23,7 @@ interface Props {
   edge: Edge;
   onDataChange: (patch: Record<string, unknown>) => void;
   onDelete: () => void;
+  extraControls?: ReactNode;
 }
 
 const DEFAULT_COLOR = '#B4B2A9';
@@ -111,7 +112,7 @@ function RoutingIcon({ id }: { id: EdgeRouting }) {
   );
 }
 
-export default function ConnectionStylePanel({ edge, onDataChange, onDelete }: Props) {
+export default function ConnectionStylePanel({ edge, onDataChange, onDelete, extraControls }: Props) {
   const enabled = useMarkerPalette((s) => s.enabled);
 
   const data = (edge.data ?? {}) as ConnectionEdgeData;
@@ -126,7 +127,8 @@ export default function ConnectionStylePanel({ edge, onDataChange, onDelete }: P
   const markersLocked = lineStyle === 'double';
 
   const [moreOpen, setMoreOpen] = useState(false);
-  const [openMenu, setOpenMenu] = useState<'start' | 'end' | 'line' | null>(null);
+  const [requestedMenu, setOpenMenu] = useState<'start' | 'end' | 'line' | null>(null);
+  const openMenu = markersLocked && (requestedMenu === 'start' || requestedMenu === 'end') ? null : requestedMenu;
   const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
   const [colorPage, setColorPage] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -188,11 +190,6 @@ export default function ConnectionStylePanel({ edge, onDataChange, onDelete }: P
     };
   }, [openMenu]);
 
-  // If the style flips to double while an endpoint menu is open, close it.
-  useEffect(() => {
-    if (markersLocked && (openMenu === 'start' || openMenu === 'end')) setOpenMenu(null);
-  }, [markersLocked, openMenu]);
-
   const endpointEnd: 'start' | 'end' | null =
     openMenu === 'start' || openMenu === 'end' ? openMenu : null;
   const currentMarker = endpointEnd === 'start' ? markerStart : markerEnd;
@@ -214,6 +211,7 @@ export default function ConnectionStylePanel({ edge, onDataChange, onDelete }: P
         </header>
 
         <div className="flex flex-col gap-5 overflow-y-auto p-[18px]">
+          {extraControls}
           <section className="flex flex-col gap-2.5">
             <h3 className="m-0 text-[0.7rem] font-bold tracking-[0.08em] text-mq-maroon">ENDPOINTS</h3>
             <div className={`grid grid-cols-2 gap-2.5 transition-opacity duration-[120ms] ${markersLocked ? 'pointer-events-none opacity-40' : ''}`}>

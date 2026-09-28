@@ -10,10 +10,10 @@ export class AppService {
   }
 
   async getHealth() {
+    await this.prisma.$queryRaw`SELECT 1`;
     return {
       status: 'ok',
       uptime: process.uptime(),
-      usersInDb: await this.prisma.user.count(),
     };
   }
 }

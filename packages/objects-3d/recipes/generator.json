@@ -1,0 +1,156 @@
+{
+  "id": "generator",
+  "name": "Generator",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 200,
+      "height": 100,
+      "depth": 1.6
+    },
+    "fill": "#5b6a78",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.8,
+          1
+        ],
+        "position": [
+          0,
+          -0.1,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          1.02,
+          0.06,
+          1.02
+        ],
+        "position": [
+          0,
+          -0.47,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "dark",
+        "size": [
+          0.14,
+          0.5,
+          0.14
+        ],
+        "position": [
+          0.35,
+          0.45,
+          -0.3
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "screen",
+        "size": [
+          0.24,
+          0.16,
+          0.02
+        ],
+        "position": [
+          -0.25,
+          0.1,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "amber",
+        "size": [
+          0.04,
+          0.04,
+          0.02
+        ],
+        "position": [
+          -0.06,
+          0.1,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.02,
+          0.5,
+          0.02
+        ],
+        "position": [
+          0.05,
+          -0.1,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.02,
+          0.5,
+          0.02
+        ],
+        "position": [
+          0.14,
+          -0.1,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.02,
+          0.5,
+          0.02
+        ],
+        "position": [
+          0.23,
+          -0.1,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.02,
+          0.5,
+          0.02
+        ],
+        "position": [
+          0.32,
+          -0.1,
+          0.51
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.02,
+          0.5,
+          0.02
+        ],
+        "position": [
+          0.41,
+          -0.1,
+          0.51
+        ]
+      }
+    ]
+  }
+}

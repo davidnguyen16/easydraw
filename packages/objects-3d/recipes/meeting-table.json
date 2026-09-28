@@ -1,0 +1,114 @@
+{
+  "id": "meeting-table",
+  "name": "Meeting table",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 240,
+      "height": 110,
+      "depth": 0.75
+    },
+    "fill": "#bd9871",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "body",
+        "size": [
+          1,
+          0.06,
+          1
+        ],
+        "position": [
+          0,
+          0.47,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.14,
+          0.44,
+          0.5
+        ],
+        "position": [
+          -0.32,
+          -0.28,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "frame",
+        "size": [
+          0.14,
+          0.44,
+          0.5
+        ],
+        "position": [
+          0.32,
+          -0.28,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.2,
+          0.44,
+          0.6
+        ],
+        "position": [
+          -0.32,
+          -0.28,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "dark",
+        "size": [
+          0.2,
+          0.44,
+          0.6
+        ],
+        "position": [
+          0.32,
+          -0.28,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          0.12,
+          0.012,
+          0.16
+        ],
+        "position": [
+          -0.1,
+          0.506,
+          0.12
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "dark",
+        "size": [
+          0.1,
+          0.03,
+          0.1
+        ],
+        "position": [
+          0.05,
+          0.515,
+          -0.05
+        ]
+      }
+    ]
+  }
+}

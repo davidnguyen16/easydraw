@@ -1,4 +1,3 @@
-import type { JwtService } from '@nestjs/jwt';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import * as bcrypt from 'bcryptjs';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -10,179 +9,161 @@ import type { Cache } from 'cache-manager';
 // Replace the real bcrypt function with Jest mock function.
 // This prevents the test from performing real password
 jest.mock('bcryptjs', () => ({
-    hash: jest.fn(),
-    compare: jest.fn(),
+  hash: jest.fn(),
+  compare: jest.fn(),
 }));
 
 // Define a simpler type for bcrypt.compare().
 // bcrypt has multiple overloads, so this avoid TypeScript mock errors.
 
 type ComparePassword = (
-    password: string,
-    passwordHash: string,
+  password: string,
+  passwordHash: string,
 ) => Promise<boolean>;
 
 // Convert bcrypt.compare into a typed Jest mock
-const comparePasswordMock = bcrypt.compare as unknown as jest.MockedFunction<ComparePassword>;
+const comparePasswordMock =
+  bcrypt.compare as unknown as jest.MockedFunction<ComparePassword>;
 
 describe('AuthService.login', () => {
-    // real service that we want to test
-    let authService: AuthService;
+  // real service that we want to test
+  let authService: AuthService;
 
-    // Mock Prisma so the test does not connect to PostgreSQL
-    const prismaMock = {
-        user: {
-            findUnique: jest.fn(),
-        },
+  // Mock Prisma so the test does not connect to PostgreSQL
+  const prismaMock = {
+    user: {
+      findUnique: jest.fn(),
+    },
+  };
+
+  const mailServiceMock = {};
+
+  const cacheManagerMock = {
+    del: jest.fn(),
+  };
+
+  // Use a fixed date to keep the expected result predictable
+  const createdAt = new Date('2026-01-02T03:04:05.000Z');
+
+  // Fake user returned by Prisma
+  const existingUser = {
+    id: 'user-1',
+    email: 'alice@example.com',
+    passwordHash: 'stored-password-hash',
+    name: 'Alice',
+    createdAt,
+  };
+
+  type FindUniqueUser = (args: {
+    where: {
+      email: string;
     };
+  }) => Promise<typeof existingUser | null>;
 
-    // Mock JwtService so the test does not create a real JWT
+  // Create a typed version of the Prisma mock.
+  const findUniqueUserMock = prismaMock.user
+    .findUnique as unknown as jest.MockedFunction<FindUniqueUser>;
 
-    const jwtServiceMock = {
-        sign: jest.fn(),
-    };
+  // Run before every test case.
+  beforeEach(() => {
+    // Reset calls and previous mock results.
+    jest.resetAllMocks();
 
-    const mailServiceMock = {};
+    // Create the real AuthService with fake dependencies.
+    authService = new AuthService(
+      prismaMock as unknown as PrismaService,
+      mailServiceMock as unknown as MailService,
+      cacheManagerMock as unknown as Cache,
+    );
+  });
 
-    const cacheManagerMock = {
-        del: jest.fn(),
-    };
+  it('should return the account when credentials are valid', async () => {
+    // Arrange:
+    // Make Prisma return an existing user.
+    findUniqueUserMock.mockResolvedValue(existingUser);
 
-    // Use a fixed date to keep the expected result predictable
-    const createdAt = new Date('2026-01-02T03:04:05.000Z');
+    // Pretend that the entered password matches the stored hash
+    comparePasswordMock.mockResolvedValue(true);
 
-    // Fake user returned by Prisma
-    const existingUser = {
+    // Act:
+    // Call the real login() method.
+    const result = await authService.login('alice@example.com', 'password123');
+
+    // Assert:
+    // Verify that Prisma searched using the correct email.
+    expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+      where: {
+        email: 'alice@example.com',
+      },
+    });
+
+    // Verify that bcrypt compared the entered password
+    // with the password hash stored in the database.
+    expect(comparePasswordMock).toHaveBeenCalledWith(
+      'password123',
+      'stored-password-hash',
+    );
+
+    // login() identifies the account; the session is opened by the
+    // controller, which is the layer that knows the browser and the IP.
+    expect(result).toEqual({
+      user: {
         id: 'user-1',
         email: 'alice@example.com',
-        passwordHash: 'stored-password-hash',
-        googleId: null,
         name: 'Alice',
         createdAt,
-    };
-    
-    type FindUniqueUser = (args: {
-        where: {
-            email: string;
-        };
-    }) => Promise<typeof existingUser | null>;
-
-    // Create a typed version of the Prisma mock.
-    const findUniqueUserMock = prismaMock.user.findUnique as unknown as jest.MockedFunction<FindUniqueUser>;
-
-    // Describe the JWT sign() function.
-    type SignToken = (payload: {
-        sub: string;
-        email: string;
-    }) => string;
-
-    // Create a typed version of the JWT mock.
-    const signTokenMock = jwtServiceMock.sign as unknown as jest.MockedFunction<SignToken>;
-
-    // Run before every test case.
-    beforeEach(() => {
-        // Reset calls and previous mock results.
-        jest.resetAllMocks();
-
-        // Always return a predictable token when jwtService.sign() is called.
-        signTokenMock.mockReturnValue('test-access-token');
-
-        // Create the real AuthService with fake dependencies.
-        authService = new AuthService(
-            prismaMock as unknown as PrismaService,
-            jwtServiceMock as unknown as JwtService,
-            mailServiceMock as unknown as MailService,
-            cacheManagerMock as unknown as Cache,
-        );
+      },
     });
 
-    it('should return an access token when credentials are valid', async () => {
-        // Arrange:
-        // Make Prisma return an existing user.
-        findUniqueUserMock.mockResolvedValue(existingUser);
+    // Ensure that sensitive data is not included in the response.
+    expect(result.user).not.toHaveProperty('passwordHash');
+  });
 
-        // Pretend that the entered password matches the stored hash
-        comparePasswordMock.mockResolvedValue(true);
+  it('should throw UnauthorizedException when the user does not exist', async () => {
+    // Arrange:
+    // Pretend that Prisma cannot find a user with this email.
+    findUniqueUserMock.mockResolvedValue(null);
 
-        // Act:
-        // Call the real login() method.
-        const result = await authService.login(
-            'alice@example.com',
-            'password123',
-        );
+    // Act and Assert:
+    // Verify that login() rejects with UnauthorizedException.
+    await expect(
+      authService.login('missing@example.com', 'password123'),
+    ).rejects.toThrow(UnauthorizedException);
 
-        // Assert"
-        // Verify that Prisma searched using the correct email.
-        expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-            where: {
-                email: 'alice@example.com',
-            },
-        });
+    // Password comparison must not run when the user does not exist.
+    expect(comparePasswordMock).not.toHaveBeenCalled();
+  });
 
-        // Verify that bcrypt compared the entered password
-        // with the password hash stored in the database.
-        expect(comparePasswordMock).toHaveBeenCalledWith(
-            'password123',
-            'stored-password-hash',
-        );
+  it('should throw UnauthorizedException when the password is incorrect', async () => {
+    // Arrange:
+    // Prisma finds the user, but bcrypt reports that the password is incorrect
+    findUniqueUserMock.mockResolvedValue(existingUser);
+    comparePasswordMock.mockResolvedValue(false);
 
-        // Verify that the JWT payload contains the correct user data.
-        expect(jwtServiceMock.sign).toHaveBeenCalledWith({
-            sub: 'user-1',
-            email: 'alice@example.com',
-        });
+    // Act and Assert;
+    await expect(
+      authService.login('alice@example.com', 'wrong-password'),
+    ).rejects.toThrow(UnauthorizedException);
 
-        // Verify the final value returned by login().
-        expect(result).toEqual({
-            access_token: 'test-access-token',
-            user: {
-                id: 'user-1',
-                email: 'alice@example.com',
-                name: 'Alice',
-                createdAt,
-            },
-        });
+    // Verify that bcrypt received the entered password and stored hash.
+    expect(comparePasswordMock).toHaveBeenCalledWith(
+      'wrong-password',
+      'stored-password-hash',
+    );
+  });
 
-        // Ensure that sensitive data is not included in the response.
-        expect(result.user).not.toHaveProperty('passwordHash');
+  it('should refuse an account that has no password, without calling bcrypt', async () => {
+    // An account created through Google has no passwordHash. The password
+    // form must not be a way in, and must not say which case it hit.
+    findUniqueUserMock.mockResolvedValue({
+      ...existingUser,
+      passwordHash: null as unknown as string,
     });
 
-    it('should throw UnauthorizedException when the user does not exist', async () => {
-        // Arrange:
-        // Pretend that Prisma cannot find a user with this email.
-        findUniqueUserMock.mockResolvedValue(null);
+    await expect(
+      authService.login('alice@example.com', 'password123'),
+    ).rejects.toThrow(UnauthorizedException);
 
-        // Act and Assert:
-        // Verify that login() rejects with UnauthorizedException.
-        await expect(
-            authService.login('missing@example.com', 'password123'),
-        ).rejects.toThrow(UnauthorizedException);
-
-        // Password comparison must not run when the user does not exist.
-        expect(comparePasswordMock).not.toHaveBeenCalled();
-
-        // A token must not be generated for an invalid login.
-        expect(signTokenMock).not.toHaveBeenCalled();
-    });
-
-    it('should throw UnauthorizedException when the password is incorrect', async () => { 
-        // Arrange:
-        // Prisma finds the user, but bcrypt reports that the password is incorrect
-        findUniqueUserMock.mockResolvedValue(existingUser);
-        comparePasswordMock.mockResolvedValue(false);
-
-        // Act and Assert;
-        await expect(
-            authService.login('alice@example.com', 'wrong-password'),
-        ).rejects.toThrow(UnauthorizedException);
-
-        // Verify that bcrypt received the entered password and stored hash.
-        expect(comparePasswordMock).toHaveBeenCalledWith(
-            'wrong-password',
-            'stored-password-hash',
-        );
-
-        // An invalid password must not produce a JWT.
-        expect(signTokenMock).not.toHaveBeenCalled();
-    });
+    expect(comparePasswordMock).not.toHaveBeenCalled();
+  });
 });

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="256" height="205">
+  <title>IP Phone</title>
+  <rect x="18" y="10" width="64" height="60" rx="9" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8"/>
+  <path d="M28 18 C22 25 22 36 28 43 L37 37 C34 32 34 27 37 23 Z" fill="#f5e6e8" stroke="#a6192e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="46" y="18" width="25" height="15" rx="2" fill="#f5e6e8" stroke="#9a9a99" stroke-width="1.2"/>
+  <circle cx="49" cy="41" r="2" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <circle cx="58" cy="41" r="2" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <circle cx="67" cy="41" r="2" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <circle cx="49" cy="50" r="2" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <circle cx="58" cy="50" r="2" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <circle cx="67" cy="50" r="2" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <circle cx="49" cy="59" r="2" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <circle cx="58" cy="59" r="2" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <circle cx="67" cy="59" r="2" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+</svg>

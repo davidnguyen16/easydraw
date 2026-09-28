@@ -5,8 +5,8 @@ import { clearEasyDrawBrowserData } from '@/lib/privacy/browser-data';
 /**
  * Client-side auth state (Zustand port of auth.store.svelte.ts).
  *
- * The JWT lives in an httpOnly cookie the browser attaches automatically — JS
- * can't read it — so login state comes from the server via `fetchMe()`
+ * The session token lives in an httpOnly cookie the browser attaches
+ * automatically — JS can't read it — so login state comes from the server via `fetchMe()`
  * (GET /auth/me). `ready` flips true once that first check resolves, letting
  * route guards tell "still checking" apart from "checked, not logged in".
  */
@@ -14,6 +14,8 @@ export type AuthUser = {
   id: string;
   email: string;
   name: string | null;
+  /** 'admin' accounts publish the sample diagrams everyone can start from. */
+  role?: 'user' | 'admin';
   createdAt?: string;
 };
 
@@ -73,7 +75,7 @@ async function apiErrorMessage(response: Response, fallback: string): Promise<st
 
 /**
  * Permanently delete the authenticated account. Backend derives the user id
- * from the JWT cookie; then wipe local EasyDraw storage + auth state.
+ * from the session cookie; then wipe local EasyDraw storage + auth state.
  */
 export async function deleteAccount(): Promise<void> {
   const response = await fetch(`${API_URL}/auth/account`, {

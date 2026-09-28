@@ -1,0 +1,126 @@
+{
+  "id": "person",
+  "name": "Person",
+  "group": "Office",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 40,
+      "height": 40,
+      "depth": 1.7
+    },
+    "fill": "#3f91be",
+    "parts": [
+      {
+        "shape": "cylinder",
+        "material": "dark",
+        "size": [
+          0.14,
+          0.42,
+          0.14
+        ],
+        "position": [
+          -0.1,
+          -0.29,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "dark",
+        "size": [
+          0.14,
+          0.42,
+          0.14
+        ],
+        "position": [
+          0.1,
+          -0.29,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "blue",
+        "size": [
+          0.4,
+          0.38,
+          0.22
+        ],
+        "position": [
+          0,
+          0.11,
+          0
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "blue",
+        "size": [
+          0.11,
+          0.36,
+          0.11
+        ],
+        "position": [
+          -0.26,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0.15
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "blue",
+        "size": [
+          0.11,
+          0.36,
+          0.11
+        ],
+        "position": [
+          0.26,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          -0.15
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "custom",
+        "color": "#e0b48a",
+        "size": [
+          0.24,
+          0.26,
+          0.24
+        ],
+        "position": [
+          0,
+          0.42,
+          0
+        ]
+      },
+      {
+        "shape": "sphere",
+        "material": "custom",
+        "color": "#3b2a1e",
+        "size": [
+          0.26,
+          0.14,
+          0.26
+        ],
+        "position": [
+          0,
+          0.48,
+          -0.01
+        ]
+      }
+    ]
+  }
+}

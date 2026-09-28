@@ -1,50 +1,240 @@
 name: Deploy server (ECS)
 
-on: 
- push:
-    branches: [main]
-    paths:
-        - 'server/**'
-        - '.github/workflows/deploy-server.yml'
- workflow_dispatch:
+# Reviewed, manual releases only: choose `main` under "Run workflow". The
+# commit must already have a successful EasyDraw CI run, and the job waits on
+# the `production` environment (add required reviewers in repository settings).
+# Order: check service -> build + push immutable images -> migrate (one-off
+# task) -> roll API. See docs/cloud-release.md for the one-time AWS setup.
+on:
+  workflow_dispatch:
+    inputs:
+      run_migrations:
+        description: Apply pending Prisma migrations before rolling the API
+        type: boolean
+        default: true
+      desired_count:
+        description: API tasks to run after the rollout (1-4)
+        type: string
+        default: "1"
 
 permissions:
-    contents: read
+  contents: read
+  actions: read
+
+concurrency:
+  group: deploy-server-production
+  cancel-in-progress: false
 
 env:
   AWS_REGION: ap-southeast-2
   ECR_REPOSITORY: easydraw-api
-  ECS_CLUSTER: default 
+  ECS_CLUSTER: default
   ECS_SERVICE: easydraw-api
+  API_HEALTH_URL: https://api.easydraw.net/health
 
-jobs: 
-  deploy:
-    name: Build image and roll out ECS
+jobs:
+  gate:
+    name: Verify release commit
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
     steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+      - name: Require main, passing CI and a sane task count
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DESIRED_COUNT: ${{ inputs.desired_count }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Deploy only from main (got $GITHUB_REF)"; exit 1
+          fi
+          if ! [[ "$DESIRED_COUNT" =~ ^[1-4]$ ]]; then
+            echo "::error::desired_count must be 1-4"; exit 1
+          fi
+          passed=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&status=success" --jq '.total_count')
+          if [ "$passed" -lt 1 ]; then
+            echo "::error::EasyDraw CI has not passed for $GITHUB_SHA"; exit 1
+          fi
 
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v4
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: ${{ env.AWS_REGION }}
+  release:
+    name: Build, migrate and roll out
+    needs: gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: production
 
-        - name: Log in to Amazon ECR
-          id: ecr
-          uses: aws-actions/amazon-ecr-login@v2
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
-        - name: Build and push image
-          env: 
-            REGISTRY: ${{ steps.ecr.outputs.registry }}
-          run: |
-            IMAGE="$REGISTRY/$ECR_REPOSITORY"
-            docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" ./server
-            docker push "$IMAGE:latest"
-            docker push "$IMAGE:${{ github.sha }}"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-        - name: Force new ECS deployment
-          run: |
-           aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" --force-new-deployment --region "$AWS_REGION"
+      # Checked before anything is built, so a configuration problem stops the
+      # release without side effects. The service is an ECS Express Mode
+      # service: its task definition and network live on the PRIMARY
+      # deployment, not on the service object.
+      - name: Read and check the running service
+        id: service
+        run: |
+          aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" --query 'services[0]' > service.json
+          jq -e '.status == "ACTIVE"' service.json > /dev/null
+          if ! jq -e '.deploymentConfiguration.deploymentCircuitBreaker | .enable and .rollback' service.json > /dev/null; then
+            echo "::error::Enable the deployment circuit breaker with rollback on $ECS_SERVICE first"; exit 1
+          fi
+          jq '[.deployments[] | select(.status == "PRIMARY")][0]' service.json > primary.json
+          previous=$(jq -r '.taskDefinition // empty' primary.json)
+          if [ -z "$previous" ]; then echo "::error::$ECS_SERVICE has no primary deployment"; exit 1; fi
+          # Configuration (environment, secrets, roles, size) comes from the
+          # family's LATEST revision, so a setting changed with "Create new
+          # revision" ships with the next release. The running revision stays
+          # the rollback target.
+          family=$(aws ecs describe-task-definition --task-definition "$previous" --query 'taskDefinition.family' --output text)
+          aws ecs describe-task-definition --task-definition "$family" --query taskDefinition > base-task.json
+          base=$(jq -r '.taskDefinitionArn' base-task.json)
+          if [ "$(jq '.containerDefinitions | length' base-task.json)" -ne 1 ]; then
+            echo "::error::Expected exactly one container in $base"; exit 1
+          fi
+
+          # The API and migration task refuse unverified database TLS. Check the
+          # setting here without ever printing it: the URL carries the password.
+          db=$(jq -r '(.containerDefinitions[0].environment // []) | map(select(.name == "DATABASE_URL"))[0].value // empty' base-task.json)
+          if [ -n "$db" ]; then
+            echo "::add-mask::$db"
+            if ! grep -Eq '[?&]sslmode=verify-full(&|$)' <<< "$db" || ! grep -Eq '[?&]sslrootcert=[^&]+' <<< "$db"; then
+              echo "::error::DATABASE_URL on $base must use sslmode=verify-full&sslrootcert=/app/server/certs/rds-ap-southeast-2-bundle.pem (docs/cloud-release.md)"
+              exit 1
+            fi
+          elif jq -e '(.containerDefinitions[0].secrets // []) | any(.name == "DATABASE_URL")' base-task.json > /dev/null; then
+            echo "::notice::DATABASE_URL comes from a secret; the migration task checks its TLS mode at startup."
+          else
+            echo "::error::$base has no DATABASE_URL"; exit 1
+          fi
+
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+          echo "family=$family" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Server release $GITHUB_SHA"
+            echo "Running (rollback target): \`$previous\`"
+            echo "Configuration from: \`$base\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Tagged by commit, deployed by digest: nothing mutable such as `latest`.
+      # A re-run reuses images already pushed for this commit.
+      - name: Build and push images
+        id: images
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          repo="$REGISTRY/$ECR_REPOSITORY"
+          for target in runtime migrate; do
+            tag="$GITHUB_SHA"; output=api
+            if [ "$target" = migrate ]; then tag="$GITHUB_SHA-migrate"; output=migrate; fi
+            if ! aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$tag" > /dev/null 2>&1; then
+              docker build -f server/Dockerfile --target "$target" -t "$repo:$tag" .
+              docker push "$repo:$tag"
+            fi
+            digest=$(aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$tag" \
+              --query 'imageDetails[0].imageDigest' --output text)
+            echo "$output=$repo@$digest" >> "$GITHUB_OUTPUT"
+          done
+
+      # Same roles, environment, secrets and logging as the running API; only
+      # the image changes. The image's own CMD/WORKDIR apply, so an old
+      # command override cannot start the wrong process in the new layout.
+      - name: Render task definitions
+        env:
+          API_IMAGE: ${{ steps.images.outputs.api }}
+          MIGRATE_IMAGE: ${{ steps.images.outputs.migrate }}
+          FAMILY: ${{ steps.service.outputs.family }}
+        run: |
+          render() {
+            jq --arg image "$1" --arg family "$2" '
+              del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities,
+                  .registeredAt, .registeredBy, .deregisteredAt)
+              | .family = $family
+              | .containerDefinitions[0] |= (del(.command, .entryPoint, .workingDirectory) | .image = $image)
+            ' base-task.json
+          }
+          render "$API_IMAGE" "$FAMILY" > api-task.json
+          # A separate family, so the service never resolves to the migration
+          # revision; no health check, because the task exits when done.
+          render "$MIGRATE_IMAGE" "$FAMILY-migrate" \
+            | jq 'del(.containerDefinitions[0].healthCheck) | .containerDefinitions[0].portMappings = []' > migrate-task.json
+
+      - name: Run database migrations
+        if: inputs.run_migrations
+        run: |
+          arn=$(aws ecs register-task-definition --cli-input-json file://migrate-task.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          args=(--cluster "$ECS_CLUSTER" --task-definition "$arn" --started-by "github-$GITHUB_RUN_ID")
+          if jq -e '(.capacityProviderStrategy // []) | length > 0' primary.json > /dev/null; then
+            args+=(--capacity-provider-strategy "$(jq -c '.capacityProviderStrategy' primary.json)")
+          else
+            args+=(--launch-type "$(jq -r '.launchType' primary.json)")
+          fi
+          if jq -e '.networkConfiguration != null' primary.json > /dev/null; then
+            args+=(--network-configuration "$(jq -c '.networkConfiguration' primary.json)")
+          fi
+          task=$(aws ecs run-task "${args[@]}" --query 'tasks[0].taskArn' --output text)
+          echo "Migration task: $task"
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$task"
+          aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$task" --query 'tasks[0]' > migration.json
+          code=$(jq -r '.containers[0].exitCode // "none"' migration.json)
+          if [ "$code" != "0" ]; then
+            echo "::error::Migration failed (exit $code): $(jq -r '.stoppedReason // .containers[0].reason // "see task logs"' migration.json)"
+            exit 1
+          fi
+          echo "Migrations applied by \`$arn\`" >> "$GITHUB_STEP_SUMMARY"
+
+      # The service's own strategy (canary with a bake period) and circuit
+      # breaker are left as configured; a failing rollout rolls itself back.
+      - name: Roll out the API
+        id: rollout
+        env:
+          DESIRED_COUNT: ${{ inputs.desired_count }}
+        run: |
+          arn=$(aws ecs register-task-definition --cli-input-json file://api-task.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "task=$arn" >> "$GITHUB_OUTPUT"
+          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" \
+            --task-definition "$arn" --desired-count "$DESIRED_COUNT" > /dev/null
+          # One waiter call gives up after 10 minutes; a canary with a bake
+          # period can need longer.
+          for attempt in 1 2 3; do
+            if aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"; then break; fi
+            if [ "$attempt" = 3 ]; then echo "::error::$ECS_SERVICE did not stabilise in 30 minutes"; exit 1; fi
+          done
+          aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query 'services[0].deployments' > deployments.json
+          # "Stable" is also what a rolled-back deployment reports.
+          if ! jq -e --arg arn "$arn" '.[] | select(.status == "PRIMARY")
+              | .taskDefinition == $arn and .rolloutState == "COMPLETED" and .runningCount == .desiredCount' \
+              deployments.json > /dev/null; then
+            echo "::error::The new revision did not become the healthy primary deployment"
+            jq '.[] | {status, taskDefinition, rolloutState, rolloutStateReason, runningCount, desiredCount}' deployments.json
+            exit 1
+          fi
+          echo "Deployed \`$arn\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke the public API
+        run: curl --fail --silent --show-error --retry 10 --retry-delay 6 --retry-all-errors "$API_HEALTH_URL"
+
+      - name: Explain rollback
+        if: failure() && steps.service.outputs.previous != ''
+        env:
+          PREVIOUS: ${{ steps.service.outputs.previous }}
+        run: |
+          {
+            echo "Rollback (only if its code is compatible with any migrations just applied):"
+            echo "\`aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $PREVIOUS\`"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,18 +1,26 @@
 'use client';
 
+import { requestInitialThumbnail } from '@/lib/flow/editor-persistence';
 import { useEffect, useState } from 'react';
 import Flow from '@/lib/flow/Flow';
 import { API_URL } from '@/lib/api';
 import { useDiagramId } from '@/lib/flow/use-diagram-id';
 import { useEditorDoc } from '@/lib/stores/editor-doc.store';
 import { useEditorMeta } from '@/lib/stores/editor-meta.store';
+import { useEditorStore } from '@/lib/stores/editor.store';
+
+import WhiteboardEditor from '@/lib/whiteboard/WhiteboardEditor';
+import { WHITEBOARD_TYPE } from '@/lib/dashboard/workspaces';
 
 // Loads the diagram by id, hydrates the document store, then renders the
 // full-screen canvas. Port of (app)/editor/[id]/+page.svelte.
 export default function EditorClient() {
   const diagramId = useDiagramId();
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState('');
+  const [loaded, setLoaded] = useState<{ id: string; revision: number } | null>(null);
+  const [error, setError] = useState<{ id: string; message: string } | null>(null);
+  // A whiteboard bypasses the 2D canvas and its stores entirely: its data is
+  // a painted board, not an editor state.
+  const [special, setSpecial] = useState<{ kind: 'whiteboard'; id: string; title: string; data: unknown } | null>(null);
 
   // The editor is full-screen and must NOT scroll (unlike landing/auth/dashboard).
   useEffect(() => {
@@ -24,35 +32,48 @@ export default function EditorClient() {
     if (!diagramId) return;
     let cancelled = false;
     (async () => {
-      const res = await fetch(`${API_URL}/diagrams/${diagramId}`, { credentials: 'include' });
-      if (cancelled) return;
-      if (!res.ok) {
-        setError('Could not load this diagram.');
-        return;
+      try {
+        const res = await fetch(`${API_URL}/diagrams/${diagramId}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Could not load this diagram.');
+        const diagram = await res.json();
+        if (cancelled) return;
+        if (diagram.type === WHITEBOARD_TYPE) {
+          setSpecial({ kind: 'whiteboard', id: diagramId, title: diagram.title, data: diagram.data });
+        } else {
+          // data JSONB = EditorState. New diagrams have data = {}.
+          const doc = useEditorDoc.getState();
+          const ok = doc.loadEditorStateFromJSON(JSON.stringify(diagram.data));
+          if (!ok) doc.resetEditorState();
+          useEditorMeta.getState().setFileName(diagram.title);
+          if (!diagram.thumbnailAt) requestInitialThumbnail(diagramId);
+          // A shared sample link may request an initial viewpoint. This is UI
+          // state only: subsequent 2D/3D switches never refetch or convert data.
+          const initialView = new URLSearchParams(window.location.search).get('view');
+          useEditorStore.getState().setViewMode(initialView === '3d' ? '3d' : '2d');
+          setSpecial(null);
+        }
+        setLoaded((previous) => ({ id: diagramId, revision: (previous?.revision ?? 0) + 1 }));
+      } catch {
+        if (!cancelled) setError({ id: diagramId, message: 'Could not load this diagram.' });
       }
-      const diagram = await res.json();
-      // data JSONB = EditorState. New diagrams have data = {} → not a valid state
-      // → start fresh.
-      const doc = useEditorDoc.getState();
-      const ok = doc.loadEditorStateFromJSON(JSON.stringify(diagram.data));
-      if (!ok) doc.resetEditorState();
-      useEditorMeta.getState().setFileName(diagram.title);
-      setLoaded(true);
     })();
     return () => {
       cancelled = true;
     };
   }, [diagramId]);
 
-  if (loaded) {
+  if (loaded?.id === diagramId && special?.kind === 'whiteboard') {
+    return <WhiteboardEditor key={special.id} diagramId={special.id} title={special.title} data={special.data} />;
+  }
+  if (loaded?.id === diagramId) {
     return (
       <main className="h-screen w-full overflow-hidden">
-        <Flow />
+        <Flow key={`${loaded.id}:${loaded.revision}`} />
       </main>
     );
   }
-  if (error) {
-    return <div className="flex h-screen items-center justify-center text-ink-muted">{error}</div>;
+  if (error?.id === diagramId) {
+    return <div className="flex h-screen items-center justify-center text-ink-muted">{error.message}</div>;
   }
   return <div className="flex h-screen items-center justify-center text-ink-muted">Loading...</div>;
 }

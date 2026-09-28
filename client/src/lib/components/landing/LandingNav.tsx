@@ -1,177 +1,123 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import Link from 'next/link';
-import { Menu, X, LayoutDashboard, LogOut } from 'lucide-react';
+import { ArrowUpRight, LayoutDashboard, LogOut, Menu, X } from 'lucide-react';
 import Logo from '@/lib/components/Logo';
-import { useAuthStore, accountInitials } from '@/lib/stores/auth.store';
+import { accountInitials, useAuthStore } from '@/lib/stores/auth.store';
+import styles from './LandingNavigation.module.css';
 
 const navLinks = [
-  { label: 'Features', href: '#features' },
-  { label: 'Diagram types', href: '#diagram-types' },
+  { label: 'Workspace', href: '#workspace' },
   { label: 'How it works', href: '#how-it-works' },
+  { label: 'Explore 3D', href: '#playground' },
 ];
 
 export default function LandingNav() {
-  const ready = useAuthStore((s) => s.ready);
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
-  // authStore.ready flips true after the first GET /auth/me resolves — until
-  // then show skeletons instead of flashing guest buttons at a logged-in user.
-  const isLoading = !ready;
-  const isAuthenticated = !!user;
-  const initials = accountInitials(user);
-
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const ready = useAuthStore((state) => state.ready);
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const [open, setOpen] = useState<'mobile' | 'account' | null>(null);
+  const header = useRef<HTMLElement>(null);
+  const account = useRef<HTMLDivElement>(null);
+  const accountMenu = useRef<HTMLDivElement>(null);
+  const accountButton = useRef<HTMLButtonElement>(null);
+  const mobileButton = useRef<HTMLButtonElement>(null);
+  const firstAccountFocus = useRef<'first' | 'last'>('first');
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+    if (!open) return;
+    if (open === 'account') {
+      const items = accountMenu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]');
+      items?.[firstAccountFocus.current === 'last' ? items.length - 1 : 0]?.focus();
+    }
+    const closeOutside = (event: Event) => {
+      const boundary = open === 'account' ? account.current : header.current;
+      if (event.target instanceof Node && !boundary?.contains(event.target)) setOpen(null);
+    };
+    const escape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setOpen(null);
+      (open === 'account' ? accountButton : mobileButton).current?.focus();
+    };
+    const desktop = window.matchMedia('(min-width: 980px)');
+    const resize = () => { if (desktop.matches && open === 'mobile') setOpen(null); };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('focusin', closeOutside);
+    document.addEventListener('keydown', escape);
+    desktop.addEventListener('change', resize);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('focusin', closeOutside);
+      document.removeEventListener('keydown', escape);
+      desktop.removeEventListener('change', resize);
+    };
+  }, [open]);
 
-  const handleLogout = async () => {
-    setUserMenuOpen(false);
-    await logout();
-  };
+  function accountKeys(event: KeyboardEvent<HTMLDivElement>) {
+    const items = Array.from(accountMenu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+    if (!items.length) return;
+    if (event.key === 'Tab') {
+      // Restore the trigger first; native Tab then proceeds out of the menu.
+      setOpen(null);
+      accountButton.current?.focus();
+      return;
+    }
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
+      : (current + (event.key === 'ArrowUp' ? -1 : 1) + items.length) % items.length;
+    items[next]?.focus();
+  }
 
-  return (
-    <header
-      className={`sticky top-0 z-40 bg-white/80 backdrop-blur-md transition-shadow ${
-        scrolled ? 'border-b border-line-soft shadow-sm' : 'border-b border-transparent'
-      }`}
-    >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" aria-label="EasyDraw home">
-          <Logo size="md" />
-        </Link>
+  async function handleLogout() {
+    setOpen(null);
+    try { await logout(); } catch { /* The shared store clears local auth in its finally block. */ }
+  }
 
-        <nav className="hidden items-center gap-8 md:flex">
-          {navLinks.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="text-sm text-ink-muted transition-colors hover:text-ink"
-            >
-              {l.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-2">
-          {isLoading ? (
-            <>
-              <div className="hidden h-9 w-20 animate-pulse rounded-lg bg-surface-hover sm:block" />
-              <div className="h-9 w-32 animate-pulse rounded-lg bg-surface-hover" />
-            </>
-          ) : isAuthenticated ? (
-            <>
-              <Link
-                href="/dashboard"
-                className="flex h-9 items-center rounded-lg bg-mq-red px-3.5 text-sm font-medium text-white transition-colors hover:bg-mq-red-hover"
-              >
-                Open dashboard
-              </Link>
-              <div className="relative">
-                <button
-                  type="button"
-                  className="flex size-9 items-center justify-center rounded-full bg-mq-red/10 text-xs font-semibold text-mq-red transition-colors hover:bg-mq-red/20"
-                  aria-haspopup="menu"
-                  aria-expanded={userMenuOpen}
-                  onClick={() => setUserMenuOpen((v) => !v)}
-                >
-                  {initials}
-                </button>
-                {userMenuOpen && (
-                  <>
-                    <button
-                      className="fixed inset-0 z-10 cursor-default"
-                      aria-label="Close menu"
-                      tabIndex={-1}
-                      onClick={() => setUserMenuOpen(false)}
-                    />
-                    <div
-                      className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-lg border border-line bg-white py-1 shadow-lg"
-                      role="menu"
-                    >
-                      <Link
-                        href="/dashboard"
-                        role="menuitem"
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-surface-hover"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <LayoutDashboard size={16} /> Dashboard
-                      </Link>
-                      <div className="my-1 h-px bg-line-soft" />
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#b42318] hover:bg-surface-hover"
-                        onClick={handleLogout}
-                      >
-                        <LogOut size={16} /> Log out
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="hidden h-9 items-center rounded-lg px-3.5 text-sm font-medium text-ink transition-colors hover:bg-surface-hover sm:inline-flex"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/register"
-                className="flex h-9 items-center rounded-lg bg-mq-red px-3.5 text-sm font-medium text-white transition-colors hover:bg-mq-red-hover"
-              >
-                Get started free
-              </Link>
-            </>
-          )}
-
-          <button
-            type="button"
-            className="flex size-9 items-center justify-center rounded-lg text-ink hover:bg-surface-hover md:hidden"
-            aria-label="Toggle menu"
-            onClick={() => setMobileOpen((v) => !v)}
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
+  return <header ref={header} className={styles.header}>
+    <div className={styles.navInner}>
+      <Link href="/" aria-label="EasyDraw home" className={styles.logo} onClick={() => setOpen(null)}><Logo size="md" /></Link>
+      <nav aria-label="Main navigation" className={styles.desktopLinks}>
+        {navLinks.map((link) => <a key={link.href} href={link.href} className={styles.navLink}>{link.label}</a>)}
+      </nav>
+      <div className={styles.actions} aria-busy={!ready}>
+        {!ready ? <div className={styles.skeleton} role="status" aria-label="Checking your account" /> : user ? <>
+          <Link href="/dashboard" className={styles.primaryButton + ' ' + styles.workspaceButton}>Open workspace <ArrowUpRight size={15} aria-hidden="true" /></Link>
+          <div ref={account} className={styles.account}>
+            <button ref={accountButton} type="button" className={styles.accountButton} aria-label="Account menu"
+              aria-haspopup="menu" aria-controls="landing-account-menu" aria-expanded={open === 'account'}
+              onClick={() => { firstAccountFocus.current = 'first'; setOpen(open === 'account' ? null : 'account'); }}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                  event.preventDefault();
+                  firstAccountFocus.current = event.key === 'ArrowUp' ? 'last' : 'first';
+                  setOpen('account');
+                }
+              }}>{accountInitials(user)}</button>
+            {open === 'account' && <div ref={accountMenu} id="landing-account-menu" role="menu" aria-label="Your account" className={styles.accountMenu} onKeyDown={accountKeys}>
+              <p className={styles.accountName}>{user.name || user.email}</p>
+              <Link href="/dashboard" role="menuitem" className={styles.menuItem} onClick={() => setOpen(null)}><LayoutDashboard size={16} aria-hidden="true" /> Dashboard</Link>
+              <button type="button" role="menuitem" className={styles.menuItem + ' ' + styles.logout} onClick={() => void handleLogout()}><LogOut size={16} aria-hidden="true" /> Log out</button>
+            </div>}
+          </div>
+        </> : <>
+          <Link href="/login" className={styles.signIn}>Sign in</Link>
+          <Link href="/register" className={styles.primaryButton}>Start creating <ArrowUpRight size={15} aria-hidden="true" /></Link>
+        </>}
+        <button ref={mobileButton} type="button" className={styles.mobileToggle}
+          aria-label={open === 'mobile' ? 'Close navigation' : 'Open navigation'} aria-expanded={open === 'mobile'} aria-controls="landing-mobile-navigation"
+          onClick={() => setOpen(open === 'mobile' ? null : 'mobile')}>
+          {open === 'mobile' ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+        </button>
       </div>
-
-      {mobileOpen && (
-        <div className="border-t border-line-soft bg-white/95 backdrop-blur-md md:hidden">
-          <nav className="flex flex-col gap-1 px-4 py-3">
-            {navLinks.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                className="rounded-lg px-3 py-2.5 text-sm text-ink transition-colors hover:bg-surface-hover"
-                onClick={() => setMobileOpen(false)}
-              >
-                {l.label}
-              </a>
-            ))}
-            {!isLoading && !isAuthenticated && (
-              <Link
-                href="/login"
-                className="rounded-lg px-3 py-2.5 text-sm text-ink transition-colors hover:bg-surface-hover sm:hidden"
-                onClick={() => setMobileOpen(false)}
-              >
-                Sign in
-              </Link>
-            )}
-          </nav>
-        </div>
-      )}
-    </header>
-  );
+    </div>
+    <nav id="landing-mobile-navigation" aria-label="Mobile navigation" className={styles.mobileLinks} hidden={open !== 'mobile'}>
+      {navLinks.map((link) => <a key={link.href} href={link.href} onClick={() => setOpen(null)}>{link.label}</a>)}
+      {ready && !user && <Link href="/login" onClick={() => setOpen(null)}>Sign in</Link>}
+      {ready && user && <Link href="/dashboard" onClick={() => setOpen(null)}>Open workspace <ArrowUpRight size={15} aria-hidden="true" /></Link>}
+    </nav>
+  </header>;
 }

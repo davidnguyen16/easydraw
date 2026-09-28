@@ -1,0 +1,134 @@
+{
+  "id": "cable-tray",
+  "name": "Cable tray",
+  "group": "Data centre",
+  "recipe": {
+    "version": 2,
+    "size": {
+      "width": 300,
+      "height": 20,
+      "depth": 0.1
+    },
+    "fill": "#c2cdd5",
+    "parts": [
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1,
+          0.12,
+          1
+        ],
+        "position": [
+          0,
+          -0.44,
+          0
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1,
+          1,
+          0.06
+        ],
+        "position": [
+          0,
+          0,
+          -0.47
+        ]
+      },
+      {
+        "shape": "box",
+        "material": "silver",
+        "size": [
+          1,
+          1,
+          0.06
+        ],
+        "position": [
+          0,
+          0,
+          0.47
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "blue",
+        "size": [
+          0.18,
+          1,
+          0.18
+        ],
+        "position": [
+          0,
+          -0.3,
+          -0.25
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "amber",
+        "size": [
+          0.18,
+          1,
+          0.18
+        ],
+        "position": [
+          0,
+          -0.2,
+          -0.08
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "teal",
+        "size": [
+          0.18,
+          1,
+          0.18
+        ],
+        "position": [
+          0,
+          -0.1,
+          0.09
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      },
+      {
+        "shape": "cylinder",
+        "material": "blue",
+        "size": [
+          0.18,
+          1,
+          0.18
+        ],
+        "position": [
+          0,
+          0,
+          0.26
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      }
+    ]
+  }
+}

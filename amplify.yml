@@ -1,0 +1,28 @@
+# Amplify build for easydraw.net (static export). This file overrides the
+# build settings in the Amplify console. The client depends on workspace
+# packages, so install and build from the repository root with the root
+# lockfile. appRoot must equal the AMPLIFY_MONOREPO_APP_ROOT env var (client).
+version: 1
+applications:
+  - appRoot: client
+    frontend:
+      buildPath: /
+      phases:
+        preBuild:
+          commands:
+            - nvm install 24
+            - nvm use 24
+            - node --version
+            # The API URL is baked into the bundle; refuse to ship localhost.
+            - 'node -e "if (!/^https:\/\//.test(process.env.NEXT_PUBLIC_API_URL || \"\")) { console.error(\"NEXT_PUBLIC_API_URL must be an https URL\"); process.exit(1) }"'
+            - npm ci --ignore-scripts --no-audit --no-fund --cache .npm --prefer-offline
+        build:
+          commands:
+            - npm run build:client
+      artifacts:
+        baseDirectory: client/out
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - .npm/**/*

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="256" height="205">
+  <title>Wireless Router</title>
+  <rect x="7" y="20" width="86" height="43" rx="8" fill="#ffffff" stroke="#2c2c2a" stroke-width="1.8"/>
+  <rect x="7" y="49" width="86" height="14" rx="0" fill="#f5e6e8" stroke="none" stroke-width="1.8"/>
+  <line x1="7" y1="49" x2="93" y2="49" fill="none" stroke="#9a9a99" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="17" cy="56" r="1.9" fill="#a6192e" stroke="none" stroke-width="1.8"/>
+  <circle cx="24" cy="56" r="1.9" fill="#9a9a99" stroke="none" stroke-width="1.8"/>
+  <rect x="42" y="53" width="8" height="5" rx="1" fill="#ffffff" stroke="#9a9a99" stroke-width="1.2"/>
+  <rect x="52" y="53" width="8" height="5" rx="1" fill="#ffffff" stroke="#9a9a99" stroke-width="1.2"/>
+  <rect x="62" y="53" width="8" height="5" rx="1" fill="#ffffff" stroke="#9a9a99" stroke-width="1.2"/>
+  <rect x="72" y="53" width="8" height="5" rx="1" fill="#ffffff" stroke="#9a9a99" stroke-width="1.2"/>
+  <rect x="82" y="53" width="8" height="5" rx="1" fill="#ffffff" stroke="#9a9a99" stroke-width="1.2"/>
+  <line x1="19" y1="20" x2="14" y2="7" fill="none" stroke="#2c2c2a" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="81" y1="20" x2="86" y2="7" fill="none" stroke="#2c2c2a" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M30 17 Q50 -1 70 17" fill="none" stroke="#a6192e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38 22 Q50 10 62 22" fill="none" stroke="#a6192e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="50" cy="27" r="2.4" fill="#a6192e" stroke="none" stroke-width="1.8"/>
+</svg>

@@ -15,7 +15,7 @@
   <img alt="CI" src="https://github.com/davidnguyen16/easydraw/actions/workflows/ci.yml/badge.svg">
 </p>
 
-![The EasyDraw 2D editor: a diagram on the canvas, with the shape library on the left](docs/screenshot.png)
+![The EasyDraw 3D editor: a data-centre floor plan with server racks, operator desks and cable runs, rendered live from the same diagram as its 2D plan](docs/screenshot-3d.png)
 
 ## 🌟 Highlights
 
@@ -72,6 +72,8 @@ diagram stays linked to the whiteboard it came from.
 flowcharts, entity-relationship and UML. Connections route themselves around
 your shapes, bend points can be dragged, labels sit anywhere along a line, and
 ERD cardinality is set on either end.
+
+![The EasyDraw 2D editor: an entity-relationship diagram on the canvas, with the shape library on the left](docs/screenshot.png)
 
 **Design in 3D**: Switch the same diagram to 3D. Orbit, pan and zoom; jump to a
 Fit, Isometric, Top or Front view; lay the scene on the floor or stand it

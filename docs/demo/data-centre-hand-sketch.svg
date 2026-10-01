@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120">
+  <title>Hand-drawn data centre floor plan for the EasyDraw whiteboard demo</title>
+  <desc>Two five-rack rows with a cold aisle, cooling units, power equipment, spine switches, storage, and a network operations centre.</desc>
+  <defs>
+    <filter id="pen" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="1" seed="8" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <style>
+      .hand { font-family: 'Segoe Print', 'Comic Sans MS', sans-serif; fill: #26313b; }
+      .title { font-size: 37px; font-weight: 700; }
+      .zone { font-size: 29px; font-weight: 700; }
+      .label { font-size: 21px; font-weight: 700; }
+      .small { font-size: 18px; font-weight: 700; }
+      .pen { fill: none; stroke: #29333d; stroke-width: 4.1; stroke-linecap: round; stroke-linejoin: round; filter: url(#pen); }
+      .thin { fill: none; stroke: #65727e; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; filter: url(#pen); }
+      .fabric-a { fill: none; stroke: #13998f; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; filter: url(#pen); }
+      .fabric-b { fill: none; stroke: #3b6fd0; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; filter: url(#pen); }
+    </style>
+    <g id="rack">
+      <path d="M5 4 L102 2 L106 88 L3 93 Z" fill="#f6f7fa" stroke="#29333d" stroke-width="4" stroke-linejoin="round" filter="url(#pen)"/>
+      <path d="M15 27 Q53 24 95 26 M15 57 Q55 55 96 58" class="thin"/>
+      <circle cx="18" cy="16" r="3" fill="#738491"/>
+    </g>
+  </defs>
+
+  <rect width="1600" height="1120" fill="#fffdf9"/>
+  <path d="M44 119 Q803 113 1557 124 M53 132 Q794 126 1545 135" class="thin"/>
+  <text x="75" y="78" class="hand title">DATA CENTRE / DC-01 — rough floor plan</text>
+  <text x="1260" y="77" class="hand small">TOP VIEW</text>
+
+  <!-- One facility, three clearly separated areas. -->
+  <path d="M54 154 L1541 150 L1546 1054 L57 1058 Z" class="pen"/>
+  <path d="M78 213 L996 207 L1003 754 L81 760 Z" fill="#e8f5f3" fill-opacity="0.43" stroke="#65727e" stroke-width="3.5" stroke-linejoin="round" filter="url(#pen)"/>
+  <path d="M1018 210 L1517 211 L1516 754 L1023 755 Z" fill="#fff0e8" fill-opacity="0.45" stroke="#65727e" stroke-width="3.5" stroke-linejoin="round" filter="url(#pen)"/>
+  <path d="M80 788 L1517 782 L1519 1034 L82 1039 Z" fill="#f0f1fa" fill-opacity="0.58" stroke="#65727e" stroke-width="3.5" stroke-linejoin="round" filter="url(#pen)"/>
+  <text x="104" y="199" class="hand zone">01 COMPUTE HALL</text>
+  <text x="1035" y="199" class="hand zone">02 INFRASTRUCTURE</text>
+  <text x="111" y="825" class="hand zone">03 NETWORK OPERATIONS CENTRE</text>
+
+  <!-- Cooling units at the back of the compute hall. -->
+  <g class="hand label" text-anchor="middle">
+    <path d="M226 250 L344 248 L349 323 L224 326 Z" fill="#eef3f7" stroke="#29333d" stroke-width="3.6" filter="url(#pen)"/>
+    <text x="286" y="295">CRAC 01</text>
+    <path d="M513 253 L639 249 L639 325 L512 328 Z" fill="#eef3f7" stroke="#29333d" stroke-width="3.6" filter="url(#pen)"/>
+    <text x="575" y="296">CRAC 02</text>
+    <path d="M790 251 L921 250 L922 326 L789 324 Z" fill="#eef3f7" stroke="#29333d" stroke-width="3.6" filter="url(#pen)"/>
+    <text x="853" y="294">CRAC 03</text>
+  </g>
+
+  <!-- Two rack rows, five independent boxes in each. -->
+  <text x="104" y="436" class="hand label">ROW A</text>
+  <text x="104" y="636" class="hand label">ROW B</text>
+  <g class="hand label" text-anchor="middle">
+    <g transform="translate(206 396) rotate(-1 54 47)"><use href="#rack"/><text x="54" y="79">A-01</text></g>
+    <g transform="translate(359 393) rotate(0.6 54 47)"><use href="#rack"/><text x="54" y="79">A-02</text></g>
+    <g transform="translate(512 397) rotate(-0.6 54 47)"><use href="#rack"/><text x="54" y="79">A-03</text></g>
+    <g transform="translate(665 394) rotate(0.8 54 47)"><use href="#rack"/><text x="54" y="79">A-04</text></g>
+    <g transform="translate(818 396) rotate(-0.8 54 47)"><use href="#rack"/><text x="54" y="79">A-05</text></g>
+    <g transform="translate(206 614) rotate(0.6 54 47)"><use href="#rack"/><text x="54" y="79">B-01</text></g>
+    <g transform="translate(359 616) rotate(-0.8 54 47)"><use href="#rack"/><text x="54" y="79">B-02</text></g>
+    <g transform="translate(512 613) rotate(0.4 54 47)"><use href="#rack"/><text x="54" y="79">B-03</text></g>
+    <g transform="translate(665 617) rotate(-0.5 54 47)"><use href="#rack"/><text x="54" y="79">B-04</text></g>
+    <g transform="translate(818 614) rotate(0.7 54 47)"><use href="#rack"/><text x="54" y="79">B-05</text></g>
+  </g>
+  <path d="M205 515 Q541 509 932 516 L931 562 Q548 558 206 564 Z" fill="#d6f2ee" stroke="#329b99" stroke-width="2.8" filter="url(#pen)"/>
+  <text x="346" y="547" class="hand label" fill="#247d80">COLD AISLE / 18–22°C</text>
+
+  <!-- The physical cable runs touch each rack; they have no arrowheads. -->
+  <path d="M1125 468 L1028 468 L1029 373 L260 374 L260 394 M413 374 L413 392 M566 374 L566 396 M719 374 L719 394 M872 374 L872 396" class="fabric-a"/>
+  <path d="M1374 523 L1009 523 L1010 590 L260 590 L260 611 M413 590 L413 614 M566 590 L566 611 M719 590 L719 614 M872 590 L872 612" class="fabric-b"/>
+  <text x="818" y="357" class="hand small" fill="#14877e">FABRIC A</text>
+  <text x="818" y="587" class="hand small" fill="#3b6fd0">FABRIC B</text>
+
+  <!-- Independent infrastructure bay. -->
+  <g class="hand label" text-anchor="middle">
+    <path d="M1045 263 L1181 259 L1185 343 L1045 344 Z" fill="#fcfaf4" stroke="#29333d" stroke-width="3.5" filter="url(#pen)"/>
+    <text x="1115" y="311">UPS A</text>
+    <path d="M1203 260 L1338 263 L1340 343 L1201 346 Z" fill="#fcfaf4" stroke="#29333d" stroke-width="3.5" filter="url(#pen)"/>
+    <text x="1270" y="311">UPS B</text>
+    <path d="M1362 262 L1492 260 L1494 345 L1360 342 Z" fill="#fcfaf4" stroke="#29333d" stroke-width="3.5" filter="url(#pen)"/>
+    <text x="1427" y="311">PDU</text>
+
+    <path d="M1076 433 L1241 431 L1244 524 L1075 522 Z" fill="#e2f1ef" stroke="#29333d" stroke-width="3.7" filter="url(#pen)"/>
+    <text x="1160" y="490">SPINE A</text>
+    <path d="M1292 432 L1460 430 L1462 527 L1291 526 Z" fill="#e6edfa" stroke="#29333d" stroke-width="3.7" filter="url(#pen)"/>
+    <text x="1375" y="491">SPINE B</text>
+
+    <path d="M1045 647 L1171 644 L1174 721 L1045 723 Z" fill="#f2f5f8" stroke="#29333d" stroke-width="3.5" filter="url(#pen)"/>
+    <text x="1109" y="696">SAN 01</text>
+    <path d="M1204 644 L1330 647 L1332 722 L1203 720 Z" fill="#f2f5f8" stroke="#29333d" stroke-width="3.5" filter="url(#pen)"/>
+    <text x="1268" y="695">SAN 02</text>
+    <path d="M1362 646 L1493 644 L1493 721 L1360 724 Z" fill="#f2f5f8" stroke="#29333d" stroke-width="3.5" filter="url(#pen)"/>
+    <text x="1427" y="695">SAN 03</text>
+  </g>
+  <path d="M1376 526 L1376 618 L1110 618 L1110 644 M1110 618 L1427 618 M1268 618 L1268 644 M1427 618 L1427 644" class="fabric-b"/>
+  <text x="1049" y="386" class="hand small">POWER + NETWORK</text>
+  <text x="1046" y="750" class="hand small">STORAGE / BACKUP</text>
+
+  <!-- Front-side operations room and access point. -->
+  <path d="M148 886 L157 866 L188 867 L192 914 L154 918 Z" class="pen"/>
+  <text x="124" y="950" class="hand small">ACCESS</text>
+  <g class="hand label" text-anchor="middle">
+    <path d="M246 868 L521 864 L525 964 L245 967 Z" fill="#fbfbfd" stroke="#29333d" stroke-width="3.5" filter="url(#pen)"/>
+    <text x="384" y="921">MONITORING</text>
+    <path d="M660 864 L940 869 L939 969 L657 965 Z" fill="#fbfbfd" stroke="#29333d" stroke-width="3.5" filter="url(#pen)"/>
+    <text x="799" y="920">NETWORK</text>
+    <path d="M1071 869 L1356 865 L1358 964 L1071 967 Z" fill="#fbfbfd" stroke="#29333d" stroke-width="3.5" filter="url(#pen)"/>
+    <text x="1215" y="921">SECURITY</text>
+  </g>
+
+</svg>

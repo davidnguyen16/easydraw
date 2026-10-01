@@ -19,7 +19,7 @@ import WhiteboardPreviewWorkspace from './preview/WhiteboardPreviewWorkspace';
  * with menus, toolbar with the active tool's options, tool palette on the
  * left, colours floating on the right, status strip at the bottom.
  */
-export default function WhiteboardEditor({ diagramId, title, data }: { diagramId: string; title: string; data: unknown }) {
+export default function WhiteboardEditor({ diagramId, title, data, initialHint = '' }: { diagramId: string; title: string; data: unknown; initialHint?: string }) {
   const [ready, setReady] = useState(false);
   // Display preference only: hiding the palette never changes drawing options,
   // document pixels, undo history or autosave state.
@@ -97,7 +97,7 @@ export default function WhiteboardEditor({ diagramId, title, data }: { diagramId
       <div className="shrink-0 overflow-x-auto">
         <WhiteboardToolBar showColors={showColors} onToggleColors={() => setShowColors((visible) => !visible)} />
       </div>
-      <WhiteboardPreviewWorkspace key={diagramId} ready={ready}>
+      <WhiteboardPreviewWorkspace key={diagramId} ready={ready} initialHint={initialHint}>
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
           {ready ? <WhiteboardViewport /> : <div className="flex flex-1 items-center justify-center text-ink-muted">Loading whiteboard…</div>}
           <ColorPanel visible={showColors} />

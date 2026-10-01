@@ -11,6 +11,7 @@ import { useEditorStore } from '@/lib/stores/editor.store';
 
 import WhiteboardEditor from '@/lib/whiteboard/WhiteboardEditor';
 import { WHITEBOARD_TYPE } from '@/lib/dashboard/workspaces';
+import { DATA_CENTRE_WHITEBOARD_SAMPLE } from '@/lib/whiteboard/samples/data-centre';
 
 // Loads the diagram by id, hydrates the document store, then renders the
 // full-screen canvas. Port of (app)/editor/[id]/+page.svelte.
@@ -20,7 +21,7 @@ export default function EditorClient() {
   const [error, setError] = useState<{ id: string; message: string } | null>(null);
   // A whiteboard bypasses the 2D canvas and its stores entirely: its data is
   // a painted board, not an editor state.
-  const [special, setSpecial] = useState<{ kind: 'whiteboard'; id: string; title: string; data: unknown } | null>(null);
+  const [special, setSpecial] = useState<{ kind: 'whiteboard'; id: string; title: string; data: unknown; initialHint: string } | null>(null);
 
   // The editor is full-screen and must NOT scroll (unlike landing/auth/dashboard).
   useEffect(() => {
@@ -38,7 +39,9 @@ export default function EditorClient() {
         const diagram = await res.json();
         if (cancelled) return;
         if (diagram.type === WHITEBOARD_TYPE) {
-          setSpecial({ kind: 'whiteboard', id: diagramId, title: diagram.title, data: diagram.data });
+          const sampleId = new URLSearchParams(window.location.search).get('sample');
+          const initialHint = sampleId === DATA_CENTRE_WHITEBOARD_SAMPLE.id ? DATA_CENTRE_WHITEBOARD_SAMPLE.prompt : '';
+          setSpecial({ kind: 'whiteboard', id: diagramId, title: diagram.title, data: diagram.data, initialHint });
         } else {
           // data JSONB = EditorState. New diagrams have data = {}.
           const doc = useEditorDoc.getState();
@@ -63,7 +66,7 @@ export default function EditorClient() {
   }, [diagramId]);
 
   if (loaded?.id === diagramId && special?.kind === 'whiteboard') {
-    return <WhiteboardEditor key={special.id} diagramId={special.id} title={special.title} data={special.data} />;
+    return <WhiteboardEditor key={special.id} diagramId={special.id} title={special.title} data={special.data} initialHint={special.initialHint} />;
   }
   if (loaded?.id === diagramId) {
     return (

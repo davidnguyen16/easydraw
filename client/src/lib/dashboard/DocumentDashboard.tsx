@@ -15,6 +15,7 @@ import WorkspaceSwitch from './WorkspaceSwitch';
 import { SAMPLES, SampleCard, type SampleDefinition } from './samples';
 import { templatesApi, templateThumbnailUrl, type SampleTemplate } from './templates';
 import { getWorkspace, WHITEBOARD_TYPE, type WorkspaceId } from './workspaces';
+import { createDataCentreWhiteboardDocument, DATA_CENTRE_WHITEBOARD_SAMPLE } from '@/lib/whiteboard/samples/data-centre';
 
 type SortKey = 'recent' | 'oldest' | 'name-asc' | 'name-desc';
 
@@ -141,8 +142,8 @@ export default function DocumentDashboard({ workspace: workspaceId }: { workspac
     if (created) router.push(`/editor/${created.id}`);
   };
 
-  /** Built-in samples are generated here; published ones are copied by the API. Both open as the user's own diagram. */
-  const startFromSample = async (id: string, make: () => Promise<{ id: string } | null>, view3d: boolean) => {
+  /** Each sample opens as a private copy owned by the signed-in account. */
+  const startFromSample = async (id: string, make: () => Promise<{ id: string } | null>, query = '') => {
     if (sampleRequest.current || openingSample) return;
     sampleRequest.current = true;
     setActiveSample(id);
@@ -150,7 +151,7 @@ export default function DocumentDashboard({ workspace: workspaceId }: { workspac
     try {
       const created = await make();
       if (!created?.id) throw new Error('Sample creation failed');
-      startSampleNavigation(() => router.push(`/editor/${encodeURIComponent(created.id)}${view3d ? '?view=3d' : ''}`));
+      startSampleNavigation(() => router.push(`/editor/${encodeURIComponent(created.id)}${query}`));
     } catch (error) {
       setSampleError({ id, message: error instanceof Error && error.message !== 'Sample creation failed' ? error.message : 'Could not create the sample. Please try again.' });
       setActiveSample(null);
@@ -162,9 +163,14 @@ export default function DocumentDashboard({ workspace: workspaceId }: { workspac
   const handleCreateSample = (sample: SampleDefinition) => startFromSample(sample.id, async () => {
     const { title, create } = await sample.load();
     return createDocument(title, 'diagram', create(), sample.category);
-  }, true);
+  }, '?view=3d');
 
-  const handleUseTemplate = (template: SampleTemplate) => startFromSample(template.id, () => templatesApi.use(template.id), false);
+  const handleCreateWhiteboardSample = () => startFromSample(DATA_CENTRE_WHITEBOARD_SAMPLE.id, async () => {
+    const data = await createDataCentreWhiteboardDocument();
+    return createDocument(DATA_CENTRE_WHITEBOARD_SAMPLE.title, WHITEBOARD_TYPE, data, DATA_CENTRE_WHITEBOARD_SAMPLE.category);
+  }, `?sample=${DATA_CENTRE_WHITEBOARD_SAMPLE.id}`);
+
+  const handleUseTemplate = (template: SampleTemplate) => startFromSample(template.id, () => templatesApi.use(template.id));
 
   const publishSample = async (doc: DashboardDocument) => {
     setMenuFor(null);
@@ -232,7 +238,7 @@ export default function DocumentDashboard({ workspace: workspaceId }: { workspac
       <main className="mx-auto max-w-7xl px-5 py-7 sm:px-8 sm:py-9">
         <WorkspaceSwitch current={workspace.id} />
 
-        {(workspace.id === 'diagram' || publishedSamples.length > 0) && <section aria-labelledby="samples-heading" className="mt-8">
+        <section aria-labelledby="samples-heading" className="mt-8">
           <h1 id="samples-heading" className="text-2xl font-bold tracking-tight text-ink">Sample {workspace.plural}</h1>
           <p className="mt-1 text-sm text-ink-muted">Start from a finished {workspace.noun}: every sample opens as your own editable copy.{isAdmin ? ' You publish samples from a diagram’s menu.' : ''}</p>
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -247,6 +253,17 @@ export default function DocumentDashboard({ workspace: workspaceId }: { workspac
               error={sampleError?.id === sample.id ? sampleError.message : ''}
               onUse={() => void handleCreateSample(sample)}
             />)}
+            {workspace.id === 'whiteboard' && <SampleCard
+              key={DATA_CENTRE_WHITEBOARD_SAMPLE.id}
+              title={DATA_CENTRE_WHITEBOARD_SAMPLE.title}
+              category={DATA_CENTRE_WHITEBOARD_SAMPLE.category}
+              description={DATA_CENTRE_WHITEBOARD_SAMPLE.description}
+              thumbnailUrl={DATA_CENTRE_WHITEBOARD_SAMPLE.imagePath}
+              badge="AI demo"
+              pending={activeSample === DATA_CENTRE_WHITEBOARD_SAMPLE.id}
+              error={sampleError?.id === DATA_CENTRE_WHITEBOARD_SAMPLE.id ? sampleError.message : ''}
+              onUse={() => void handleCreateWhiteboardSample()}
+            />}
             {publishedSamples.map((template) => <SampleCard
               key={template.id}
               title={template.title}
@@ -261,7 +278,7 @@ export default function DocumentDashboard({ workspace: workspaceId }: { workspac
             />)}
           </div>
           {notice && <p role="status" className="mt-3 text-sm text-ink-muted">{notice}</p>}
-        </section>}
+        </section>
 
         <h2 className="mt-10 text-2xl font-bold tracking-tight text-ink">{workspace.title}</h2>
         <p className="mt-1 text-sm text-ink-muted">{workspace.subtitle}</p>

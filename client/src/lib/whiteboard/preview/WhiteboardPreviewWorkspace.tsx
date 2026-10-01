@@ -33,7 +33,7 @@ const EMPTY_CREATION: CreationState = { phase: 'idle', target: null, receipt: nu
 /** AI preview and explicit creation from an immutable server-owned result.
  * Keep the board/2D viewport mounted; dispose hidden 3D GPU resources.
  */
-export default function WhiteboardPreviewWorkspace({ children, ready }: { children: ReactNode; ready: boolean }) {
+export default function WhiteboardPreviewWorkspace({ children, ready, initialHint = '' }: { children: ReactNode; ready: boolean; initialHint?: string }) {
   const router = useRouter();
   const [tab, setTab] = useState<'whiteboard' | 'preview'>('whiteboard');
   const wide = useSyncExternalStore(subscribePreviewLayout, widePreview, serverPreviewLayout);
@@ -43,9 +43,9 @@ export default function WhiteboardPreviewWorkspace({ children, ready }: { childr
   const [workspaceWidth, setWorkspaceWidth] = useState(0);
   const sizes = resolvePanelLayout(workspaceWidth || (wide ? 1024 : 768), wide, layout);
   const previewCollapsed = wide && layout.previewCollapsed;
-  const [hint, setHint] = useState('');
+  const [hint, setHint] = useState(initialHint);
   const [ideaExpanded, setIdeaExpanded] = useState(true);
-  const latestHint = useRef('');
+  const latestHint = useRef(initialHint);
   const [feedback, setFeedback] = useState('');
   const [unresolved, setUnresolved] = useState<PreviewRequest | null>(null);
   const [cancelling, setCancelling] = useState(false);

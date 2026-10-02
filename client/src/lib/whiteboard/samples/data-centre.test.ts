@@ -1,7 +1,8 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { isWhiteboardDocument } from '@easydraw/pack-whiteboard';
-import { createDataCentreWhiteboardDocument, DATA_CENTRE_WHITEBOARD_SAMPLE } from './data-centre';
+import { createDataCentreDocument } from '@/lib/diagram3d/samples/data-centre';
+import { createDataCentreBuiltInPreview, createDataCentreWhiteboardDocument, DATA_CENTRE_WHITEBOARD_SAMPLE } from './data-centre';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -28,6 +29,19 @@ it('creates an editable whiteboard copy from the shipped PNG', async () => {
     height: DATA_CENTRE_WHITEBOARD_SAMPLE.height,
   });
   expect(Buffer.from(document.image!.split(',')[1]!, 'base64')).toEqual(bytes);
+  expect(document.sample).toBe(DATA_CENTRE_WHITEBOARD_SAMPLE.id);
+});
+
+it('answers Generate with the dashboard Data Centre diagram instead of an AI request', async () => {
+  const fetchSpy = vi.fn();
+  vi.stubGlobal('fetch', fetchSpy);
+  const preview = createDataCentreBuiltInPreview();
+  const result = await preview.generate({ id: '11111111-1111-4111-8111-111111111111', whiteboardId: '22222222-2222-4222-8222-222222222222',
+    source: { width: 1600, height: 1120, image: 'data:image/png;base64,AA==', revision: 1 }, hint: DATA_CENTRE_WHITEBOARD_SAMPLE.prompt }, 1_000);
+  expect(result.document).toEqual(createDataCentreDocument());
+  expect(result.document?.pages[0]?.nodes.some((node) => node.type === 'CubeNode')).toBe(true);
+  expect(preview.openQuery).toBe('?view=3d');
+  expect(fetchSpy).not.toHaveBeenCalled();
 });
 
 it('does not create a whiteboard from a missing sample asset', async () => {

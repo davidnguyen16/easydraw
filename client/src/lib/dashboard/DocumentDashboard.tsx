@@ -168,7 +168,7 @@ export default function DocumentDashboard({ workspace: workspaceId }: { workspac
   const handleCreateWhiteboardSample = () => startFromSample(DATA_CENTRE_WHITEBOARD_SAMPLE.id, async () => {
     const data = await createDataCentreWhiteboardDocument();
     return createDocument(DATA_CENTRE_WHITEBOARD_SAMPLE.title, WHITEBOARD_TYPE, data, DATA_CENTRE_WHITEBOARD_SAMPLE.category);
-  }, `?sample=${DATA_CENTRE_WHITEBOARD_SAMPLE.id}`);
+  });
 
   const handleUseTemplate = (template: SampleTemplate) => startFromSample(template.id, () => templatesApi.use(template.id));
 

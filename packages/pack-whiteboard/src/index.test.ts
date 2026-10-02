@@ -32,6 +32,14 @@ describe('whiteboard document', () => {
     assert.equal(isWhiteboardDocument(createEmptyWhiteboardDocument({ width: 1, height: MAX_WHITEBOARD_SIZE })), true);
   });
 
+  it('keeps an optional built-in sample id and rejects malformed ones', () => {
+    assert.equal(isWhiteboardDocument({ ...createEmptyWhiteboardDocument(), sample: 'data-centre-whiteboard' }), true);
+    const spaced = validateWhiteboardDocument({ ...createEmptyWhiteboardDocument(), sample: 'Not An Id' });
+    assert.equal(spaced.valid, false);
+    assert.equal(spaced.issues[0]?.path, '$.sample');
+    assert.equal(isWhiteboardDocument({ ...createEmptyWhiteboardDocument(), sample: 7 }), false);
+  });
+
   it('tells other documents apart', () => {
     assert.equal(isWhiteboardDocument({ pages: [], activePageId: 'p' }), false);
     assert.equal(isWhiteboardDocument({ version: 1, pack: 'other' }), false);

@@ -46,6 +46,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe('whiteboard document origin', () => {
+  it('carries a built-in sample id through load and save, and only then', async () => {
+    const engine = new WhiteboardEngine(10, 10);
+    await engine.loadDocument({ version: 1, pack: 'whiteboard', width: 10, height: 10, image: null, sample: 'data-centre-whiteboard' });
+    expect(engine.toDocument()).toEqual({ version: 1, pack: 'whiteboard', width: 10, height: 10, image: PNG, sample: 'data-centre-whiteboard' });
+    await engine.loadDocument({ version: 1, pack: 'whiteboard', width: 10, height: 10, image: null });
+    expect(engine.toDocument()).not.toHaveProperty('sample');
+  });
+});
+
 describe('whiteboard preview snapshot', () => {
   it('composites board, floating selection and uncommitted text in order without mutating the engine', () => {
     const engine = new WhiteboardEngine(400, 240);

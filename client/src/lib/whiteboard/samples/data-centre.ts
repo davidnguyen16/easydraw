@@ -1,4 +1,6 @@
 import { isWhiteboardDocument, type WhiteboardDocumentV1 } from '@easydraw/pack-whiteboard';
+import { createDataCentreDocument, DATA_CENTRE_TITLE } from '@/lib/diagram3d/samples/data-centre';
+import { createBuiltInPreview, type BuiltInPreview } from '../preview/built-in-preview';
 
 /** Shipped with the static client so every signed-in account sees the same demo. */
 export const DATA_CENTRE_WHITEBOARD_SAMPLE = {
@@ -37,7 +39,23 @@ export async function createDataCentreWhiteboardDocument(): Promise<WhiteboardDo
     width: DATA_CENTRE_WHITEBOARD_SAMPLE.width,
     height: DATA_CENTRE_WHITEBOARD_SAMPLE.height,
     image,
+    // The copy remembers where it came from, so Generate preview keeps
+    // answering with the built-in result after a reload or a repaint.
+    sample: DATA_CENTRE_WHITEBOARD_SAMPLE.id,
   };
   if (!isWhiteboardDocument(document)) throw new Error('The Data Centre sketch could not be opened.');
   return document;
+}
+
+/** Generate preview on this sample answers with the dashboard's Data Centre
+ * diagram, 3D equipment included, and Create saves that same diagram. No
+ * request reaches the preview API or OpenAI. */
+export function createDataCentreBuiltInPreview(): BuiltInPreview {
+  return createBuiltInPreview({
+    id: DATA_CENTRE_WHITEBOARD_SAMPLE.id,
+    title: DATA_CENTRE_TITLE,
+    category: DATA_CENTRE_WHITEBOARD_SAMPLE.category,
+    document: createDataCentreDocument,
+    openQuery: '?view=3d',
+  });
 }

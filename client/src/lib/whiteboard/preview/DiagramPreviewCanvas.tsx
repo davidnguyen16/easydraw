@@ -30,23 +30,15 @@ import VectorArtwork from '@/lib/flow/nodes/vector/VectorArtwork';
 import SourceImageArtwork from '@/lib/flow/nodes/source-image/SourceImageArtwork';
 import { toFiniteRotation } from '@/lib/flow/nodes/style-utils';
 import { previewEdgeAppearance, previewEdgePath } from './preview-edge';
+import { PREVIEW_NODE_TYPES, previewNodeType, UNSUPPORTED_PREVIEW_NODE, type PreviewCatalog } from './preview-catalog';
 import '@xyflow/react/dist/style.css';
 import '@/app/xy-theme.css';
 
 interface Props {
   document: PagedDiagramData;
+  catalog: PreviewCatalog;
 }
 
-const SUPPORTED_NODE_TYPES = new Set([
-  'RectangleNode',
-  'RoundedRectangleNode',
-  'EllipseNode',
-  'DiamondNode',
-  'DatabaseNode',
-  'TextNode',
-  VECTOR_PATH_NODE_TYPE,
-  SOURCE_IMAGE_NODE_TYPE,
-]);
 const MIN_ZOOM = 0.05;
 const MAX_ZOOM = 3;
 const FIT_OPTIONS: FitViewOptions = {
@@ -97,10 +89,10 @@ function PreviewArtworkNode({ data, width, height, type }: NodeProps) {
 }
 
 const NODE_TYPES: NodeTypes = {
-  ...Object.fromEntries([...SUPPORTED_NODE_TYPES].map((type) => [type, PreviewShapeNode])),
+  ...Object.fromEntries(PREVIEW_NODE_TYPES.map((type) => [type, PreviewShapeNode])),
   [VECTOR_PATH_NODE_TYPE]: PreviewArtworkNode,
   [SOURCE_IMAGE_NODE_TYPE]: PreviewArtworkNode,
-  UnsupportedPreviewNode: PreviewArtworkNode,
+  [UNSUPPORTED_PREVIEW_NODE]: PreviewArtworkNode,
 };
 
 /** A standalone edge renderer: no editor actions, editable labels, or stores. */
@@ -153,13 +145,13 @@ function PreviewConnection({
 
 const EDGE_TYPES: EdgeTypes = { preview: PreviewConnection };
 
-function createPreviewGraph(document: PagedDiagramData): { nodes: Node[]; edges: Edge[] } {
+function createPreviewGraph(document: PagedDiagramData, catalog: PreviewCatalog): { nodes: Node[]; edges: Edge[] } {
   // Clone before handing data to a rendering library. Neither measurements nor
   // any local viewport operation can alter the preview awaiting confirmation.
   const page = structuredClone(document.pages.find((item) => item.id === document.activePageId) ?? document.pages[0]);
   if (!page) return { nodes: [], edges: [] };
   const nodes: Node[] = page.nodes.map((node) => {
-    const type = node.type && SUPPORTED_NODE_TYPES.has(node.type) ? node.type : 'UnsupportedPreviewNode';
+    const type = previewNodeType(node.type, catalog);
     const width = Math.max(1, finite(node.width, 160));
     const height = Math.max(1, finite(node.height, type === 'TextNode' ? 40 : 80));
     const data = isRecord(node.data) ? node.data : {};
@@ -290,8 +282,8 @@ function PreviewViewport({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) {
 }
 
 /** A disposable viewer, not an editor: it owns only a local pan/zoom viewport. */
-export default function DiagramPreviewCanvas({ document }: Props) {
-  const graph = useMemo(() => createPreviewGraph(document), [document]);
+export default function DiagramPreviewCanvas({ document, catalog }: Props) {
+  const graph = useMemo(() => createPreviewGraph(document, catalog), [document, catalog]);
   return (
     <section
       aria-label="Diagram preview"

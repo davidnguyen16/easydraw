@@ -24,6 +24,10 @@ export interface WhiteboardDocumentV1 {
   height: number;
   /** PNG of the whole board (`data:image/png;base64,…`), or null when blank. */
   image: string | null;
+  /** Id of the built-in sample this board was created from, if any. It
+   * survives repaints and saves, so the editor keeps answering Generate
+   * preview with that sample's shipped result instead of an AI request. */
+  sample?: string;
 }
 
 export function createEmptyWhiteboardDocument(
@@ -33,6 +37,7 @@ export function createEmptyWhiteboardDocument(
 }
 
 const PNG_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/;
+const SAMPLE_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -55,6 +60,9 @@ export function validateWhiteboardDocument(value: unknown): ValidationResult {
   if (!isSize(value.height)) issue('whiteboard.height', `height must be an integer between ${MIN_WHITEBOARD_SIZE} and ${MAX_WHITEBOARD_SIZE}.`, '$.height');
   if (value.image !== null && (typeof value.image !== 'string' || !PNG_DATA_URL.test(value.image))) {
     issue('whiteboard.image', 'image must be a PNG data URL or null.', '$.image');
+  }
+  if (value.sample !== undefined && (typeof value.sample !== 'string' || !SAMPLE_ID.test(value.sample))) {
+    issue('whiteboard.sample', 'sample must be a short lowercase id when present.', '$.sample');
   }
   return createValidationResult(issues);
 }

@@ -9,9 +9,11 @@ import { useEditorDoc } from '@/lib/stores/editor-doc.store';
 import { useEditorMeta } from '@/lib/stores/editor-meta.store';
 import { useEditorStore } from '@/lib/stores/editor.store';
 
+import { isWhiteboardDocument } from '@easydraw/pack-whiteboard';
 import WhiteboardEditor from '@/lib/whiteboard/WhiteboardEditor';
 import { WHITEBOARD_TYPE } from '@/lib/dashboard/workspaces';
-import { DATA_CENTRE_WHITEBOARD_SAMPLE } from '@/lib/whiteboard/samples/data-centre';
+import { createDataCentreBuiltInPreview, DATA_CENTRE_WHITEBOARD_SAMPLE } from '@/lib/whiteboard/samples/data-centre';
+import type { BuiltInPreview } from '@/lib/whiteboard/preview/built-in-preview';
 
 // Loads the diagram by id, hydrates the document store, then renders the
 // full-screen canvas. Port of (app)/editor/[id]/+page.svelte.
@@ -21,7 +23,9 @@ export default function EditorClient() {
   const [error, setError] = useState<{ id: string; message: string } | null>(null);
   // A whiteboard bypasses the 2D canvas and its stores entirely: its data is
   // a painted board, not an editor state.
-  const [special, setSpecial] = useState<{ kind: 'whiteboard'; id: string; title: string; data: unknown; initialHint: string } | null>(null);
+  const [special, setSpecial] = useState<{
+    kind: 'whiteboard'; id: string; title: string; data: unknown; initialHint: string; builtIn: BuiltInPreview | null;
+  } | null>(null);
 
   // The editor is full-screen and must NOT scroll (unlike landing/auth/dashboard).
   useEffect(() => {
@@ -39,9 +43,11 @@ export default function EditorClient() {
         const diagram = await res.json();
         if (cancelled) return;
         if (diagram.type === WHITEBOARD_TYPE) {
-          const sampleId = new URLSearchParams(window.location.search).get('sample');
-          const initialHint = sampleId === DATA_CENTRE_WHITEBOARD_SAMPLE.id ? DATA_CENTRE_WHITEBOARD_SAMPLE.prompt : '';
-          setSpecial({ kind: 'whiteboard', id: diagramId, title: diagram.title, data: diagram.data, initialHint });
+          // A copy of the built-in sample carries its origin in the document,
+          // so reopening it keeps the sample's shipped preview result.
+          const sample = isWhiteboardDocument(diagram.data) && diagram.data.sample === DATA_CENTRE_WHITEBOARD_SAMPLE.id;
+          setSpecial({ kind: 'whiteboard', id: diagramId, title: diagram.title, data: diagram.data,
+            initialHint: sample ? DATA_CENTRE_WHITEBOARD_SAMPLE.prompt : '', builtIn: sample ? createDataCentreBuiltInPreview() : null });
         } else {
           // data JSONB = EditorState. New diagrams have data = {}.
           const doc = useEditorDoc.getState();
@@ -66,7 +72,8 @@ export default function EditorClient() {
   }, [diagramId]);
 
   if (loaded?.id === diagramId && special?.kind === 'whiteboard') {
-    return <WhiteboardEditor key={special.id} diagramId={special.id} title={special.title} data={special.data} initialHint={special.initialHint} />;
+    return <WhiteboardEditor key={special.id} diagramId={special.id} title={special.title} data={special.data}
+      initialHint={special.initialHint} builtIn={special.builtIn} />;
   }
   if (loaded?.id === diagramId) {
     return (

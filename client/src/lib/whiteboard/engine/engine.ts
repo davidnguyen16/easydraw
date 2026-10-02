@@ -90,6 +90,8 @@ export class WhiteboardEngine {
   private readonly listeners = new Set<Listener>();
   private revision = 0;
   private pointerActive = false;
+  /** Built-in sample this board came from; carried through every save. */
+  private sample: string | undefined;
 
   constructor(width: number, height: number, maxUndoLevels = 50) {
     this.doc = createCanvas(width, height);
@@ -655,6 +657,7 @@ export class WhiteboardEngine {
   toDocument(): WhiteboardDocumentV1 {
     const doc = createEmptyWhiteboardDocument({ width: this.doc.width, height: this.doc.height });
     doc.image = this.doc.toDataURL('image/png');
+    if (this.sample) doc.sample = this.sample;
     return doc;
   }
 
@@ -666,6 +669,7 @@ export class WhiteboardEngine {
     this.selection = null;
     this.textBox = null;
     this.history.clear();
+    this.sample = doc.sample;
     this.setSize(doc.width, doc.height);
     this.ctx.fillStyle = '#ffffff';
     this.ctx.fillRect(0, 0, this.doc.width, this.doc.height);

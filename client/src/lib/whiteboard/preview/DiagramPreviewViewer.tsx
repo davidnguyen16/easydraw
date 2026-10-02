@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { Box, LoaderCircle, Square } from 'lucide-react';
 import type { DiagramCamera3D, PagedDiagramData } from '@easydraw/diagram-schema';
 import DiagramPreviewCanvas from './DiagramPreviewCanvas';
+import type { PreviewCatalog } from './preview-catalog';
 
 const DiagramPreview3D = dynamic(() => import('./DiagramPreview3D'), {
   ssr: false,
@@ -26,7 +27,7 @@ class Preview3DBoundary extends Component<{ children: ReactNode; onReturnTo2D: (
 
 /** The result key is owned by the workspace. Camera and view are local UI only;
  * the 2D viewport survives toggles, but hidden 3D graphics are fully unmounted. */
-export default function DiagramPreviewViewer({ document, active = true }: { document: PagedDiagramData; active?: boolean }) {
+export default function DiagramPreviewViewer({ document, active = true, catalog = 'ai' }: { document: PagedDiagramData; active?: boolean; catalog?: PreviewCatalog }) {
   const [mode, setMode] = useState<'2D' | '3D'>('2D');
   const [camera, setCamera] = useState<DiagramCamera3D>();
   const [orientation, setOrientation] = useState<'floor' | 'upright'>('upright');
@@ -46,16 +47,18 @@ export default function DiagramPreviewViewer({ document, active = true }: { docu
     </div>
     <div className={`relative flex-1 ${mode === '3D' ? 'min-h-[360px]' : 'min-h-[260px]'}`}>
       <div className={mode === '2D' ? 'absolute inset-0' : 'hidden'} aria-hidden={mode !== '2D'} inert={mode !== '2D'}>
-        <DiagramPreviewCanvas document={document} />
+        <DiagramPreviewCanvas document={document} catalog={catalog} />
       </div>
       {mode === '3D' && active && <Preview3DBoundary onReturnTo2D={returnTo2D}>
-        <DiagramPreview3D document={document} camera={camera} onCameraChange={setCamera} onReturnTo2D={returnTo2D}
+        <DiagramPreview3D document={document} catalog={catalog} camera={camera} onCameraChange={setCamera} onReturnTo2D={returnTo2D}
           orientation={orientation} onOrientationChange={(value) => { setOrientation(value); setCamera(undefined); }}
           showGrid={showGrid} onShowGridChange={setShowGrid} />
       </Preview3DBoundary>}
     </div>
     {mode === '3D' && <p className="shrink-0 border-t border-line-soft bg-white px-3 py-2 text-[10px] leading-4 text-ink-muted">
-      Read-only. Supported vectors have depth; images and complex fallback artwork stay flat. No hidden detail is inferred.
+      {catalog === 'built-in'
+        ? 'Read-only. The sample’s equipment keeps its 3D shapes; Create diagram opens an editable copy.'
+        : 'Read-only. Supported vectors have depth; images and complex fallback artwork stay flat. No hidden detail is inferred.'}
     </p>}
   </div>;
 }

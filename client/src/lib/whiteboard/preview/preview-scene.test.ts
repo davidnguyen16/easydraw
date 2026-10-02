@@ -58,6 +58,16 @@ describe('isolated preview 3D model', () => {
     expect(input).toEqual(before);
   });
 
+  it('renders CubeNode equipment only for a built-in sample result', () => {
+    const input = document();
+    input.pages[0].nodes = [{ id: 'rack', type: 'CubeNode', position: { x: 0, y: 0 }, width: 60, height: 100,
+      data: { label: 'Rack A-01', spatial3d: { depth: 2, elevation: 0 } } }];
+    expect(createPreviewScene(input).nodes[0].type).toBe('UnsupportedPreviewNode');
+    const builtIn = createPreviewScene(input, 'built-in');
+    expect(builtIn.nodes[0].type).toBe('CubeNode');
+    expect(builtIn.warnings.some((warning) => warning.includes('Unsupported'))).toBe(false);
+  });
+
   it('never resolves unsupported account-library node types and uses 2D fallback dimensions', () => {
     const input = document();
     input.pages[0].nodes = [{ id: 'asset', type: 'CustomImageNode', data: { label: 'Unsupported', assetId: 'private-asset' } }];

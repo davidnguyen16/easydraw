@@ -273,7 +273,7 @@ function readResponse(body: unknown, request: PreviewRequest): PreviewResponse {
   return result;
 }
 
-function delay(ms: number, signal: AbortSignal): Promise<void> {
+export function delay(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     if (signal.aborted) { reject(abortError()); return; }
     const abort = () => { clearTimeout(timer); signal.removeEventListener('abort', abort); reject(abortError()); };

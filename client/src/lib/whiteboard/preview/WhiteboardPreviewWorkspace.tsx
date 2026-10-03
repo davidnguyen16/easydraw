@@ -147,7 +147,7 @@ export default function WhiteboardPreviewWorkspace({ children, ready, initialHin
     pending.current = { controller, request };
     dispatch({ type: 'start', id: request.id });
     try {
-      const next = await (builtIn ? builtIn.generate(request, Date.now())
+      const next = await (builtIn ? builtIn.generate(request, Date.now(), controller.signal)
         : recover ? recoverPreview(request, controller.signal) : generatePreview(request, controller.signal));
       if (!controller.signal.aborted) {
         rememberUnresolved(null);
@@ -372,7 +372,9 @@ export default function WhiteboardPreviewWorkspace({ children, ready, initialHin
             <button type="button" aria-label="Cancel preview" onClick={cancel} disabled={cancelling} className={`${BUTTON} border border-line text-ink`}><X size={16} />{cancelling ? 'Cancelling…' : 'Cancel'}</button>
           </div>
           {unresolved && !loading && !cancelling && <button type="button" onClick={() => void run(unresolved, true)} className={`${BUTTON} mt-2 w-full border border-line text-ink`}><RefreshCw size={16} />Check existing request</button>}
-          <p className="mt-2 text-[11px] leading-4 text-ink-muted">Cancelling may still incur a charge if AI has started. Requests are never sent to AI again automatically.</p>
+          <p className="mt-2 text-[11px] leading-4 text-ink-muted">{builtIn
+            ? 'Nothing is sent to AI for this sample, so cancelling costs nothing.'
+            : 'Cancelling may still incur a charge if AI has started. Requests are never sent to AI again automatically.'}</p>
         </div>}
           <div className="shrink-0" aria-live="polite" aria-atomic="true">
             {stale && <p className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-900">{builtIn

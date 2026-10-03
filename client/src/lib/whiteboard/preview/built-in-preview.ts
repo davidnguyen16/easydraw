@@ -1,7 +1,7 @@
 import { isDiagramData, type PagedDiagramData } from '@easydraw/diagram-schema';
 import { API_URL } from '../../api';
 import {
-  isPreviewIdentifier, PreviewApiError,
+  delay, isPreviewIdentifier, PreviewApiError,
   type PreviewCommitReceipt, type PreviewCommitTarget, type PreviewRequest, type PreviewResult,
 } from './preview-api';
 
@@ -13,7 +13,8 @@ const RESULT_TTL_MS = 24 * 60 * 60 * 1000;
  * diagrams API. Nothing reaches the preview API, S3 or OpenAI. */
 export interface BuiltInPreview {
   id: string;
-  generate(request: PreviewRequest, now: number): Promise<PreviewResult>;
+  /** Settles after the sample's thinking time; cancelling the signal ends the wait. */
+  generate(request: PreviewRequest, now: number, signal: AbortSignal): Promise<PreviewResult>;
   commit(target: PreviewCommitTarget, signal: AbortSignal): Promise<PreviewCommitReceipt>;
   /** Appended when opening the created diagram, e.g. its intended view. */
   openQuery: string;
@@ -27,6 +28,10 @@ export interface BuiltInPreviewDefinition {
   /** Allocates a fresh copy of the shipped document on every call. */
   document: () => unknown;
   openQuery?: string;
+  /** How long Generate keeps its loading state up before the shipped result
+   * appears, so the sample paces like a real request. Cosmetic only: nothing
+   * is waiting on a server. Defaults to no wait. */
+  thinkMs?: number;
 }
 
 async function sha256Hex(text: string): Promise<string> {
@@ -51,8 +56,11 @@ export function createBuiltInPreview(definition: BuiltInPreviewDefinition): Buil
   return {
     id: definition.id,
     openQuery: definition.openQuery ?? '',
-    async generate(request, now) {
-      const { document, hash } = await prepare();
+    async generate(request, now, signal) {
+      // Building and hashing the document overlaps the wait instead of adding to it.
+      const [{ document, hash }] = await Promise.all([
+        prepare(), definition.thinkMs ? delay(definition.thinkMs, signal) : undefined,
+      ]);
       return {
         id: crypto.randomUUID(), source: structuredClone(request.source), hint: request.hint,
         refinementAvailable: false, creationAvailable: true,

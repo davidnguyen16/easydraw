@@ -18,7 +18,7 @@ describe('built-in sample preview', () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal('fetch', fetchSpy);
     const preview = createBuiltInPreview(definition());
-    const result = await preview.generate(request(), 1_000);
+    const result = await preview.generate(request(), 1_000, signal());
     expect(isPreviewIdentifier(result.id)).toBe(true);
     expect(isPreviewHash(result.documentHash)).toBe(true);
     expect(result).toMatchObject({ model: BUILT_IN_PREVIEW_MODEL, creationAvailable: true, refinementAvailable: false,
@@ -27,14 +27,34 @@ describe('built-in sample preview', () => {
     expect(result.document).toEqual(definition().document());
     expect(fetchSpy).not.toHaveBeenCalled();
     // Deterministic document, deterministic hash: a later result still matches.
-    expect((await preview.generate(request(), 2_000)).documentHash).toBe(result.documentHash);
+    expect((await preview.generate(request(), 2_000, signal())).documentHash).toBe(result.documentHash);
+  });
+
+  it('keeps the loading state up for the thinking time, and stops waiting when cancelled', async () => {
+    vi.useFakeTimers();
+    try {
+      const preview = createBuiltInPreview({ ...definition(), thinkMs: 2_000 });
+      let settled = false;
+      const pending = preview.generate(request(), 1_000, signal()).then((result) => { settled = true; return result; });
+      await vi.advanceTimersByTimeAsync(1_999);
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect((await pending).model).toBe(BUILT_IN_PREVIEW_MODEL);
+
+      const controller = new AbortController();
+      const cancelled = expect(preview.generate(request(), 1_000, controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+      await vi.advanceTimersByTimeAsync(500);
+      controller.abort();
+      await cancelled;
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
   });
 
   it('creates the reviewed document through the diagrams API and reports a receipt', async () => {
     const fetchSpy = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: DIAGRAM }), { status: 201 }));
     vi.stubGlobal('fetch', fetchSpy);
     const preview = createBuiltInPreview(definition());
-    const result = await preview.generate(request(), 1_000);
+    const result = await preview.generate(request(), 1_000, signal());
     const receipt = await preview.commit({ previewId: result.id, whiteboardId: BOARD, documentHash: result.documentHash! }, signal());
     expect(receipt).toEqual({ previewId: result.id, diagramId: DIAGRAM, visualDocumentId: null, sourceWhiteboardId: BOARD,
       documentHash: result.documentHash, created: true });
@@ -51,13 +71,13 @@ describe('built-in sample preview', () => {
     await expect(preview.commit({ previewId: request().id, whiteboardId: BOARD, documentHash: 'f'.repeat(64) }, signal()))
       .rejects.toThrow(/no longer matches/);
     expect(fetchSpy).not.toHaveBeenCalled();
-    const result = await preview.generate(request(), 1_000);
+    const result = await preview.generate(request(), 1_000, signal());
     await expect(preview.commit({ previewId: result.id, whiteboardId: BOARD, documentHash: result.documentHash! }, signal()))
       .rejects.toThrow('Could not create the diagram');
   });
 
   it('rejects a shipped document that is not a paged diagram', async () => {
     const preview = createBuiltInPreview({ ...definition(), document: () => ({ nodes: [], edges: [] }) });
-    await expect(preview.generate(request(), 1_000)).rejects.toThrow('built-in sample result is unavailable');
+    await expect(preview.generate(request(), 1_000, signal())).rejects.toThrow('built-in sample result is unavailable');
   });
 });

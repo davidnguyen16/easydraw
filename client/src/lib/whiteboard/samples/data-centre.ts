@@ -57,5 +57,7 @@ export function createDataCentreBuiltInPreview(): BuiltInPreview {
     category: DATA_CENTRE_WHITEBOARD_SAMPLE.category,
     document: createDataCentreDocument,
     openQuery: '?view=3d',
+    // Hard-coded pause so the shipped answer arrives like a generated one.
+    thinkMs: 2_000,
   });
 }

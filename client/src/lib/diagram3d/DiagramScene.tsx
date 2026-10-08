@@ -211,7 +211,7 @@ export default function DiagramScene({ model, camera, onCameraChange, onReturnTo
               {canTransform && selected && !selected.locked && editing && <NodeTransformControl key={`node:${orientation}`} node={selected} editing={editing} orientation={orientation} />}
               {canTransform && !selected && bendEdge && selectedBend && editing && <EdgePointControl key={`bend:${orientation}`} edge={bendEdge} index={selectedBend.index} editing={editing} orientation={orientation} />}
               {canTransform && !selected && endpointEdge && selectedEndpoint && editing && <EdgeEndpointControl key={`endpoint:${orientation}`} edge={endpointEdge} end={selectedEndpoint.end} editing={editing} orientation={orientation} />}
-              <SceneCameraRig model={model} camera={camera} onCameraChange={onCameraChange} view={view} editing={editing} viewportRef={viewportRef} projectDropRef={projectDrop} standalone={standalone} orientation={orientation} />
+              <SceneCameraRig model={model} camera={camera} onCameraChange={onCameraChange} view={view} editing={editing} viewportRef={viewportRef} projectDropRef={projectDrop} standalone={standalone} presenting={presenting} orientation={orientation} />
               <ContextGuard onLost={loseContext} />
             </Canvas>
           </div>

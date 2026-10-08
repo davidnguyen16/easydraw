@@ -11,6 +11,7 @@ import type { DiagramCamera, DiagramSceneEditing } from './types';
 import { registerSceneViewport } from './scene-viewport';
 import { waitForDocumentImages, waitForImageReadiness, type ImageReadiness } from '@/lib/exporters/image-readiness';
 import { diagramToWorld, worldRayToDiagram, worldToDiagram, type SceneOrientation } from './scene-orientation';
+import { fitPreviewCamera } from './preview-camera-fit';
 
 export type CameraPreset = 'fit' | 'isometric' | 'top' | 'front';
 export interface ViewRequest { preset: CameraPreset; nonce: number }
@@ -25,10 +26,11 @@ interface Props {
   viewportRef: RefObject<HTMLDivElement | null>;
   projectDropRef: RefObject<DropProjector | null>;
   standalone?: boolean;
+  presenting?: boolean;
   orientation?: SceneOrientation;
 }
 
-export function SceneCameraRig({ model, camera: storedCamera, onCameraChange, view, editing, viewportRef, projectDropRef, standalone = false, orientation = 'floor' }: Props) {
+export function SceneCameraRig({ model, camera: storedCamera, onCameraChange, view, editing, viewportRef, projectDropRef, standalone = false, presenting = false, orientation = 'floor' }: Props) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const get = useThree((state) => state.get);
   const invalidate = useThree((state) => state.invalidate);
@@ -75,12 +77,17 @@ export function SceneCameraRig({ model, camera: storedCamera, onCameraChange, vi
     const fov = camera instanceof THREE.PerspectiveCamera ? THREE.MathUtils.degToRad(camera.fov) : Math.PI / 4;
     const aspect = Math.max(size.width / Math.max(size.height, 1), 0.1);
     const limitingFov = Math.min(fov, 2 * Math.atan(Math.tan(fov / 2) * aspect));
-    const distance = Math.max(radius, 0.3) / Math.sin(limitingFov / 2) * 1.18;
+    let distance = Math.max(radius, 0.3) / Math.sin(limitingFov / 2) * 1.18;
     const direction = orientation === 'upright' ? new THREE.Vector3(0.45, 0.3, 1.4) : new THREE.Vector3(1, 0.85, 1.15);
     if (preset === 'top') direction.set(0, 1, 0.0001);
     else if (preset === 'front') direction.set(0, 0, 1);
     else if (preset === 'fit') direction.copy(camera.position).sub(controls.target);
     if (direction.lengthSq() === 0) direction.set(1, 0.85, 1.15);
+    if (standalone || presenting) {
+      const fitted = fitPreviewCamera(model, orientation, direction, fov, aspect);
+      center = fitted.center;
+      distance = fitted.distance;
+    }
     controls.target.copy(center);
     camera.position.copy(center).addScaledVector(direction.normalize(), distance);
     referenceDistance.current = distance;
@@ -88,7 +95,7 @@ export function SceneCameraRig({ model, camera: storedCamera, onCameraChange, vi
     camera.lookAt(controls.target);
     controls.update();
     invalidate();
-  }, [editing, get, invalidate, model, orientation]);
+  }, [editing, get, invalidate, model, orientation, presenting, standalone]);
 
   useEffect(() => {
     const controls = controlsRef.current;
@@ -100,8 +107,12 @@ export function SceneCameraRig({ model, camera: storedCamera, onCameraChange, vi
     const { camera, gl } = get();
     camera.up.set(0, 1, 0);
     const saved = firstRun ? initialCamera.current : undefined;
-    fit(orientationChanged ? 'isometric' : view.preset);
-    if (saved) {
+    if (saved && (standalone || presenting)) {
+      camera.position.fromArray(saved.position);
+      controls.target.fromArray(saved.target);
+    }
+    fit(saved && (standalone || presenting) ? 'fit' : orientationChanged ? 'isometric' : view.preset);
+    if (saved && !standalone && !presenting) {
       camera.position.fromArray(saved.position);
       controls.target.fromArray(saved.target);
       camera.lookAt(controls.target);
@@ -112,19 +123,19 @@ export function SceneCameraRig({ model, camera: storedCamera, onCameraChange, vi
     if (!standalone) useEditorStore.getState().setZoom3d(Math.round(100 * referenceDistance.current / Math.max(camera.position.distanceTo(controls.target), 0.001)));
     invalidate();
     if (!firstRun) reportCamera();
-  }, [fit, get, invalidate, orientation, reportCamera, standalone, view]);
+  }, [fit, get, invalidate, orientation, presenting, reportCamera, standalone, view]);
 
-  // Embeds can resize when a notice expands or a narrow tab becomes visible.
+  // Embeds and presentations can resize as their available canvas changes.
   // Refit only on actual dimensions, preserving the current orbit direction;
   // ordinary pan/zoom must not snap back or touch the shared editor viewport.
   useEffect(() => {
-    if (!standalone) return;
+    if (!standalone && !presenting) return;
     const previous = previousSize.current;
     previousSize.current = { width: size.width, height: size.height };
     if (!previous || previous.width === size.width && previous.height === size.height) return;
     fit('fit');
     reportCamera();
-  }, [fit, reportCamera, size.width, size.height, standalone]);
+  }, [fit, presenting, reportCamera, size.width, size.height, standalone]);
 
   useEffect(() => {
     const { camera } = get();

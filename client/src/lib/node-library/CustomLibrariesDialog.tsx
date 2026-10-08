@@ -17,6 +17,7 @@ export interface CustomLibrariesDialogProps {
   onDeleteSection: (section: LibrarySection) => Promise<void>;
   onReorderSection: (id: string, direction: -1 | 1) => Promise<void>;
   onUpload: (section: LibrarySection, files: File[]) => void;
+  onImportFolder: (section: LibrarySection) => void;
   renderNodes: (section: LibrarySection) => ReactNode;
   uploadStatus: ReactNode;
   onRetry: () => void;
@@ -40,6 +41,7 @@ export default function CustomLibrariesDialog({
   onDeleteSection,
   onReorderSection,
   onUpload,
+  onImportFolder,
   renderNodes,
   uploadStatus,
   onRetry,
@@ -263,6 +265,13 @@ export default function CustomLibrariesDialog({
             {!selected && <p className="mt-2 mb-0 text-sm text-[#a79b8e]">Select or create a private section first.</p>}
           </section>
 
+          <section>
+            <h3 className={HEADING}>3D OBJECTS</h3>
+            <p className="mt-2 mb-3 text-sm leading-relaxed text-[#9c9186]">Preview a folder of 3D objects, then select which ones to import.</p>
+            <button type="button" className={SECONDARY_BUTTON} disabled={uploadDisabled}
+              aria-label={selected ? `Import a 3D folder into ${selected.name}` : 'Import a 3D folder'}
+              onClick={() => { if (selected) onImportFolder(selected); }}><FolderOpen size={16} />+ Import 3D folder</button>
+          </section>
           {selected && selected.nodes.length > 0 && <section aria-label={`Nodes in ${selected.name}`} className="min-w-0 border-t border-[#e5dcd3] pt-4">
             <h3 className={`${HEADING} mb-3 break-words`}>{selected.name}</h3>
             {renderNodes(selected)}

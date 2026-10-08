@@ -43,9 +43,13 @@ result in 3D immediately, without waiting for a render.
 
 ## 💡 Why design in 2D and 3D at once
 
-- ⚡ **Try and approve ideas faster**: Draw or edit on the 2D plane and see the
-  matching 3D volume, viewpoint and lighting straight away. A design decision
-  can be made on the spot, with no waiting for frames to render.
+- 🎓 **Make spatial geometry easier to understand**: Teachers and high-school
+  students can sketch a geometry problem by hand, then generate a clear,
+  editable diagram with labelled points, hidden edges and angle markers.
+  The classroom sample uses a regular triangular prism ABC.A′B′C′ with
+  base side a and a 60° angle between (ABC) and (A′BC). Students can rotate
+  the model to distinguish the two highlighted planes, then follow the
+  construction for its volume and the distance from midpoint M to (AB′C′).
 - 📐 **Catch scale and spatial mistakes early**: Flat drawings easily mislead
   about depth and how things will fit in reality. Orbiting a live 3D model shows
   clashes of space, structure or human scale while the design is still a sketch.
@@ -82,8 +86,10 @@ them depth, connect them and edit their labels in 3D - the 2D plan follows.
 Camera and spatial layout are saved with each page.
 
 **Build with objects**: Compose reusable 3D objects from simple parts and keep
-them, alongside your own image nodes, in private libraries. Open the Data
-Centre sample from the dashboard to see a complete 2D and 3D layout.
+them, alongside your own image nodes, in private libraries. Import a folder
+of 3D JSON objects, preview each in 2D or 3D, then select which to save.
+Open the Data Centre sample from the dashboard to see a complete 2D and 3D
+layout, or the Geometry sample for an English classroom demonstration.
 
 **Organise**: Split a document into pages; keep diagrams and whiteboards apart
 on the dashboard, with thumbnails, categories, templates and a *draft*,

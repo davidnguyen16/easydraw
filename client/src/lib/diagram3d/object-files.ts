@@ -47,3 +47,16 @@ export function pickObjectFile(): Promise<Object3DFile | null> {
     input.click();
   });
 }
+
+/** Selects a local folder for preview; it does not read files or upload anything. */
+export function pickObjectFolder(): Promise<File[] | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.multiple = true;
+    input.onchange = () => resolve(input.files?.length ? Array.from(input.files) : null);
+    input.oncancel = () => resolve(null);
+    input.click();
+  });
+}

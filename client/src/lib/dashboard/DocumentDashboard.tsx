@@ -16,6 +16,7 @@ import { SAMPLES, SampleCard, type SampleDefinition } from './samples';
 import { templatesApi, templateThumbnailUrl, type SampleTemplate } from './templates';
 import { getWorkspace, WHITEBOARD_TYPE, type WorkspaceId } from './workspaces';
 import { createDataCentreWhiteboardDocument, DATA_CENTRE_WHITEBOARD_SAMPLE } from '@/lib/whiteboard/samples/data-centre';
+import { createGeometryWhiteboardDocument, GEOMETRY_WHITEBOARD_SAMPLE } from '@/lib/whiteboard/samples/geometry';
 
 type SortKey = 'recent' | 'oldest' | 'name-asc' | 'name-desc';
 
@@ -170,6 +171,11 @@ export default function DocumentDashboard({ workspace: workspaceId }: { workspac
     return createDocument(DATA_CENTRE_WHITEBOARD_SAMPLE.title, WHITEBOARD_TYPE, data, DATA_CENTRE_WHITEBOARD_SAMPLE.category);
   });
 
+  const handleCreateGeometrySample = () => startFromSample(GEOMETRY_WHITEBOARD_SAMPLE.id, async () => {
+    const data = await createGeometryWhiteboardDocument();
+    return createDocument(GEOMETRY_WHITEBOARD_SAMPLE.title, WHITEBOARD_TYPE, data, GEOMETRY_WHITEBOARD_SAMPLE.category);
+  });
+
   const handleUseTemplate = (template: SampleTemplate) => startFromSample(template.id, () => templatesApi.use(template.id));
 
   const publishSample = async (doc: DashboardDocument) => {
@@ -253,6 +259,17 @@ export default function DocumentDashboard({ workspace: workspaceId }: { workspac
               error={sampleError?.id === sample.id ? sampleError.message : ''}
               onUse={() => void handleCreateSample(sample)}
             />)}
+            {workspace.id === 'whiteboard' && <SampleCard
+              key={GEOMETRY_WHITEBOARD_SAMPLE.id}
+              title={GEOMETRY_WHITEBOARD_SAMPLE.title}
+              category={GEOMETRY_WHITEBOARD_SAMPLE.category}
+              description={GEOMETRY_WHITEBOARD_SAMPLE.description}
+              thumbnailUrl={GEOMETRY_WHITEBOARD_SAMPLE.imagePath}
+              badge="Sample"
+              pending={activeSample === GEOMETRY_WHITEBOARD_SAMPLE.id}
+              error={sampleError?.id === GEOMETRY_WHITEBOARD_SAMPLE.id ? sampleError.message : ''}
+              onUse={() => void handleCreateGeometrySample()}
+            />}
             {workspace.id === 'whiteboard' && <SampleCard
               key={DATA_CENTRE_WHITEBOARD_SAMPLE.id}
               title={DATA_CENTRE_WHITEBOARD_SAMPLE.title}

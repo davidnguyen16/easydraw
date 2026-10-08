@@ -18,6 +18,8 @@ export interface BuiltInPreview {
   commit(target: PreviewCommitTarget, signal: AbortSignal): Promise<PreviewCommitReceipt>;
   /** Appended when opening the created diagram, e.g. its intended view. */
   openQuery: string;
+  /** Optional opening dimension for this sample's reviewed preview. */
+  initialView?: '2D' | '3D';
 }
 
 export interface BuiltInPreviewDefinition {
@@ -28,6 +30,7 @@ export interface BuiltInPreviewDefinition {
   /** Allocates a fresh copy of the shipped document on every call. */
   document: () => unknown;
   openQuery?: string;
+  initialView?: '2D' | '3D';
   /** How long Generate keeps its loading state up before the shipped result
    * appears, so the sample paces like a real request. Cosmetic only: nothing
    * is waiting on a server. Defaults to no wait. */
@@ -56,6 +59,7 @@ export function createBuiltInPreview(definition: BuiltInPreviewDefinition): Buil
   return {
     id: definition.id,
     openQuery: definition.openQuery ?? '',
+    initialView: definition.initialView,
     async generate(request, now, signal) {
       // Building and hashing the document overlaps the wait instead of adding to it.
       const [{ document, hash }] = await Promise.all([

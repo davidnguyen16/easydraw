@@ -327,10 +327,10 @@ export default function WhiteboardPreviewWorkspace({ children, ready, initialHin
         <div className="shrink-0 border-b border-line-soft p-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-base font-semibold text-ink"><Sparkles size={18} className="text-mq-red" />Diagram preview</h2>
-            <span className="rounded-full bg-[#f5efee] px-2 py-1 text-[10px] font-semibold text-mq-red lg:mr-5">{builtIn ? 'Built-in sample' : 'AI preview'}</span>
+            <span className="rounded-full bg-[#f5efee] px-2 py-1 text-[10px] font-semibold text-mq-red lg:mr-5">{builtIn ? 'Demo' : 'AI preview'}</span>
           </div>
           <p className="mt-2 text-xs leading-5 text-ink-muted">{builtIn
-            ? 'This sample answers with its shipped diagram: no AI request is sent and nothing is charged. Your drawing stays unchanged.'
+            ? 'Explore the diagram in 2D and 3D, then create an editable copy. Your whiteboard is kept.'
             : 'Turn a sketch and your intent into a diagram. Your drawing stays unchanged; previews do not create saved diagrams.'}</p>
         </div>
 
@@ -344,7 +344,7 @@ export default function WhiteboardPreviewWorkspace({ children, ready, initialHin
             onChange={(event) => { latestHint.current = event.target.value; setHint(event.target.value); }} placeholder="What does your sketch mean? Describe the result, labels, relationships or style you want. You can paste relevant code too."
             className="mt-1 block w-full resize-none rounded-lg border border-line px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-muted focus:border-mq-red" />
           <p id="preview-idea-help" className="mt-1 text-[11px] leading-4 text-ink-muted">{builtIn
-            ? 'The prompt this sample was drawn for, shown for reference. Its built-in result does not use it.'
+            ? 'Diagram description.'
             : `Used with your current drawing. Include code if its exact behavior matters. ${hint.length}/${IDEA_MAX_LENGTH}`}</p>
           {!builtIn && <details className="mt-2 text-xs text-ink-muted">
             <summary className="cursor-pointer">Ideas for different kinds of drawings</summary>
@@ -360,7 +360,7 @@ export default function WhiteboardPreviewWorkspace({ children, ready, initialHin
             <button type="button" onClick={() => void generate()} disabled={requestBlocked}
               className={`${BUTTON} flex-1 bg-mq-red text-white hover:bg-mq-red-hover`}>
               {loading ? <LoaderCircle size={16} className="animate-spin" /> : everGenerated ? <RefreshCw size={16} /> : <Sparkles size={16} />}
-              {loading ? 'Generating preview…' : everGenerated ? 'Generate from drawing' : 'Generate preview'}
+              {loading ? 'Generating preview…' : everGenerated && !builtIn ? 'Generate from drawing' : 'Generate preview'}
             </button>
           </div>
           {blocked && <p className="mt-2 text-xs text-amber-800" role="status">{blocked}</p>}
@@ -368,17 +368,17 @@ export default function WhiteboardPreviewWorkspace({ children, ready, initialHin
         </details>
         {(loading || unresolved || cancelling) && <div className="shrink-0 border-b border-line-soft px-3 py-2">
           <div className="flex items-center justify-between gap-2">
-            {loading && <p role="status" className="flex items-center gap-2 text-xs text-ink"><LoaderCircle size={14} className="animate-spin" />Generating preview…</p>}
+            {loading && <p role="status" className="flex items-center gap-2 text-xs text-ink"><LoaderCircle size={14} className="animate-spin" />{builtIn ? 'Preparing diagram…' : 'Generating preview…'}</p>}
             <button type="button" aria-label="Cancel preview" onClick={cancel} disabled={cancelling} className={`${BUTTON} border border-line text-ink`}><X size={16} />{cancelling ? 'Cancelling…' : 'Cancel'}</button>
           </div>
           {unresolved && !loading && !cancelling && <button type="button" onClick={() => void run(unresolved, true)} className={`${BUTTON} mt-2 w-full border border-line text-ink`}><RefreshCw size={16} />Check existing request</button>}
           <p className="mt-2 text-[11px] leading-4 text-ink-muted">{builtIn
-            ? 'Nothing is sent to AI for this sample, so cancelling costs nothing.'
+            ? 'Your whiteboard stays unchanged.'
             : 'Cancelling may still incur a charge if AI has started. Requests are never sent to AI again automatically.'}</p>
         </div>}
           <div className="shrink-0" aria-live="polite" aria-atomic="true">
             {stale && <p className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-900">{builtIn
-              ? 'Your drawing has changed since this result. The sample always answers with the same diagram; generate again to refresh the snapshot.'
+              ? 'Changes to your drawing are not included in this preview.'
               : 'Your drawing or description has changed since this preview. Refine it with the updated input, or generate from the drawing to start fresh.'}</p>}
             {state.status === 'error' && <p role="alert" className="flex gap-2 bg-red-50 px-4 py-3 text-xs leading-5 text-red-800"><AlertCircle size={16} className="mt-0.5 shrink-0" />{state.error}</p>}
             {state.status === 'expired' && <p className="bg-amber-50 px-4 py-3 text-xs text-amber-900">This preview has expired. Generate a new preview to continue.</p>}
@@ -392,10 +392,10 @@ export default function WhiteboardPreviewWorkspace({ children, ready, initialHin
           {/* Let the viewer's controls, canvas and notice contribute their full
               minimum height. Short panes scroll instead of overlapping details. */}
           <div ref={viewer} className={`relative flex-1 bg-[#faf9f6] ${result?.document ? 'flex flex-col' : 'min-h-[260px]'}`}>
-            {result?.document ? <DiagramPreviewViewer key={result.id} document={result.document} active={wide ? !previewCollapsed : tab === 'preview'} catalog={builtIn ? 'built-in' : 'ai'} /> :
+            {result?.document ? <DiagramPreviewViewer key={result.id} document={result.document} active={wide ? !previewCollapsed : tab === 'preview'} catalog={builtIn ? 'built-in' : 'ai'} initialMode={builtIn?.initialView} /> :
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-7 text-center">
                 {loading ? <LoaderCircle size={28} className="animate-spin text-mq-red" /> : <Sparkles size={28} className="text-[#c8bab8]" />}
-                <p className="text-sm font-medium text-ink">{loading ? 'Reading your drawing…' : state.status === 'unrecognized' ? 'No diagram recognized' : 'Your diagram preview appears here'}</p>
+                <p className="text-sm font-medium text-ink">{loading ? builtIn ? 'Preparing your diagram…' : 'Reading your drawing…' : state.status === 'unrecognized' ? 'No diagram recognized' : 'Your diagram preview appears here'}</p>
                 <p className="max-w-xs text-xs leading-5 text-ink-muted">{state.status === 'unrecognized' ? 'Try clearer shapes, labels and arrows, then generate another preview.' : 'Draw shapes, labels and arrows on the whiteboard, then generate a preview. Your original drawing stays unchanged.'}</p>
               </div>}
           </div>
@@ -419,9 +419,9 @@ export default function WhiteboardPreviewWorkspace({ children, ready, initialHin
               : 'View a valid, unexpired preview to refine it, or generate a new one.'}</p>}
           </div>}
           {result && <div className="shrink-0 border-t border-line-soft p-4">
-            <p className="text-xs text-ink-muted">{result.document?.pages.reduce((count, page) => count + page.nodes.length, 0) ?? 0} objects · {result.document?.pages.reduce((count, page) => count + page.edges.length, 0) ?? 0} connections · {result.model}</p>
+            <p className="text-xs text-ink-muted">{result.document?.pages.reduce((count, page) => count + page.nodes.length, 0) ?? 0} objects · {result.document?.pages.reduce((count, page) => count + page.edges.length, 0) ?? 0} connections{!builtIn && <> · {result.model}</>}</p>
             <p className="mt-1 text-[11px] text-ink-muted">{builtIn
-              ? 'Shipped with the sample, not recognised from your drawing. Create diagram saves an editable copy with its 3D equipment.'
+              ? 'Create diagram to edit the objects and labels.'
               : 'AI can make mistakes. Check labels and connections before using the result.'}</p>
             {!builtIn && <details className="mt-3 text-xs text-ink-muted">
               <summary className="cursor-pointer">Instructions used for this preview</summary>
@@ -464,7 +464,7 @@ export default function WhiteboardPreviewWorkspace({ children, ready, initialHin
           </button>
           <p id="preview-create-help" className="mt-2 text-center text-[11px] leading-4 text-ink-muted">{result?.document && result.creationAvailable !== true
             ? 'Creation is not enabled. Check again after the server update.'
-            : builtIn ? 'Saves the sample diagram to your account. Your whiteboard is kept.' : 'No AI rerun. Your whiteboard is kept.'}</p>
+            : builtIn ? 'Saves the diagram to your account. Your whiteboard is kept.' : 'No AI rerun. Your whiteboard is kept.'}</p>
           {result?.document && result.creationAvailable !== true && state.status === 'ready' && <button type="button"
             disabled={requestBlocked} onClick={() => void checkAvailability()} title="Check this preview without sending a new AI request"
             className="mt-2 w-full text-xs font-medium text-mq-red underline underline-offset-2 disabled:opacity-50">

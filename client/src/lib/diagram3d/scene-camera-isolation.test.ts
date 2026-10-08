@@ -26,6 +26,7 @@ import type { SceneOrientation } from './scene-orientation';
 import { diagramToWorld } from './scene-orientation';
 import { sceneNodeHalfExtents, type DiagramSceneModel, type DiagramSceneNode } from './scene-model';
 import type { DiagramSceneEditing } from './types';
+import type { DiagramCamera } from './types';
 
 beforeEach(() => {
   harness.effects = [];
@@ -37,13 +38,15 @@ beforeEach(() => {
 });
 
 function mountRig(standalone: boolean, orientation: SceneOrientation = 'floor', preset: CameraPreset = 'isometric',
-  options: { model?: DiagramSceneModel; editing?: DiagramSceneEditing } = {}) {
+  options: { model?: DiagramSceneModel; editing?: DiagramSceneEditing; camera?: DiagramCamera; presenting?: boolean } = {}) {
   const onCameraChange = vi.fn();
   const projectDropRef = { current: null as DropProjector | null };
   const element = SceneCameraRig({
     standalone, orientation,
     model: options.model ?? { nodes: [], edges: [], warnings: [], center: [0, 0, 0], origin: [0, 0, 0], radius: 2 },
     editing: options.editing,
+    camera: options.camera,
+    presenting: options.presenting,
     view: { preset, nonce: 0 }, onCameraChange,
     viewportRef: { current: null }, projectDropRef,
   });
@@ -75,6 +78,59 @@ describe('standalone preview camera isolation', () => {
     expect(mounted.onCameraChange).toHaveBeenCalledOnce();
     mounted.cleanup.forEach((cleanup) => cleanup());
     expect(harness.registerViewport.mock.results[0].value).toHaveBeenCalledOnce();
+  });
+
+  it('uses a standalone saved camera direction and recalculates its preview distance', () => {
+    const saved: DiagramCamera = { position: [30, 40, 100], target: [1, 2, 3] };
+    const mounted = mountRig(true, 'floor', 'isometric', { camera: saved });
+    const actual = harness.state.camera as THREE.PerspectiveCamera;
+    const expectedDirection = new THREE.Vector3(...saved.position).sub(new THREE.Vector3(...saved.target)).normalize();
+    const actualDirection = actual.position.clone().normalize();
+    expect(actualDirection.distanceTo(expectedDirection)).toBeLessThan(1e-10);
+    expect(actual.position.length()).toBeLessThan(20);
+    expect(harness.readEditor).not.toHaveBeenCalled();
+    mounted.cleanup.forEach((cleanup) => cleanup());
+  });
+
+  it('keeps the exact editor saved camera position and target', () => {
+    const saved: DiagramCamera = { position: [30, 40, 100], target: [1, 2, 3] };
+    const mounted = mountRig(false, 'floor', 'isometric', { camera: saved });
+    const actual = harness.state.camera as THREE.PerspectiveCamera;
+    expect(actual.position.toArray()).toEqual(saved.position);
+    mounted.end();
+    expect(mounted.onCameraChange.mock.calls[0][0].target).toEqual(saved.target);
+    mounted.cleanup.forEach((cleanup) => cleanup());
+  });
+
+  it('refits presentation bounds while preserving the saved direction and normal editor integration', () => {
+    const node: DiagramSceneNode = { id: 'wide-notes', type: 'TextNode', kind: 'plane', selected: false, locked: false,
+      label: 'Teaching notes', details: [], position: [0, 2, 0], rotation: [Math.PI / 2, 0, 0], size: [12, 0.02, 4],
+      color: '#ffffff', textColor: '#000000', data: {} };
+    const model: DiagramSceneModel = { nodes: [node], edges: [], warnings: [], center: [0, 2, 0], origin: [0, 0, 0], radius: 7 };
+    const saved: DiagramCamera = { position: [30, 42, 100], target: [0, 2, 0] };
+    const mounted = mountRig(false, 'floor', 'isometric', { model, camera: saved, presenting: true });
+    const camera = harness.state.camera as THREE.PerspectiveCamera;
+    const expectedDirection = new THREE.Vector3(...saved.position).sub(new THREE.Vector3(...saved.target)).normalize();
+    const actualDirection = camera.position.clone().sub(new THREE.Vector3(...model.center)).normalize();
+    expect(actualDirection.distanceTo(expectedDirection)).toBeLessThan(1e-10);
+    expect(camera.position.distanceTo(new THREE.Vector3(...model.center))).toBeLessThan(30);
+    expect(harness.registerViewport).toHaveBeenCalledOnce();
+    expect(harness.setZoom).toHaveBeenCalled();
+    mounted.end();
+    expect(mounted.onCameraChange.mock.calls[0][0].target).toEqual(model.center);
+    const editorSphereDistance = model.radius / Math.sin(THREE.MathUtils.degToRad(camera.fov) / 2) * 1.18;
+    expect(camera.position.distanceTo(new THREE.Vector3(...model.center))).toBeLessThan(editorSphereDistance);
+    camera.aspect = 400 / 300;
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld(true);
+    const half = sceneNodeHalfExtents(node);
+    for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) {
+      const point = new THREE.Vector3(x * half[0], y * half[1], z * half[2])
+        .applyEuler(new THREE.Euler(...node.rotation)).add(new THREE.Vector3(...node.position)).project(camera);
+      expect(Math.abs(point.x)).toBeLessThan(1);
+      expect(Math.abs(point.y)).toBeLessThan(1);
+    }
+    mounted.cleanup.forEach((cleanup) => cleanup());
   });
 
   it('projects upright front-view drops back to unchanged diagram coordinates', () => {

@@ -28,7 +28,7 @@ export function createPreviewScene(document: PagedDiagramData, catalog: PreviewC
     targetHandle: typeof edge.targetHandle === 'string' ? edge.targetHandle : 'left',
     data: record(edge.data), selected: false,
   }));
-  const model = buildDiagramScene(nodes, edges);
+  const model = buildDiagramScene(nodes, edges, { origin: page.view3d?.origin });
   for (const node of nodes) {
     if (node.type === UNSUPPORTED_PREVIEW_NODE) model.warnings.push(`Unsupported preview object ${node.id}: shown as a placeholder, not an inferred 3D shape.`);
   }

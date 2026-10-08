@@ -89,6 +89,7 @@ export default function WhiteboardToolBar({ showColors, onToggleColors }: {
           <ZoomOut />
         </button>
         <select className={`${SELECT} w-[84px]`} aria-label="Zoom level" value={String(zoom)} onChange={(e) => setZoom(Number(e.target.value))}>
+          {!(ZOOM_LEVELS as readonly number[]).includes(zoom) && <option value={String(zoom)}>{Math.round(zoom * 100)}%</option>}
           {ZOOM_LEVELS.map((level) => (
             <option key={level} value={String(level)}>
               {Math.round(level * 100)}%

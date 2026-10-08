@@ -18,7 +18,7 @@ const GRID_MIN_ZOOM = 4;
  * board never becomes a giant DOM element at 800%, and every overlay (ants,
  * grid, text box) is drawn in screen space so it stays one pixel crisp.
  */
-export default function WhiteboardViewport() {
+export default function WhiteboardViewport({ fitOnLoad = false }: { fitOnLoad?: boolean }) {
   const engine = useWhiteboard((s) => s.engine);
   const zoom = useWhiteboard((s) => s.zoom);
   const showGrid = useWhiteboard((s) => s.showGrid);
@@ -203,6 +203,18 @@ export default function WhiteboardViewport() {
     if (frame.current !== null) return;
     frame.current = requestAnimationFrame(draw);
   }, [draw]);
+
+  // Show the whole classroom/sample board on entry, then let the teacher zoom
+  // and pan normally. Resizing the panels must not reset their chosen zoom.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!fitOnLoad || !engine || !container) return;
+    useWhiteboard.getState().setZoom(Math.min(1,
+      Math.max(1, container.clientWidth - GUTTER * 2) / engine.width,
+      Math.max(1, container.clientHeight - GUTTER * 2) / engine.height));
+    container.scrollLeft = 0;
+    container.scrollTop = 0;
+  }, [engine, fitOnLoad]);
 
   // The engine asks for a repaint after every change; so do resize and layout.
   useEffect(() => {

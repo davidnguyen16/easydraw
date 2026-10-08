@@ -26,7 +26,7 @@ export default function WhiteboardEditor({ diagramId, title, data, initialHint =
   const [ready, setReady] = useState(false);
   // Display preference only: hiding the palette never changes drawing options,
   // document pixels, undo history or autosave state.
-  const [showColors, setShowColors] = useState(true);
+  const [showColors, setShowColors] = useState(!builtIn);
   const actions = useMemo(() => createActions(), []);
 
   // One engine per opened document, loaded from the stored PNG (or blank).
@@ -102,7 +102,7 @@ export default function WhiteboardEditor({ diagramId, title, data, initialHint =
       </div>
       <WhiteboardPreviewWorkspace key={diagramId} ready={ready} initialHint={initialHint} builtIn={builtIn}>
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-          {ready ? <WhiteboardViewport /> : <div className="flex flex-1 items-center justify-center text-ink-muted">Loading whiteboard…</div>}
+          {ready ? <WhiteboardViewport fitOnLoad={Boolean(builtIn)} /> : <div className="flex flex-1 items-center justify-center text-ink-muted">Loading whiteboard…</div>}
           <ColorPanel visible={showColors} />
         </div>
       </WhiteboardPreviewWorkspace>

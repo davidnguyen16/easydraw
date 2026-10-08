@@ -13,6 +13,7 @@ import { isWhiteboardDocument } from '@easydraw/pack-whiteboard';
 import WhiteboardEditor from '@/lib/whiteboard/WhiteboardEditor';
 import { WHITEBOARD_TYPE } from '@/lib/dashboard/workspaces';
 import { createDataCentreBuiltInPreview, DATA_CENTRE_WHITEBOARD_SAMPLE } from '@/lib/whiteboard/samples/data-centre';
+import { createGeometryBuiltInPreview, GEOMETRY_WHITEBOARD_SAMPLE } from '@/lib/whiteboard/samples/geometry';
 import type { BuiltInPreview } from '@/lib/whiteboard/preview/built-in-preview';
 
 // Loads the diagram by id, hydrates the document store, then renders the
@@ -45,9 +46,13 @@ export default function EditorClient() {
         if (diagram.type === WHITEBOARD_TYPE) {
           // A copy of the built-in sample carries its origin in the document,
           // so reopening it keeps the sample's shipped preview result.
-          const sample = isWhiteboardDocument(diagram.data) && diagram.data.sample === DATA_CENTRE_WHITEBOARD_SAMPLE.id;
+          const sampleId = isWhiteboardDocument(diagram.data) ? diagram.data.sample : undefined;
+          const sample = sampleId === DATA_CENTRE_WHITEBOARD_SAMPLE.id
+            ? { prompt: DATA_CENTRE_WHITEBOARD_SAMPLE.prompt, preview: createDataCentreBuiltInPreview() }
+            : sampleId === GEOMETRY_WHITEBOARD_SAMPLE.id
+              ? { prompt: GEOMETRY_WHITEBOARD_SAMPLE.prompt, preview: createGeometryBuiltInPreview() } : null;
           setSpecial({ kind: 'whiteboard', id: diagramId, title: diagram.title, data: diagram.data,
-            initialHint: sample ? DATA_CENTRE_WHITEBOARD_SAMPLE.prompt : '', builtIn: sample ? createDataCentreBuiltInPreview() : null });
+            initialHint: sample?.prompt ?? '', builtIn: sample?.preview ?? null });
         } else {
           // data JSONB = EditorState. New diagrams have data = {}.
           const doc = useEditorDoc.getState();

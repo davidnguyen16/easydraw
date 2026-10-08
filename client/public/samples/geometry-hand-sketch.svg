@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120">
+<rect width="1600" height="1120" fill="#fffefb"/>
+<g font-family="Segoe Print, Comic Sans MS, cursive">
+<text x="72" y="83" fill="#25384b" font-size="49" transform="rotate(-0.5 72 83)">Triangular Prism — Teacher Sketch</text>
+<path d="M 76 109 Q 789.3 106.7 1499 108" fill="none" stroke="#d1dce4" stroke-width="3" stroke-linecap="round" />
+<text x="77" y="157" fill="#25384b" font-size="33" transform="rotate(0 77 157)">Right prism ABC.A′B′C′ with equilateral triangular bases, AB = a.</text>
+<text x="77" y="204" fill="#25384b" font-size="32" transform="rotate(0 77 204)">Angle between (ABC) and (A′BC) = 60°. M is the midpoint of AA′.</text>
+<text x="77" y="250" fill="#16845b" font-size="33" transform="rotate(0 77 250)">Find: 1) volume V;  2) the distance from M to plane (AB′C′).</text>
+<polygon points="288.1346652052679,772.7756813566455 220,890 720,950" fill="#2563eb" fill-opacity="0.11"/><path d="M 288.1346652052679 772.7756813566455 Q 252.26733260263393 833.1878406783227 220 890" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" />
+<path d="M 220 890 Q 471.8 918.2 720 950" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" />
+<path d="M 720 950 Q 502.2673326026339 863.1878406783227 288.1346652052679 772.7756813566455" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" />
+<polygon points="288.1346652052679,322.77568135664546 220,890 720,950" fill="#cf8516" fill-opacity="0.025"/><path d="M 288.1346652052679 322.77568135664546 Q 255.86733260263395 604.5878406783228 220 890" fill="none" stroke="#cf8516" stroke-width="3" stroke-linecap="round" />
+<path d="M 220 890 Q 468.2 921.8 720 950" fill="none" stroke="#cf8516" stroke-width="3" stroke-linecap="round" />
+<path d="M 720 950 Q 505.86733260263395 634.5878406783228 288.1346652052679 322.77568135664546" fill="none" stroke="#cf8516" stroke-width="3" stroke-linecap="round" />
+<polygon points="288.1346652052679,772.7756813566455 220,440 720,500" fill="#16845b" fill-opacity="0.15"/><path d="M 288.1346652052679 772.7756813566455 Q 252.26733260263393 608.1878406783227 220 440" fill="none" stroke="#16845b" stroke-width="4" stroke-linecap="round" />
+<path d="M 220 440 Q 471.8 468.2 720 500" fill="none" stroke="#16845b" stroke-width="4" stroke-linecap="round" />
+<path d="M 720 500 Q 502.2673326026339 638.1878406783227 288.1346652052679 772.7756813566455" fill="none" stroke="#16845b" stroke-width="4" stroke-linecap="round" />
+<path d="M 288.1346652052679 772.7756813566455 Q 289.9346652052679 545.9756813566455 288.1346652052679 322.77568135664546" fill="none" stroke="#25384b" stroke-width="4.5" stroke-linecap="round" />
+<path d="M 220 890 Q 218.2 666.8 220 440" fill="none" stroke="#25384b" stroke-width="4.5" stroke-linecap="round" />
+<path d="M 720 950 Q 721.8 723.2 720 500" fill="none" stroke="#25384b" stroke-width="4.5" stroke-linecap="round" />
+<path d="M 288.1346652052679 322.77568135664546 Q 252.26733260263393 383.18784067832274 220 440" fill="none" stroke="#25384b" stroke-width="4" stroke-linecap="round" />
+<path d="M 288.1346652052679 322.77568135664546 Q 505.86733260263395 409.5878406783227 720 500" fill="none" stroke="#25384b" stroke-width="4" stroke-linecap="round" />
+<path d="M 220 440 Q 468.2 471.8 720 500" fill="none" stroke="#25384b" stroke-width="4" stroke-linecap="round" />
+<path d="M 288.1346652052679 772.7756813566455 Q 255.86733260263395 829.5878406783228 220 890" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" />
+<path d="M 220 890 Q 468.2 921.8 720 950" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" />
+<path d="M 720 950 Q 505.86733260263395 859.5878406783228 288.1346652052679 772.7756813566455" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" />
+<path d="M 288.1346652052679 772.7756813566455 Q 377.2673326026339 848.1878406783227 470 920" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-dasharray="13 11" opacity="0.7"/>
+<path d="M 288.1346652052679 322.77568135664546 Q 380.86733260263395 619.5878406783228 470 920" fill="none" stroke="#cf8516" stroke-width="3" stroke-linecap="round" stroke-dasharray="13 11" opacity="0.7"/>
+<path d="M 288.1346652052679 772.7756813566455 Q 377.2673326026339 623.1878406783227 470 470" fill="none" stroke="#16845b" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="13 11" opacity="0.7"/>
+<path d="M 288.1346652052679 322.77568135664546 Q 358.13416575329245 432.4348008479034 424.533666301317 545.6939203391613" fill="none" stroke="#d43b43" stroke-width="3" stroke-linecap="round" stroke-dasharray="13 11" opacity="0.7"/>
+<path d="M 288.1346652052679 547.7756813566455 Q 320.4344154792802 605.3052411022744 356.33416575329244 659.2348008479034" fill="none" stroke="#d43b43" stroke-width="5" stroke-linecap="round" />
+<path d="M 301.78466520526786 783.8256813566454 Q 303.58466520526787 772.2756813566455 301.78466520526786 764.3256813566454" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" /><path d="M 301.78466520526786 764.3256813566454 Q 293.15966520526786 760.6006813566454 288.1346652052679 753.2756813566455" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" />
+<path d="M 456.35 908.95 Q 474.40000000000003 909.1000000000001 488.85 912.85" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" /><path d="M 488.85 912.85 Q 493.875 920.175 502.5 923.9" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" />
+<path d="M 412.7124195396594 526.3743396273433 Q 417.92491953965936 518.8930919404451 419.53741953965937 515.0118442535468" fill="none" stroke="#d43b43" stroke-width="2.5" stroke-linecap="round" /><path d="M 419.53741953965937 515.0118442535468 Q 423.6480429204882 526.4716346094558 431.358666301317 534.3314249653648" fill="none" stroke="#d43b43" stroke-width="2.5" stroke-linecap="round" />
+<path d="M 344.5129189916348 639.9152201360854 Q 349.72541899163485 632.4339724491872 351.33791899163487 628.5527247622888" fill="none" stroke="#d43b43" stroke-width="2.5" stroke-linecap="round" /><path d="M 351.33791899163487 628.5527247622888 Q 355.44854237246363 640.0125151181978 363.1591657532924 647.8723054741068" fill="none" stroke="#d43b43" stroke-width="2.5" stroke-linecap="round" />
+<path d="M 423.36530775755085 882.2481062799221 A 60 60 0 0 1 452.5213830934008 862.6022827019023" fill="none" stroke="#cf8516" stroke-width="3.5" stroke-linecap="round"/>
+<text x="391" y="865" fill="#cf8516" font-size="26" transform="rotate(1 391 865)">60°</text>
+<text x="171" y="832" fill="#2563eb" font-size="35" transform="rotate(-59 171 832)">a</text>
+<text x="598" y="882" fill="#2563eb" font-size="30" transform="rotate(1 598 882)">(ABC)</text>
+<text x="547" y="594" fill="#16845b" font-size="30" transform="rotate(1 547 594)">(AB′C′)</text>
+<circle cx="288.1346652052679" cy="772.7756813566455" r="4" fill="#25384b"/>
+<circle cx="220" cy="890" r="4" fill="#25384b"/>
+<circle cx="720" cy="950" r="4" fill="#25384b"/>
+<circle cx="288.1346652052679" cy="322.77568135664546" r="4" fill="#25384b"/>
+<circle cx="220" cy="440" r="4" fill="#25384b"/>
+<circle cx="720" cy="500" r="4" fill="#25384b"/>
+<circle cx="470" cy="920" r="4" fill="#25384b"/>
+<circle cx="470" cy="470" r="4" fill="#25384b"/>
+<circle cx="288.1346652052679" cy="547.7756813566455" r="5" fill="#d43b43"/>
+<circle cx="424.533666301317" cy="545.6939203391613" r="4" fill="#25384b"/>
+<circle cx="356.33416575329244" cy="659.2348008479034" r="5" fill="#d43b43"/>
+<text x="261" y="804" fill="#25384b" font-size="34" transform="rotate(1 261 804)">A</text>
+<text x="175" y="917" fill="#25384b" font-size="34" transform="rotate(-2 175 917)">B</text>
+<text x="738" y="978" fill="#25384b" font-size="34" transform="rotate(1 738 978)">C</text>
+<text x="265" y="298" fill="#25384b" font-size="34" transform="rotate(-2 265 298)">A′</text>
+<text x="170" y="436" fill="#25384b" font-size="34" transform="rotate(1 170 436)">B′</text>
+<text x="739" y="508" fill="#25384b" font-size="34" transform="rotate(-2 739 508)">C′</text>
+<text x="249" y="559" fill="#d43b43" font-size="34" transform="rotate(1 249 559)">M</text>
+<text x="460" y="973" fill="#25384b" font-size="34" transform="rotate(-2 460 973)">N</text>
+<text x="490" y="462" fill="#25384b" font-size="34" transform="rotate(1 490 462)">K</text>
+<text x="444" y="558" fill="#d43b43" font-size="34" transform="rotate(-2 444 558)">H</text>
+<text x="368" y="684" fill="#d43b43" font-size="34" transform="rotate(1 368 684)">F</text>
+<path d="M 909 317 Q 904.2 658.3 903 996" fill="none" stroke="#e2e8ed" stroke-width="2" stroke-linecap="round" />
+<text x="959" y="359" fill="#25384b" font-size="37" transform="rotate(-1 959 359)">Teacher construction</text>
+<text x="965" y="419" fill="#2563eb" font-size="34" transform="rotate(1 965 419)">1. Volume</text>
+<text x="978" y="469" fill="#25384b" font-size="28" transform="rotate(0 978 469)">N is the midpoint of BC.</text>
+<text x="978" y="513" fill="#25384b" font-size="28" transform="rotate(0 978 513)">Use right triangle ANA′</text>
+<text x="978" y="557" fill="#cf8516" font-size="28" transform="rotate(0 978 557)">and the 60° angle at N.</text>
+<text x="978" y="601" fill="#2563eb" font-size="28" transform="rotate(0 978 601)">V = base area × height</text>
+<text x="965" y="678" fill="#16845b" font-size="34" transform="rotate(-1 965 678)">2. Distance</text>
+<text x="978" y="726" fill="#25384b" font-size="28" transform="rotate(0 978 726)">K is the midpoint of B′C′.</text>
+<text x="978" y="770" fill="#25384b" font-size="28" transform="rotate(0 978 770)">A′H ⟂ AK, with H on AK.</text>
+<text x="978" y="814" fill="#25384b" font-size="28" transform="rotate(0 978 814)">F is the midpoint of AH.</text>
+<text x="978" y="858" fill="#d43b43" font-size="28" transform="rotate(0 978 858)">MF ∥ A′H; MF ⟂ (AB′C′).</text>
+<path d="M 951 886 Q 1221.3 884.7 1488 887" fill="none" stroke="#d1dce4" stroke-width="2" stroke-linecap="round" />
+<text x="963" y="929" fill="#cf8516" font-size="26" transform="rotate(0 963 929)">Amber: given plane (A′BC)</text>
+<text x="963" y="969" fill="#16845b" font-size="26" transform="rotate(0 963 969)">Green: target plane (AB′C′)</text>
+<text x="963" y="1009" fill="#d43b43" font-size="26" transform="rotate(0 963 1009)">Red MF: the distance to find</text>
+<text x="77" y="1074" fill="#708090" font-size="29" transform="rotate(-0.2 77 1074)">Sketch not to scale — use the construction to explain each step.</text>
+</g></svg>

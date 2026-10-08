@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import dynamic from 'next/dynamic';
 import { validateVisual3DRecipe, type Visual3DRecipe } from '@easydraw/diagram-schema';
 import { dndState } from '@/lib/flow/dnd';
 import { useAuthStore } from '@/lib/stores/auth.store';
@@ -16,6 +17,8 @@ import LibrarySectionContextMenu from './LibrarySectionContextMenu';
 import LibraryNodeContextMenu from './LibraryNodeContextMenu';
 import LibraryObjectContextMenu from './LibraryObjectContextMenu';
 import LibraryObjectTile from './LibraryObjectTile';
+
+const ObjectFolderImportDialog = dynamic(() => import('./ObjectFolderImportDialog'), { ssr: false });
 
 const BUTTON = 'rounded border border-line bg-white px-2 py-1 text-xs text-ink-soft hover:border-mq-red disabled:cursor-not-allowed disabled:opacity-40';
 const INPUT = 'min-w-0 rounded border border-line bg-white px-2 py-1 text-xs text-ink-soft outline-none focus:border-mq-red';
@@ -180,6 +183,9 @@ function PrivateLibraries({ searchQuery }: { searchQuery: string }) {
   const [loadedOwner, setLoadedOwner] = useState('');
   const [busy, setBusy] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
+  const [folderLibrary, setFolderLibrary] = useState<LibrarySection | null>(null);
+  const managerTrigger = useRef<HTMLButtonElement | null>(null);
+  const folderTrigger = useRef<HTMLButtonElement | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [sectionMenu, setSectionMenu] = useState<{ sectionId: string; x: number; y: number; trigger: HTMLButtonElement } | null>(null);
   const [nodeMenu, setNodeMenu] = useState<(MenuPosition & { sectionId: string; nodeId: string }) | null>(null);
@@ -436,6 +442,7 @@ function PrivateLibraries({ searchQuery }: { searchQuery: string }) {
                   <input className="absolute inset-0 w-full cursor-pointer opacity-0" type="file" accept={CUSTOM_IMAGE_ACCEPT} multiple disabled={busy || uploading} aria-label={`Upload images to ${section.name}`} onChange={(event) => { const files = Array.from(event.target.files ?? []); event.target.value = ''; void uploadFiles(section, files); }} />
                 </label>
                 <button type="button" className="cursor-pointer rounded border border-dashed border-line px-2 py-2 text-center text-xs text-mq-maroon hover:border-mq-red disabled:cursor-default disabled:opacity-40" disabled={busy || uploading} aria-label={`Import a 3D object into ${section.name}`} onClick={() => void importObject(section)}>+ Import 3D object</button>
+                <button type="button" className="col-span-2 cursor-pointer rounded border border-dashed border-line px-2 py-2 text-center text-xs text-mq-maroon hover:border-mq-red disabled:cursor-default disabled:opacity-40" disabled={busy || uploading} aria-label={`Import a 3D folder into ${section.name}`} onClick={(event) => { folderTrigger.current = event.currentTarget; setPendingImport(null); setFolderLibrary(section); }}>+ Import 3D folder</button>
               </div>
             </>}
           </section>
@@ -449,11 +456,21 @@ function PrivateLibraries({ searchQuery }: { searchQuery: string }) {
         onCancel={() => setPendingImport(null)}
         onImportAnyway={() => { const item = pendingImport; setPendingImport(null); void storeImport(item.sectionId, item.name, item.recipe, false); }}
       />}
+      {!managerOpen && folderLibrary && userId && <ObjectFolderImportDialog
+        section={folderLibrary}
+        owner={userId}
+        onClose={() => {
+          const trigger = folderTrigger.current;
+          setFolderLibrary(null);
+          requestAnimationFrame(() => { if (trigger?.isConnected) trigger.focus({ preventScroll: true }); });
+        }}
+        onImported={() => setExpanded((current) => ({ ...current, [folderLibrary.id]: true }))}
+      />}
       {!managerOpen && objectNotice && <p role="status" className="text-xs leading-relaxed text-ink-muted">{objectNotice}</p>}
       {!managerOpen && uploadStatus}
       {!managerOpen && error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800"><p className="m-0 break-words">{error}</p><button type="button" className={`${BUTTON} mt-2`} onClick={retryLoading}>Retry</button></div>}
       <div className="flex flex-col gap-2">
-        <button type="button" className="cursor-pointer rounded-lg border border-mq-red bg-white px-3 py-2 text-sm font-semibold text-mq-maroon transition-[background-color,color,box-shadow,border-color] duration-150 enabled:hover:border-[#ad3647] enabled:hover:bg-[#ad3647] enabled:hover:text-white enabled:hover:shadow-[inset_0_0_0_1px_#fff] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mq-red" aria-haspopup="dialog" aria-expanded={managerOpen} onClick={() => { setSectionMenu(null); setNodeMenu(null); setManagerOpen(true); }}>+ Custom Libraries</button>
+        <button ref={managerTrigger} type="button" className="cursor-pointer rounded-lg border border-mq-red bg-white px-3 py-2 text-sm font-semibold text-mq-maroon transition-[background-color,color,box-shadow,border-color] duration-150 enabled:hover:border-[#ad3647] enabled:hover:bg-[#ad3647] enabled:hover:text-white enabled:hover:shadow-[inset_0_0_0_1px_#fff] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mq-red" aria-haspopup="dialog" aria-expanded={managerOpen} onClick={() => { setSectionMenu(null); setNodeMenu(null); setManagerOpen(true); }}>+ Custom Libraries</button>
       </div>
       {!managerOpen && sectionMenu && menuSection && <LibrarySectionContextMenu
         key={`${menuSection.id}:${sectionMenu.x}:${sectionMenu.y}`}
@@ -529,6 +546,7 @@ function PrivateLibraries({ searchQuery }: { searchQuery: string }) {
           for (const update of reorderUpdates(sections, id, direction)) await nodeLibraryApi.updateSection(update.id, { sortOrder: update.sortOrder });
         })}
         onUpload={(section, files) => { void uploadFiles(section, files); }}
+        onImportFolder={(section) => { folderTrigger.current = managerTrigger.current; setManagerOpen(false); setPendingImport(null); setFolderLibrary(section); }}
         renderNodes={(section) => <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
           {section.nodes.map((node) => <LibraryNodeTile key={node.id} node={node} sections={sections} disabled={busy || uploading} inManager onAction={action} first={section.nodes[0]?.id === node.id} last={section.nodes.at(-1)?.id === node.id} onReorder={(direction) => action(async () => {
             for (const update of reorderUpdates(section.nodes, node.id, direction)) await nodeLibraryApi.updateNode(update.id, { sortOrder: update.sortOrder });

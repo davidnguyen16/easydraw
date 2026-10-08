@@ -68,6 +68,18 @@ describe('isolated preview 3D model', () => {
     expect(builtIn.warnings.some((warning) => warning.includes('Unsupported'))).toBe(false);
   });
 
+  it('keeps the saved scene origin so a sample camera frames the same objects in preview and editor', () => {
+    const input = document();
+    input.pages[0].view3d = { version: 1, origin: [10, 0, 20],
+      camera: { position: [5, 8, 15], target: [0, 2, 0] }, orientation: 'floor' };
+    const before = structuredClone(input);
+    const model = createPreviewScene(input, 'built-in');
+    expect(model.origin).toEqual([10, 0, 20]);
+    expect(model.nodes[0].position[0]).toBeCloseTo((50 + 160 / 2) / 100 - 10);
+    expect(model.nodes[0].position[2]).toBeCloseTo((40 + 80 / 2) / 100 - 20);
+    expect(input).toEqual(before);
+  });
+
   it('never resolves unsupported account-library node types and uses 2D fallback dimensions', () => {
     const input = document();
     input.pages[0].nodes = [{ id: 'asset', type: 'CustomImageNode', data: { label: 'Unsupported', assetId: 'private-asset' } }];
